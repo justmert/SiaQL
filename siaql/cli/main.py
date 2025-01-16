@@ -5,7 +5,7 @@ from rich.console import Console
 from rich.prompt import Prompt
 from typing import Optional
 from pathlib import Path
-from ..graphql.app import create_graphql_app
+from siaql.graphql.app import create_graphql_app
 
 app = typer.Typer(help="SiaQL - GraphQL interface for Sia network components")
 console = Console()

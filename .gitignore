@@ -43,3 +43,5 @@ myenv/
 .coverage
 htmlcov/
 .pytest_cache/
+
+api-schemas/

@@ -1,110 +1,33 @@
-from typing import List, Optional
-import strawberry
+# siaql/graphql/resolvers/walletd.py
+from typing import Any, Dict, Optional, TypeVar, Callable
 from strawberry.types import Info
-from datetime import datetime
 
-@strawberry.type
-class BlockIndex:
-    height: int
-    id: str
+T = TypeVar('T')
 
-@strawberry.type
-class SiacoinOutput:
-    value: str
-    address: str
-
-@strawberry.type
-class SiafundOutput:
-    value: int
-    address: str
-    claim_start: str = strawberry.field(name="claimStart")
-
-@strawberry.type
-class AddressBalance:
-    siacoins: str
-    immature_siacoins: str = strawberry.field(name="immatureSiacoins")
-    siafunds: int
-
-@strawberry.type
-class SiacoinElement:
-    id: str
-    leaf_index: int = strawberry.field(name="leafIndex")
-    merkle_proof: Optional[List[str]] = strawberry.field(name="merkleProof")
-    siacoin_output: SiacoinOutput = strawberry.field(name="siacoinOutput")
-    maturity_height: int = strawberry.field(name="maturityHeight")
-
-@strawberry.type
-class SiafundElement:
-    id: str
-    leaf_index: int = strawberry.field(name="leafIndex")
-    merkle_proof: Optional[List[str]] = strawberry.field(name="merkleProof")
-    siafund_output: SiafundOutput = strawberry.field(name="siafundOutput")
-    claim_start: str = strawberry.field(name="claimStart")
-
-@strawberry.type
-class Event:
-    id: str
-    index: BlockIndex
-    timestamp: datetime
-    maturity_height: int = strawberry.field(name="maturityHeight")
-    type: str
-    data: Optional[str]  # We'll store JSON string for flexible event data
-    relevant: Optional[List[str]]
-
-@strawberry.type
-class Query:
-    @strawberry.field
-    async def address_balance(self, info: Info, address: str) -> AddressBalance:
-        """Gets the balance of an individual address"""
+class WalletdBaseResolver:
+    """Base resolver class for Walletd API"""
+    
+    def __init__(self):
+        """Initialize the resolver"""
+        pass  # We could add shared initialization here if needed
+        
+    @classmethod
+    async def handle_api_call(
+        cls,
+        info: Info, 
+        method: str, 
+        transform_func: Optional[Callable[[Dict], T]] = None,
+        *args, 
+        **kwargs
+    ) -> Any:
+        """Generic method to handle API calls with error handling"""
         client = info.context["walletd_client"]
-        data = await client.get_address_balance(address)
-        return AddressBalance(
-            siacoins=data["siacoins"],
-            immature_siacoins=data["immatureSiacoins"],
-            siafunds=data["siafunds"]
-        )
-
-    @strawberry.field
-    async def address_events(
-        self, 
-        address: str, 
-        limit: Optional[int] = 100, 
-        offset: Optional[int] = 0
-    ) -> List[Event]:
-        """Gets events for a specific address"""
-        pass
-
-    @strawberry.field
-    async def address_unconfirmed_events(
-        self, 
-        address: str, 
-        limit: Optional[int] = 100, 
-        offset: Optional[int] = 0
-    ) -> List[Event]:
-        """Gets unconfirmed events for a specific address"""
-        pass
-
-    @strawberry.field
-    async def address_siacoin_outputs(
-        self, 
-        address: str, 
-        limit: Optional[int] = 100, 
-        offset: Optional[int] = 0
-    ) -> List[SiacoinElement]:
-        """Gets Siacoin UTXOs owned by the address"""
-        pass
-
-    @strawberry.field
-    async def address_siafund_outputs(
-        self, 
-        address: str, 
-        limit: Optional[int] = 100, 
-        offset: Optional[int] = 0
-    ) -> List[SiafundElement]:
-        """Gets Siafund UTXOs owned by the address"""
-        pass
-
-    @strawberry.field
-    async def event(self, id: str) -> Event:
-        """Gets a specific event by ID"""
-        pass
+        method_func = getattr(client, method)
+        try:
+            result = await method_func(*args, **kwargs)
+            if transform_func:
+                return transform_func(result)
+            return result
+        except Exception as e:
+            # TODO: Add proper error handling/logging
+            raise e
