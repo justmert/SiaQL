@@ -31,6 +31,15 @@ def convert_type(schema: Dict[str, Any]) -> str:
         'object': 'JSON'
     }
     
+    # Handle allOf
+    if 'allOf' in schema:
+        for item in schema['allOf']:
+            if '$ref' in item:
+                return item['$ref'].split('/')[-1]
+            elif 'type' in item:
+                return convert_type(item)
+        return 'Any'  # fallback if no type found
+    
     # Special handling for Currency type pattern
     if schema.get('type') == 'string' and schema.get('pattern', '').startswith('^\\d+$'):
         return 'str'
@@ -50,12 +59,19 @@ def convert_type(schema: Dict[str, Any]) -> str:
         
     return type_mapping.get(schema.get('type', 'string'), 'str')
 
+
 def get_field_description(schema: Dict[str, Any]) -> str:
     """Get complete field description including constraints."""
     desc_parts = []
     
+    # Handle allOf descriptions
+    if 'allOf' in schema:
+        for item in schema['allOf']:
+            if 'description' in item:
+                desc_parts.append(item['description'])
+    
     # Add main description
-    if 'description' in schema:
+    elif 'description' in schema:
         desc_parts.append(schema['description'])
     
     # Add pattern if exists
@@ -86,7 +102,8 @@ def get_field_description(schema: Dict[str, Any]) -> str:
     if 'example' in schema:
         desc_parts.append(f"Example: {schema['example']}")
     
-    return ' | '.join(desc_parts)
+    return ' | '.join(filter(None, desc_parts))
+
 
 def sanitize_name(name: str) -> str:
     """Convert OpenAPI names to valid Python identifiers."""
@@ -125,23 +142,24 @@ def get_field_definition(name: str, schema: Dict[str, Any], required: List[str])
     # Add description
     description = get_field_description(schema)
     if description:
-        field_args.append(f'description="""{description}"""')
+        description = description.replace('\n', '')
+        field_args.append(f'description="{description}"')
     
-    # Add default value if specified
+    # Add default value only if explicitly specified
     if 'default' in schema:
         default_value = schema['default']
         if isinstance(default_value, str):
             default_value = f'"{default_value}"'
         field_args.append(f'default={default_value}')
-    elif is_optional:
-        field_args.append('default=None')
     
     # Add original name if different from snake_case
     snake_case_name = to_snake_case(name)
     if snake_case_name != name:
         field_args.append(f'name="{name}"')
+    else:
+        field_args.append(f'name="{name}"')
     
-    field_decorator = f'strawberry.field({", ".join(field_args)})' if field_args else 'strawberry.field'
+    field_decorator = f'strawberry.field({", ".join(field_args)})' if field_args else 'strawberry.field()'
     
     return f'    {snake_case_name}: {field_type} = {field_decorator}'
 
@@ -150,22 +168,57 @@ def create_type(name: str, schema: Dict[str, Any], required: List[str] = None) -
     if required is None:
         required = []
     
-    if not schema.get('properties'):
+    fields = []
+    type_description = get_field_description(schema)
+    
+    # Handle simple allOf with just reference and description
+    if 'allOf' in schema:
+        ref_type = None
+        for item in schema['allOf']:
+            if '$ref' in item:
+                ref_type = item['$ref'].split('/')[-1]
+        
+        if ref_type and len(schema['allOf']) <= 2:  # Only ref and possibly description
+            return f"""
+@strawberry.type(description="{type_description}")
+class {name}({ref_type}):
+    pass
+"""
+    
+    if not schema.get('properties') and not schema.get('allOf'):
+        # For types without properties
         return f"""
-@strawberry.type
+@strawberry.type(description="{type_description}")
 class {name}(SiaType):
-    \"\"\"
-    {get_field_description(schema)}
-    \"\"\"
     _dummy: Optional[str] = strawberry.field(default=None)
 """
     
-    fields = []
+    # Handle properties from allOf
+    if 'allOf' in schema:
+        properties = {}
+        for item in schema['allOf']:
+            if 'properties' in item:
+                properties.update(item['properties'])
+            if 'required' in item:
+                required.extend(item['required'])
+        schema['properties'] = properties
+    
     for prop_name, prop_schema in schema.get('properties', {}).items():
         fields.append(get_field_definition(prop_name, prop_schema, required))
     
-    type_description = get_field_description(schema)
-    type_decorator = f'@strawberry.type(description="""{type_description}""")' if type_description else '@strawberry.type'
+    if type_description:
+        type_description = type_description.replace('\n', ' ')
+        type_decorator = f'@strawberry.type(description="{type_description}")'
+    else:
+        type_decorator = '@strawberry.type'
+    
+    # If no fields were added but we have a description
+    if not fields:
+        return f"""
+{type_decorator}
+class {name}(SiaType):
+    _dummy: Optional[str] = strawberry.field(default=None)
+"""
     
     return f"""
 {type_decorator}
@@ -179,8 +232,8 @@ def create_input_type(name: str, schema: Dict[str, Any], required: List[str] = N
     if required is None:
         required = []
         
-    # Replace SiaType with SiaInput for input types
-    return create_type(f"{name}Input", schema, required).replace('(SiaType)', '(SiaInput)').replace('@strawberry.type', '@strawberry.input')
+    type_def = create_type(f"{name}Input", schema, required)
+    return type_def.replace('(SiaType)', '')  # Remove SiaType from input types
 
 def resolve_response_type(operation: Dict[str, Any]) -> str:
     """Resolve the response type from an operation."""
@@ -283,51 +336,153 @@ def create_mutation_resolvers(paths: Dict[str, Any]) -> str:
 class Mutation:
 """ + ''.join(mutations)
 
+def get_dependencies(schema: Dict[str, Any]) -> set:
+    """Extract all type dependencies from a schema, including nested ones."""
+    deps = set()
+    
+    def extract_deps(s):
+        if '$ref' in s:
+            deps.add(s['$ref'].split('/')[-1])
+        elif s.get('type') == 'array' and 'items' in s:
+            if '$ref' in s['items']:
+                deps.add(s['items']['$ref'].split('/')[-1])
+            else:
+                extract_deps(s['items'])
+        
+        # Extract from properties
+        for prop_schema in s.get('properties', {}).values():
+            if '$ref' in prop_schema:
+                deps.add(prop_schema['$ref'].split('/')[-1])
+            elif prop_schema.get('type') == 'array' and 'items' in prop_schema:
+                if '$ref' in prop_schema['items']:
+                    deps.add(prop_schema['items']['$ref'].split('/')[-1])
+                else:
+                    extract_deps(prop_schema['items'])
+        
+        # Extract from allOf
+        for item in s.get('allOf', []):
+            if '$ref' in item:
+                deps.add(item['$ref'].split('/')[-1])
+            if 'properties' in item:
+                for prop_schema in item['properties'].values():
+                    if '$ref' in prop_schema:
+                        deps.add(prop_schema['$ref'].split('/')[-1])
+                    elif prop_schema.get('type') == 'array' and 'items' in prop_schema:
+                        if '$ref' in prop_schema['items']:
+                            deps.add(prop_schema['items']['$ref'].split('/')[-1])
+                        else:
+                            extract_deps(prop_schema['items'])
+    
+    extract_deps(schema)
+    return deps
+
+
+def topological_sort(schemas: Dict[str, Dict[str, Any]]) -> List[str]:
+    """Sort schemas based on dependencies using depth-first search."""
+    # Build dependency graph
+    graph = {name: get_dependencies(schema) for name, schema in schemas.items()}
+    
+    # Track visited nodes and result
+    visited = set()
+    temp_mark = set()  # for cycle detection
+    result = []
+    
+    def visit(name):
+        if name in temp_mark:
+            # We found a cycle
+            cycle_path = []
+            for node, deps in graph.items():
+                if name in deps:
+                    cycle_path.append(f"{node} -> {name}")
+            raise ValueError(f"Circular dependency detected: {', '.join(cycle_path)}")
+            
+        if name not in visited:
+            temp_mark.add(name)
+            
+            # Visit all dependencies first
+            for dep in sorted(graph.get(name, set())):  # Sort for deterministic ordering
+                if dep in graph:  # Only visit if it's a complex type
+                    visit(dep)
+            
+            temp_mark.remove(name)
+            visited.add(name)
+            result.append(name)
+    
+    # Visit all nodes
+    for name in sorted(graph.keys()):  # Sort for deterministic ordering
+        if name not in visited:
+            visit(name)
+    
+    return result
+
+
 def create_schema(openapi_spec: Dict[str, Any]) -> str:
     """Create a complete GraphQL schema from OpenAPI specification."""
-    types = []
+    scalar_types = []
+    complex_types = []
     
-    # First, create the SiaType interface
-    types.append("""
-@strawberry.interface
-class SiaType:
-    \"\"\"Base interface for types converted from Sia network API responses\"\"\"
-    pass
-
-@strawberry.interface
-class SiaInput:
-    \"\"\"Base interface for input types converted from Sia network API requests\"\"\"
+    # First pass: identify and create scalar types
+    schemas = openapi_spec.get('components', {}).get('schemas', {})
+    schema_types = {}  # Track schema types for sorting
+    
+    for name, schema in schemas.items():
+        if not any(['allOf' in schema, 'enum' in schema, schema.get('type') == 'object']):
+            description = get_field_description(schema)
+            type_name = convert_type(schema)
+            if description:
+                description = description.replace('\n', ' ')
+                scalar_types.append(f"""
+@strawberry.scalar(description="{description}")
+class {name}({type_name}):
     pass
 """)
-
+            else:
+                scalar_types.append(f"""
+@strawberry.scalar
+class {name}({type_name}):
+    pass
+""")
+        else:
+            schema_types[name] = schema
     
-    # Create types from components/schemas
-    if 'components' in openapi_spec and 'schemas' in openapi_spec['components']:
-        for name, schema in openapi_spec['components']['schemas'].items():
-            if schema.get('type') == 'object' or ('allOf' in schema and any(s.get('type') == 'object' for s in schema['allOf'])):
-                types.append(create_type(name, schema, schema.get('required', [])))
-                # Create input types for mutations
-                types.append(create_input_type(name, schema, schema.get('required', [])))
-            elif 'enum' in schema:
-                types.append(create_enum_type(name, schema))
+    # Sort complex types by dependencies
+    sorted_names = topological_sort(schema_types)
     
-    # Create Query and Mutation types
-    types.append(create_query_resolvers(openapi_spec['paths']))
-    types.append(create_mutation_resolvers(openapi_spec['paths']))
+    # Create complex types in correct order
+    for name in sorted_names:
+        schema = schema_types[name]
+        if 'enum' in schema:
+            complex_types.append(create_enum_type(name, schema))
+        else:
+            complex_types.append(create_type(name, schema, schema.get('required', [])))
+            # Also create input types if needed
+            # if schema.get('type') == 'object' or ('allOf' in schema and any(s.get('type') == 'object' for s in schema.get('allOf', []))):
+            #     complex_types.append(create_input_type(name, schema, schema.get('required', [])))
     
-    # Create the schema
+    # Rest of the function remains the same...
+    base_interface = """
+@strawberry.interface
+class SiaType:
+    "Base interface for types converted from Sia network API responses"
+    pass
+"""
+    
+    query_type = create_query_resolvers(openapi_spec['paths'])
+    mutation_type = create_mutation_resolvers(openapi_spec['paths'])
+    
     schema_def = """
 import strawberry
 import datetime
 from typing import Optional, List, Dict, Any, Union
 from enum import Enum
 
-""" + '\n'.join(types) + """
+""" + base_interface + '\n'.join(scalar_types + complex_types + [query_type, mutation_type]) + """
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
 """
     
     return schema_def
+
 
 def main():
     # Load OpenAPI spec from file
