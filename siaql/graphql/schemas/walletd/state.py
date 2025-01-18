@@ -3,15 +3,8 @@ from strawberry.types import Info
 import strawberry
 from datetime import datetime
 from siaql.graphql.resolvers.walletd import WalletdBaseResolver
+from siaql.graphql.schemas.types import State
 
-@strawberry.type
-class State:
-    version: str
-    commit: str
-    os: str
-    build_time: datetime = strawberry.field(name="buildTime")
-    start_time: datetime = strawberry.field(name="startTime")
-    index_mode: str = strawberry.field(name="indexMode")
 
 @strawberry.type
 class StateQueries(WalletdBaseResolver):

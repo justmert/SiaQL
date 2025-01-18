@@ -1,0 +1,1592 @@
+{
+  "item": [
+    {
+      "name": "Consensus",
+      "item": [
+        {
+          "name": "Get Network",
+          "method": "GET",
+          "url": "{{baseURL}}/consensus/network",
+          "description": "Returns the current network parameters",
+          "responses": [
+            {
+              "name": "Get Network",
+              "status": 200,
+              "body": {
+                "name": "zen",
+                "initialCoinbase": "300000000000000000000000000000",
+                "minimumCoinbase": "300000000000000000000000000000",
+                "initialTarget": "bid:0000000100000000000000000000000000000000000000000000000000000000",
+                "hardforkDevAddr": {
+                  "height": 1,
+                  "oldAddress": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69",
+                  "newAddress": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                },
+                "hardforkTax": {
+                  "height": 2
+                },
+                "hardforkStorageProof": {
+                  "height": 5
+                },
+                "hardforkOak": {
+                  "height": 10,
+                  "fixHeight": 12,
+                  "genesisTimestamp": "2023-01-13T08:53:20Z"
+                },
+                "hardforkASIC": {
+                  "height": 20,
+                  "oakTime": 10000000000000,
+                  "oakTarget": "bid:0000000100000000000000000000000000000000000000000000000000000000"
+                },
+                "hardforkFoundation": {
+                  "height": 30,
+                  "primaryAddress": "addr:053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807",
+                  "failsafeAddress": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                },
+                "hardforkV2": {
+                  "allowHeight": 100000,
+                  "requireHeight": 102000
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Tip",
+          "method": "GET",
+          "url": "{{baseURL}}/consensus/tip",
+          "description": "Returns the height and ID of the current block",
+          "responses": [
+            {
+              "name": "Get Tip",
+              "status": 200,
+              "body": {
+                "height": 31705,
+                "ID": "bid:00000006031f19eaa69b127f2694964ea441ec6e7bd87bf8810d674456397c8c"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Tip State",
+          "method": "GET",
+          "url": "{{baseURL}}/consensus/tipstate",
+          "description": "Returns the current consensus state",
+          "responses": [
+            {
+              "name": "Get Tip State",
+              "status": 200,
+              "body": {
+                "index": {
+                  "height": 59071,
+                  "id": "bid:00000003259c3e67d239fb59ea849a103dad0f9d28bc6840dce2ff89768e0b76"
+                },
+                "prevTimestamps": [
+                  "2024-02-27T14:00:36Z"
+                ],
+                "depth": "bid:000000000001afdca5eae1941b43316c5575a0effca5ff5e086fa56adae7bf49",
+                "childTarget": "bid:00000003848ce279ce7b0829411ee3c1dc67c790a990b0ddd6a807292f5567b5",
+                "siafundPool": "75303140372411573309199130000",
+                "oakTime": 116451000000000,
+                "oakTarget": "bid:0000000004a9c2455f06ab34bf81b886f50ef14e0006845d89f197c1dc6837d3",
+                "foundationPrimaryAddress": "addr:053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807",
+                "foundationFailsafeAddress": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69",
+                "totalWork": "166853322601453",
+                "difficulty": "1220933012",
+                "oakWork": "235788804208",
+                "elements": {
+                  "numLeaves": 236448,
+                  "trees": [
+                    "h:64b8484b7ab99efbb3d3523d82f881919224ed5ae447f60394ed56b5287cb2cd"
+                  ]
+                },
+                "attestations": 0
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Consensus Updates",
+          "method": "GET",
+          "url": "{{baseURL}}/consensus/updates/:index?limit=5",
+          "description": "Returns applied and reverted blocks since the provided index. Chain scanning can be implemented by requesting updates starting at genesis and iterating until the tip matches.",
+          "responses": [
+            {
+              "name": "Get Consensus Updates",
+              "status": 200,
+              "body": {
+                "applied": [
+                  {
+                    "update": {
+                      "created": [
+                        "h:9dff55fb97cfa88695add85812554f44a469139b36f4747b7ead3fde3b1c4f69"
+                      ],
+                      "spent": [
+                        "h:df1434c137532a8bc8d74c20487a66cea9e560efc3821603652336120a2366c7"
+                      ],
+                      "valid": null,
+                      "revisions": null,
+                      "v2Revisions": null,
+                      "v2Resolutions": {},
+                      "siacoinElements": [
+                        {
+                          "id": "h:d770768bb8de1f30a26d9dd813f9263b37d9c0b892724debe541d24db81c261a",
+                          "leafIndex": 2661307,
+                          "merkleProof": [
+                            "h:4ff01636ba2b5cdfbd0047e1e4a4dde86eca19958afa9659c2b2e614f5f78a7c"
+                          ],
+                          "siacoinOutput": {
+                            "value": "300000385540000000000000000000",
+                            "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                          },
+                          "maturityHeight": 81663
+                        }
+                      ],
+                      "siafundElements": null,
+                      "fileContractElements": [
+                        {
+                          "id": "h:3bfef935c613e3332cc74e9aa3a61ef09f227f6a14cdc21bc57a5a129b279498",
+                          "leafIndex": 2661308,
+                          "merkleProof": [
+                            "h:24cd152c992ec6a0e5710bd081fa42c6cc9ba3c8adc731bd3a5b9c3637dc69bb"
+                          ],
+                          "fileContract": {
+                            "filesize": 0,
+                            "fileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                            "windowStart": 81719,
+                            "windowEnd": 81863,
+                            "payout": "282786309743982982627584",
+                            "validProofOutputs": [
+                              {
+                                "value": "200021774400576240145664",
+                                "address": "addr:9b6337b2f209cb131fea822fb4cd543ec7dfad9ebf353d389939dc4911b0e8a0c4761f7ceaad"
+                              }
+                            ],
+                            "missedProofOutputs": [
+                              {
+                                "value": "0",
+                                "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                              }
+                            ],
+                            "unlockHash": "h:dc5994d4d2dcabc787f40d457f884fd6c69808c72203206d4ab34ed894d06914",
+                            "revisionNumber": 0
+                          }
+                        }
+                      ],
+                      "v2FileContractElements": null,
+                      "attestationElements": null,
+                      "chainIndexElement": {
+                        "id": "h:0000000103121357e1ca989bd0ee091648defdf02575cec0f78820cebd724a06",
+                        "leafIndex": 2661309,
+                        "merkleProof": [
+                          "h:3600a0be60064a7a6a4778c6f1c7cec6bd37e3326663e3ceb95845126332bfb4"
+                        ],
+                        "chainIndex": {
+                          "height": 81519,
+                          "id": "bid:0000000103121357e1ca989bd0ee091648defdf02575cec0f78820cebd724a06"
+                        }
+                      },
+                      "updatedLeaves": {
+                        "3": [
+                          {
+                            "id": "h:14b66d87d7f6e7e8bf625e429f933943c5c6a6f1dd11a3c41b4b543555b835f8",
+                            "leafIndex": 2661191,
+                            "merkleProof": [
+                              "h:33e6a1f19d6d812db8a092d6d0d24388df4b45e2c0e1bb91cbcbd29ad94712cf"
+                            ]
+                          }
+                        ],
+                        "6": [
+                          {
+                            "id": "h:dd5426fa53b4955ffa3dd80ae24edb143ad9ffdb7d6949c1f6314af2f6686b08",
+                            "leafIndex": 2661183,
+                            "merkleProof": [
+                              "h:e3093311999d6ecff503b7b7d50596fd97e05aa472ce4403cf8f0e1d5e8bf50c"
+                            ]
+                          }
+                        ],
+                        "8": [
+                          {
+                            "id": "h:bd6c8782f6767ed7db3e3a9351da67bc54d0d980bd12c8cc858e9ce9079ae9dc",
+                            "leafIndex": 2661119,
+                            "merkleProof": [
+                              "h:f0cd7c60ebf00cbc7ade08960cc339c5e30f61af2a2b8a3c6ad903108ca07be1"
+                            ]
+                          }
+                        ],
+                        "11": [
+                          {
+                            "id": "h:b1e0314c15d7ba0238b56be00d380179dc73277abac2d09c9bc5cea8e46bd9e2",
+                            "leafIndex": 2658419,
+                            "merkleProof": [
+                              "h:5d62312af70c703d0cc4beb3107ccfd376f823fa788eb2cda730013960761882"
+                            ]
+                          }
+                        ],
+                        "15": [
+                          {
+                            "id": "h:42b3cea2e947a2d656d3838d05506b9e8ff82fc1f07ef64658d81da9c77216d3",
+                            "leafIndex": 2650560,
+                            "merkleProof": [
+                              "h:c8d18f08f75c9e7a77b623304ce75fe9d95787b1eacc35196695080994dca7b1"
+                            ]
+                          }
+                        ],
+                        "21": [
+                          {
+                            "id": "h:81d6d9f671a744baa5abcb2b9682231b0558e24e1156d57b776d6e6109a7042d",
+                            "leafIndex": 4619,
+                            "merkleProof": [
+                              "h:419a49e3fb77b2bc3d8ab9333b72f92cd7dee8a998519f8d71abbe706e7ac1f7"
+                            ]
+                          }
+                        ]
+                      },
+                      "treeGrowth": {
+                        "0": [
+                          "h:33e6a1f19d6d812db8a092d6d0d24388df4b45e2c0e1bb91cbcbd29ad94712cf"
+                        ],
+                        "1": [
+                          "h:33e6a1f19d6d812db8a092d6d0d24388df4b45e2c0e1bb91cbcbd29ad94712cf"
+                        ],
+                        "3": [
+                          "h:33e6a1f19d6d812db8a092d6d0d24388df4b45e2c0e1bb91cbcbd29ad94712cf"
+                        ],
+                        "6": [
+                          "h:e3093311999d6ecff503b7b7d50596fd97e05aa472ce4403cf8f0e1d5e8bf50c"
+                        ]
+                      },
+                      "oldNumLeaves": 2661195,
+                      "numLeaves": 2661310
+                    },
+                    "state": {
+                      "index": {
+                        "height": 81519,
+                        "id": "bid:0000000103121357e1ca989bd0ee091648defdf02575cec0f78820cebd724a06"
+                      },
+                      "prevTimestamps": [
+                        "2024-08-01T12:43:38Z"
+                      ],
+                      "depth": "bid:0000000000016281a0c3af28a68e68c01ac571200604e2266f058552d6f334da",
+                      "childTarget": "bid:0000000112d7fee0ad7b985e1401947284e330920d40cae92e2a80609168a04b",
+                      "siafundPool": "215584655920378335992564390000",
+                      "oakTime": 127343000000000,
+                      "oakTarget": "bid:00000000014889787270ac136ecb359e91e2092b645a6d7b5603fe7a19706855",
+                      "foundationPrimaryAddress": "addr:053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807",
+                      "foundationFailsafeAddress": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69",
+                      "totalWork": "203261781188237",
+                      "difficulty": "4000497360",
+                      "oakWork": "856752760703",
+                      "elements": {
+                        "numLeaves": 2661310,
+                        "trees": [
+                          "h:0225d2ac370a11713a21a89013d683816fde25a31c1c7dd0ef2b0ba40576056d"
+                        ]
+                      },
+                      "attestations": 0
+                    },
+                    "block": {
+                      "parentID": "bid:000000001a43121cfbc1ddf7c14f182a0b2dd1410de1bf767fe81a60218bf084",
+                      "nonce": 221456493467,
+                      "timestamp": "2024-08-01T14:27:03Z",
+                      "minerPayouts": [
+                        {
+                          "value": "300000385540000000000000000000",
+                          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                        }
+                      ],
+                      "transactions": [
+                        {
+                          "siacoinInputs": [
+                            {
+                              "parentID": "scoid:b1e0314c15d7ba0238b56be00d380179dc73277abac2d09c9bc5cea8e46bd9e2",
+                              "unlockConditions": {
+                                "timelock": 0,
+                                "publicKeys": [
+                                  "ed25519:d70303882835f9caf85270d08cbece50141113b34c7c04cb7ea269ffd2bf47fb"
+                                ],
+                                "signaturesRequired": 1
+                              }
+                            }
+                          ],
+                          "siacoinOutputs": [
+                            {
+                              "value": "6539526105647086372934581432",
+                              "address": "addr:9b6337b2f209cb131fea822fb4cd543ec7dfad9ebf353d389939dc4911b0e8a0c4761f7ceaad"
+                            }
+                          ],
+                          "fileContracts": [
+                            {
+                              "filesize": 0,
+                              "fileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                              "windowStart": 81719,
+                              "windowEnd": 81863,
+                              "payout": "282786309743982982627584",
+                              "validProofOutputs": [
+                                {
+                                  "value": "200021774400576240145664",
+                                  "address": "addr:9b6337b2f209cb131fea822fb4cd543ec7dfad9ebf353d389939dc4911b0e8a0c4761f7ceaad"
+                                }
+                              ],
+                              "missedProofOutputs": [
+                                {
+                                  "value": "0",
+                                  "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                                }
+                              ],
+                              "unlockHash": "h:dc5994d4d2dcabc787f40d457f884fd6c69808c72203206d4ab34ed894d06914",
+                              "revisionNumber": 0
+                            }
+                          ],
+                          "minerFees": [
+                            "61440000000000000000000"
+                          ],
+                          "signatures": [
+                            {
+                              "parentID": "h:b1e0314c15d7ba0238b56be00d380179dc73277abac2d09c9bc5cea8e46bd9e2",
+                              "publicKeyIndex": 0,
+                              "coveredFields": {
+                                "wholeTransaction": true
+                              },
+                              "signature": "C8pzgxLLHKz6qu7jMYaRpGXg/k0hxmyo0pdbLSKxpfBMi5fIa2oGy28cWRzBXu2r5nVlDSHdPlSkFQ0CcXQkAA=="
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "reverted": [
+                  {
+                    "update": {
+                      "created": [
+                        "h:10461d11d6f64388a6ee8960540d69ec43af33f3f900bced7fca38674154218c"
+                      ],
+                      "spent": [
+                        "h:42b3cea2e947a2d656d3838d05506b9e8ff82fc1f07ef64658d81da9c77216d3"
+                      ],
+                      "valid": null,
+                      "revisions": null,
+                      "v2Revisions": null,
+                      "v2Resolutions": {},
+                      "siacoinElements": [
+                        {
+                          "id": "h:d770768bb8de1f30a26d9dd813f9263b37d9c0b892724debe541d24db81c261a",
+                          "leafIndex": 2661307,
+                          "merkleProof": null,
+                          "siacoinOutput": {
+                            "value": "300000385540000000000000000000",
+                            "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                          },
+                          "maturityHeight": 81663
+                        }
+                      ],
+                      "siafundElements": null,
+                      "fileContractElements": [
+                        {
+                          "id": "h:3bfef935c613e3332cc74e9aa3a61ef09f227f6a14cdc21bc57a5a129b279498",
+                          "leafIndex": 2661308,
+                          "merkleProof": null,
+                          "fileContract": {
+                            "filesize": 0,
+                            "fileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                            "windowStart": 81719,
+                            "windowEnd": 81863,
+                            "payout": "282786309743982982627584",
+                            "validProofOutputs": [
+                              {
+                                "value": "200021774400576240145664",
+                                "address": "addr:9b6337b2f209cb131fea822fb4cd543ec7dfad9ebf353d389939dc4911b0e8a0c4761f7ceaad"
+                              }
+                            ],
+                            "missedProofOutputs": [
+                              {
+                                "value": "0",
+                                "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                              }
+                            ],
+                            "unlockHash": "h:dc5994d4d2dcabc787f40d457f884fd6c69808c72203206d4ab34ed894d06914",
+                            "revisionNumber": 0
+                          }
+                        }
+                      ],
+                      "v2FileContractElements": null,
+                      "attestationElements": null,
+                      "chainIndexElement": {
+                        "id": "h:0000000103121357e1ca989bd0ee091648defdf02575cec0f78820cebd724a06",
+                        "leafIndex": 2661309,
+                        "merkleProof": null,
+                        "chainIndex": {
+                          "height": 81519,
+                          "id": "bid:0000000103121357e1ca989bd0ee091648defdf02575cec0f78820cebd724a06"
+                        }
+                      },
+                      "updatedLeaves": {
+                        "3": [
+                          {
+                            "id": "h:14b66d87d7f6e7e8bf625e429f933943c5c6a6f1dd11a3c41b4b543555b835f8",
+                            "leafIndex": 2661191,
+                            "merkleProof": [
+                              "h:94db8c1f254d606044ab460de4071914cdf7e43c9adf87b9ab35fcaa54e013ab"
+                            ]
+                          }
+                        ],
+                        "6": [
+                          {
+                            "id": "h:dd5426fa53b4955ffa3dd80ae24edb143ad9ffdb7d6949c1f6314af2f6686b08",
+                            "leafIndex": 2661183,
+                            "merkleProof": [
+                              "h:b20ced298d7b0742a84b1edd28dcc6701f047e563b943897a62b3505fa0e44b0"
+                            ]
+                          }
+                        ],
+                        "8": [
+                          {
+                            "id": "h:bd6c8782f6767ed7db3e3a9351da67bc54d0d980bd12c8cc858e9ce9079ae9dc",
+                            "leafIndex": 2661119,
+                            "merkleProof": [
+                              "h:f0cd7c60ebf00cbc7ade08960cc339c5e30f61af2a2b8a3c6ad903108ca07be1"
+                            ]
+                          }
+                        ],
+                        "11": [
+                          {
+                            "id": "h:b1e0314c15d7ba0238b56be00d380179dc73277abac2d09c9bc5cea8e46bd9e2",
+                            "leafIndex": 2658419,
+                            "merkleProof": [
+                              "h:5d62312af70c703d0cc4beb3107ccfd376f823fa788eb2cda730013960761882"
+                            ]
+                          }
+                        ],
+                        "15": [
+                          {
+                            "id": "h:42b3cea2e947a2d656d3838d05506b9e8ff82fc1f07ef64658d81da9c77216d3",
+                            "leafIndex": 2650560,
+                            "merkleProof": [
+                              "h:c8d18f08f75c9e7a77b623304ce75fe9d95787b1eacc35196695080994dca7b1"
+                            ]
+                          }
+                        ],
+                        "21": [
+                          {
+                            "id": "h:81d6d9f671a744baa5abcb2b9682231b0558e24e1156d57b776d6e6109a7042d",
+                            "leafIndex": 4619,
+                            "merkleProof": [
+                              "h:419a49e3fb77b2bc3d8ab9333b72f92cd7dee8a998519f8d71abbe706e7ac1f7"
+                            ]
+                          }
+                        ]
+                      },
+                      "numLeaves": 2661195
+                    },
+                    "state": {
+                      "index": {
+                        "height": 81518,
+                        "id": "bid:000000001a43121cfbc1ddf7c14f182a0b2dd1410de1bf767fe81a60218bf084"
+                      },
+                      "prevTimestamps": [
+                        "2024-08-01T12:32:36Z"
+                      ],
+                      "depth": "bid:00000000000162836bdc886e20665fc88b95318af0aac0bcce9dbbbf587417cb",
+                      "childTarget": "bid:0000000111bfad49dab0237d52244038f282697e17664583477ae7e5caf6ff87",
+                      "siafundPool": "215584644891712255977228070000",
+                      "oakTime": 126604000000000,
+                      "oakTarget": "bid:0000000001486f1c345c2f6e4f37a9cdd654ed0aa9b2ff93ae5aa482a1889bc3",
+                      "foundationPrimaryAddress": "addr:053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807",
+                      "foundationFailsafeAddress": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69",
+                      "totalWork": "203257764688888",
+                      "difficulty": "4016499349",
+                      "oakWork": "857021368195",
+                      "elements": {
+                        "numLeaves": 2661195,
+                        "trees": [
+                          "h:4f06c551884b65521759e6da438d4cf5c1811616f30895123d8cca4f3e5f56c5"
+                        ]
+                      },
+                      "attestations": 0
+                    },
+                    "block": {
+                      "parentID": "bid:000000001a43121cfbc1ddf7c14f182a0b2dd1410de1bf767fe81a60218bf084",
+                      "nonce": 221456493467,
+                      "timestamp": "2024-08-01T14:27:03Z",
+                      "minerPayouts": [
+                        {
+                          "value": "300000385540000000000000000000",
+                          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                        }
+                      ],
+                      "transactions": [
+                        {
+                          "siacoinInputs": [
+                            {
+                              "parentID": "scoid:b1e0314c15d7ba0238b56be00d380179dc73277abac2d09c9bc5cea8e46bd9e2",
+                              "unlockConditions": {
+                                "timelock": 0,
+                                "publicKeys": [
+                                  "ed25519:d70303882835f9caf85270d08cbece50141113b34c7c04cb7ea269ffd2bf47fb"
+                                ],
+                                "signaturesRequired": 1
+                              }
+                            }
+                          ],
+                          "siacoinOutputs": [
+                            {
+                              "value": "6539526105647086372934581432",
+                              "address": "addr:9b6337b2f209cb131fea822fb4cd543ec7dfad9ebf353d389939dc4911b0e8a0c4761f7ceaad"
+                            }
+                          ],
+                          "fileContracts": [
+                            {
+                              "filesize": 0,
+                              "fileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                              "windowStart": 81719,
+                              "windowEnd": 81863,
+                              "payout": "282786309743982982627584",
+                              "validProofOutputs": [
+                                {
+                                  "value": "200021774400576240145664",
+                                  "address": "addr:9b6337b2f209cb131fea822fb4cd543ec7dfad9ebf353d389939dc4911b0e8a0c4761f7ceaad"
+                                }
+                              ],
+                              "missedProofOutputs": [
+                                {
+                                  "value": "0",
+                                  "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                                }
+                              ],
+                              "unlockHash": "h:dc5994d4d2dcabc787f40d457f884fd6c69808c72203206d4ab34ed894d06914",
+                              "revisionNumber": 0
+                            }
+                          ],
+                          "minerFees": [
+                            "61440000000000000000000"
+                          ],
+                          "signatures": [
+                            {
+                              "parentID": "h:b1e0314c15d7ba0238b56be00d380179dc73277abac2d09c9bc5cea8e46bd9e2",
+                              "publicKeyIndex": 0,
+                              "coveredFields": {
+                                "wholeTransaction": true
+                              },
+                              "signature": "C8pzgxLLHKz6qu7jMYaRpGXg/k0hxmyo0pdbLSKxpfBMi5fIa2oGy28cWRzBXu2r5nVlDSHdPlSkFQ0CcXQkAA=="
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Index",
+          "method": "GET",
+          "url": "{{baseURL}}/consensus/index/:height",
+          "description": "Returns the chain index at a specified height",
+          "responses": [
+            {
+              "name": "Get Index",
+              "status": 200,
+              "body": {
+                "height": 30000,
+                "id": "bid:000000005e5325fe4f47bb3eb55bf1d2ac1014e610d59ae1baff0c3afe3ebc85"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Syncer",
+      "item": [
+        {
+          "name": "Get Peers",
+          "method": "GET",
+          "url": "{{baseURL}}/syncer/peers",
+          "description": "Returns a list of all connected peers and metadata associated with them",
+          "responses": [
+            {
+              "name": "Get Peers",
+              "status": 200,
+              "body": [
+                {
+                  "addr": "43.203.121.70:9881",
+                  "inbound": false,
+                  "version": "1.5.4",
+                  "firstSeen": "2024-02-27T15:49:25Z",
+                  "connectedSince": "2024-02-27T15:49:26Z",
+                  "syncedBlocks": 0,
+                  "syncDuration": 221154705
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Connect to Peer",
+          "method": "POST",
+          "url": "{{baseURL}}/syncer/connect",
+          "description": "",
+          "requestBody": "123.456.78.9:9981"
+        }
+      ]
+    },
+    {
+      "name": "Transaction Pool",
+      "item": [
+        {
+          "name": "Get Transactions",
+          "method": "GET",
+          "url": "{{baseURL}}/txpool/transactions",
+          "description": "Returns all transactions currently in the transaction pool. Includes transactions not associated with any registered wallet.",
+          "responses": [
+            {
+              "name": "Get Transactions",
+              "status": 200,
+              "body": {
+                "transactions": [
+                  {
+                    "siacoinInputs": [
+                      {
+                        "parentID": "scoid:484586685ef7b26e4504a4aed12ebd47811e6b1bc40d17da86c36a6e47c1ed91",
+                        "unlockConditions": {
+                          "timelock": 0,
+                          "publicKeys": [
+                            "ed25519:254c35b70e07f843c8cf63e5ac8c64cca35fb9e5370f195504d44c856af328fc"
+                          ],
+                          "signaturesRequired": 1
+                        }
+                      }
+                    ],
+                    "siacoinOutputs": [
+                      {
+                        "value": "2248916870337023849388908003",
+                        "address": "addr:7838f42a584f7247d4bc9d85e985fa1bbc42a0c55e942cc31204be7f9959091ceb62e4824eee"
+                      }
+                    ],
+                    "minerFees": [
+                      "31390000000000000000000"
+                    ],
+                    "signatures": [
+                      {
+                        "parentID": "h:484586685ef7b26e4504a4aed12ebd47811e6b1bc40d17da86c36a6e47c1ed91",
+                        "publicKeyIndex": 0,
+                        "coveredFields": {
+                          "wholeTransaction": true
+                        },
+                        "signature": "77o6G59a8LwNjTuaO56JveDvHZ+JmV4c+an4XZg5fMKPMcIQWapwX9bxGEPHqYiKNRgUF7wCEngO10IA4CD5Bw=="
+                      }
+                    ]
+                  }
+                ],
+                "v2transactions": null
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Fee",
+          "method": "GET",
+          "url": "{{baseURL}}/txpool/fee",
+          "description": "Returns the current fee to broadcast a transaction. The fee is the number of Hastings per byte. To calculate how much a transaction will cost to broadcast, take its encoded size and multiply it by the returned value.\n\nMost transactions are less than 1000 bytes. Using 1000 bytes as a constant size will work for most transactions.",
+          "responses": [
+            {
+              "name": "Get Fee",
+              "status": 200,
+              "body": "10000000000000000000"
+            }
+          ]
+        },
+        {
+          "name": "Broadcast Transaction Set",
+          "method": "POST",
+          "url": "{{baseURL}}/txpool/broadcast",
+          "description": "",
+          "requestBody": {
+            "transactions": [],
+            "v2transactions": []
+          },
+          "responses": [
+            {
+              "name": "Invalid Transaction",
+              "status": 500,
+              "body": "invalid transaction set: transaction txid:8d78070781994c87b210e615d30ed3d53e80b59228fe8e47e749225887d5abbd is invalid: siacoin input 0 spends nonexistent siacoin output scoid:aecf9303448ea20021686e2aadc36a0a8c8a900be27f04e94091c1f2111cbaa0\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Wallets",
+      "item": [
+        {
+          "name": "Construct",
+          "item": [
+            {
+              "name": "transaction",
+              "method": "POST",
+              "url": "{{baseURL}}/wallets/:id/construct/transaction",
+              "description": "Constructs a transaction sending the siacoin and siafunds to the recipients. The UTXOs used to fund the transaction will be locked for further use. If you no longer want to broadcast the transaction, you should call `/release` to release the UTXOs to be used in other transactions.\n\nAfter construction, the transaction must be signed using the correct private keys before it can be broadcast. Signing is not handled by \\`walletd\\` for increased security.\n\nThe value for the Siacoins is in Hastings (1 SC = 10^24 H)",
+              "requestBody": {
+                "siacoins": [
+                  {
+                    "address": "053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807",
+                    "value": "1000000000000000000000000"
+                  }
+                ],
+                "siafunds": [],
+                "changeAddress": "053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807"
+              },
+              "responses": [
+                {
+                  "name": "transaction",
+                  "status": 200,
+                  "body": {
+                    "basis": {
+                      "height": 505472,
+                      "id": "0000000000000000251d8473876767bae05fb6c0557bffbb7291eb22c3d16e7a"
+                    },
+                    "id": "362109a0de42e43e38ee238ff80eb7cf55f46f73042c396bdd216697c6356dde",
+                    "transaction": {
+                      "id": "362109a0de42e43e38ee238ff80eb7cf55f46f73042c396bdd216697c6356dde",
+                      "siacoinInputs": [
+                        {
+                          "parentID": "08815941869f300255af37604c572b5725573a6e4ee6e6bd44667916ef6de355",
+                          "unlockConditions": {
+                            "timelock": 0,
+                            "publicKeys": null,
+                            "signaturesRequired": 0
+                          }
+                        }
+                      ],
+                      "siacoinOutputs": [
+                        {
+                          "value": "2247464160474327734734313100",
+                          "address": "330ab25c138be50197bbdd6e5e1e6e023513e728c3e20626f0686c017f970f1a3c9508d01ded"
+                        }
+                      ],
+                      "minerFees": [
+                        "20000000000000000000000"
+                      ],
+                      "signatures": [
+                        {
+                          "parentID": "08815941869f300255af37604c572b5725573a6e4ee6e6bd44667916ef6de355",
+                          "publicKeyIndex": 0,
+                          "coveredFields": {
+                            "wholeTransaction": true
+                          },
+                          "signature": null
+                        }
+                      ]
+                    },
+                    "estimatedFee": "20000000000000000000000"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "V2 Transaction",
+              "method": "POST",
+              "url": "{{baseURL}}/wallets/:id/construct/v2/transaction",
+              "description": "**This endpoint can only be used after the V2 hardfork activates.**\n\nConstructs a V2 transaction sending the siacoin and siafunds to the recipients. The UTXOs used to fund the transaction will be locked for further use. If you no longer want to broadcast the transaction, you should call `/release` to release the UTXOs to be used in other transactions.\n\nAfter construction, the transaction must be signed using the correct private keys before it can be broadcast. Signing is not handled by \\`walletd\\` for increased security.\n\nThe value for the Siacoins is in Hastings (1 SC = 10^24 H)",
+              "requestBody": {
+                "siacoins": [
+                  {
+                    "address": "053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807",
+                    "value": "1000000000000000000000000"
+                  }
+                ],
+                "siafunds": [],
+                "changeAddress": "053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807"
+              },
+              "responses": [
+                {
+                  "name": "V2 Transaction",
+                  "status": 200,
+                  "body": {
+                    "basis": {
+                      "height": 5696,
+                      "id": "00000000c60ea4176b99c8737d0bd0f4a9bd615fa2ee6f2f2e3ecac12cce4f50"
+                    },
+                    "id": "e0f9179f40e35a1e7bd1fb3615cdfea475fd53f433777ae218092643a7a44928",
+                    "transaction": {
+                      "id": "e0f9179f40e35a1e7bd1fb3615cdfea475fd53f433777ae218092643a7a44928",
+                      "siacoinInputs": [
+                        {
+                          "parent": {
+                            "id": "8f733847259725f2899430d912d8e992a80a744414d0d74addc947d965ece67c",
+                            "stateElement": {
+                              "leafIndex": 4604,
+                              "merkleProof": [
+                                "d640c1ca3320f011d66491305299f25a03e93bd205a82900f17ae97c1599274d"
+                              ]
+                            },
+                            "siacoinOutput": {
+                              "value": "300000000000000000000000000000",
+                              "address": "241352c83da002e61f57e96b14f3a5f8b5de22156ce83b753ea495e64f1affebae88736b2347"
+                            },
+                            "maturityHeight": 2445
+                          },
+                          "satisfiedPolicy": {
+                            "policy": {
+                              "type": "",
+                              "policy": null
+                            }
+                          }
+                        }
+                      ],
+                      "siacoinOutputs": [
+                        {
+                          "value": "299998980000000000000000000000",
+                          "address": "330ab25c138be50197bbdd6e5e1e6e023513e728c3e20626f0686c017f970f1a3c9508d01ded"
+                        }
+                      ],
+                      "minerFee": "20000000000000000000000"
+                    },
+                    "estimatedFee": "20000000000000000000000"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Get Wallets",
+          "method": "GET",
+          "url": "{{baseURL}}/wallets",
+          "description": "Returns a list of all created wallets",
+          "responses": [
+            {
+              "name": "Get Wallets",
+              "status": 200,
+              "body": [
+                {
+                  "id": "3",
+                  "name": "test",
+                  "description": "my hot wallet",
+                  "dateCreated": "2024-02-27T21:12:44Z",
+                  "lastUpdated": "2024-02-27T21:12:44Z",
+                  "metadata": {
+                    "foo": "bar"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Add Wallet",
+          "method": "POST",
+          "url": "{{baseURL}}/wallets",
+          "description": "Adds a new wallet for walletd. All fields in the request body are optional and used to add additional metadata to the wallet\n\nWallet addresses must be added to the wallet to track the balance.",
+          "requestBody": {
+            "name": "test",
+            "description": "my hot wallet",
+            "metadata": {
+              "foo": "bar"
+            }
+          },
+          "responses": [
+            {
+              "name": "Add Wallet",
+              "status": 200,
+              "body": {
+                "id": "1",
+                "name": "test",
+                "description": "my hot wallet",
+                "dateCreated": "2024-05-31T03:13:13Z",
+                "lastUpdated": "2024-05-31T03:13:13Z",
+                "metadata": {
+                  "foo": "bar"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Wallet",
+          "method": "DELETE",
+          "url": "{{baseURL}}/wallets/:id",
+          "description": "Removes a wallet from walletd. Addresses that were previously added will continue to be tracked even if they are no longer connected to any wallets.",
+          "responses": [
+            {
+              "name": "Unknown Wallet",
+              "status": 404,
+              "body": "transaction failed (attempt 1): not found\n"
+            }
+          ]
+        },
+        {
+          "name": "Get Wallet Addresses",
+          "method": "GET",
+          "url": "{{baseURL}}/wallets/:id/addresses",
+          "description": "Returns a list of addresses associated with the wallet",
+          "responses": [
+            {
+              "name": "Get Wallet Addresses",
+              "status": 200,
+              "body": [
+                {
+                  "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69",
+                  "description": "description",
+                  "metadata": {
+                    "foo": "bar"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Add Wallet Address",
+          "method": "PUT",
+          "url": "{{baseURL}}/wallets/:id/addresses",
+          "description": "Adds an address for the wallet to watch. Address is the only required field. The other fields can be used for optional metadata.\n\n\\`spendPolicy\\` can, optionally, be used to track the public keys associated with an address.\n\nAfter registering one or more addresses, the blockchain may need to be rescanned using the subscribe endpoint.",
+          "requestBody": {
+            "address": "053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807",
+            "description": "description",
+            "spendPolicy": null,
+            "metadata": {
+              "foo": "bar"
+            }
+          }
+        },
+        {
+          "name": "Delete Wallet Address",
+          "method": "DELETE",
+          "url": "{{baseURL}}/wallets/:id/addresses/:addr",
+          "description": "Removes an address from a wallet. Disociating any events or UTXOs not referencing another address. The address will continue to be tracked even if not registered to another wallet.",
+          "responses": [
+            {
+              "name": "Unknown Address",
+              "status": 404,
+              "body": "transaction failed (attempt 1): not found\n"
+            }
+          ]
+        },
+        {
+          "name": "Get Wallet Events",
+          "method": "GET",
+          "url": "{{baseURL}}/wallets/:name/events?offset=0&limit=100",
+          "description": "Returns all on-chain events that are relevant to the wallet. This includes transactions, contract payouts, miner payouts, Siafund dividends, contract formations, storage proofs, etc.",
+          "responses": [
+            {
+              "name": "Get Wallet Events",
+              "status": 200,
+              "body": [
+                {
+                  "id": "h:da0ca8802d9a91a1cb0891930ee9cf336bc14213b802c94da3794d3916971cfd",
+                  "index": {
+                    "height": 60894,
+                    "id": "bid:00000000eb406de8d32a8fd1cf7b88ac1e1ac0557e0e0a3c714214b76a4a2689"
+                  },
+                  "timestamp": "2024-03-11T08:54:13Z",
+                  "maturityHeight": 60894,
+                  "type": "v1Transaction",
+                  "data": {
+                    "transaction": {
+                      "siacoinInputs": [
+                        {
+                          "parentID": "scoid:beff19fcc4346cb13127bf2b1fc1ab3d8328e23cc45ecae55c965230f19761de",
+                          "unlockConditions": {
+                            "timelock": 0,
+                            "publicKeys": [
+                              "ed25519:0778d0e03c2f1b1e5e42d6f0f580d46587d992ad6381d8cae52b998463e0f633"
+                            ],
+                            "signaturesRequired": 1
+                          }
+                        }
+                      ],
+                      "siacoinOutputs": [
+                        {
+                          "value": "977885669851267537583916928247",
+                          "address": "addr:11d68c52e67a800d0ca99867e410cfa9c0c3f5bc1726aa90e88f40b7ad0825c91841904dae10"
+                        }
+                      ],
+                      "fileContracts": [
+                        {
+                          "filesize": 0,
+                          "fileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                          "windowStart": 66699,
+                          "windowEnd": 66843,
+                          "payout": "41260064825505506670374176",
+                          "validProofOutputs": [
+                            {
+                              "value": "14650922297310791910234176",
+                              "address": "addr:11d68c52e67a800d0ca99867e410cfa9c0c3f5bc1726aa90e88f40b7ad0825c91841904dae10"
+                            }
+                          ],
+                          "missedProofOutputs": [
+                            {
+                              "value": "0",
+                              "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                            }
+                          ],
+                          "unlockHash": "h:a17583c3dcd9a7e5f4186a5c7581d7d7c59a1aa6cfcf7c4551ba3377cdf65f9b",
+                          "revisionNumber": 0
+                        }
+                      ],
+                      "minerFees": [
+                        "13650000000000000000000"
+                      ],
+                      "signatures": [
+                        {
+                          "parentID": "h:beff19fcc4346cb13127bf2b1fc1ab3d8328e23cc45ecae55c965230f19761de",
+                          "publicKeyIndex": 0,
+                          "coveredFields": {
+                            "wholeTransaction": true
+                          },
+                          "signature": "LU5ZZYWvYGQ+odoOFBF7F+IQinajHmdzYsGlHcVApn8KB9Jt0SZkDuFhlxduTWxzB4V+0RtLXPMW9cljWBhcDA=="
+                        }
+                      ]
+                    },
+                    "spentSiacoinElements": [
+                      {
+                        "id": "h:beff19fcc4346cb13127bf2b1fc1ab3d8328e23cc45ecae55c965230f19761de",
+                        "leafIndex": 277853,
+                        "merkleProof": null,
+                        "siacoinOutput": {
+                          "value": "977900120773564848375827162423",
+                          "address": "addr:11d68c52e67a800d0ca99867e410cfa9c0c3f5bc1726aa90e88f40b7ad0825c91841904dae10"
+                        },
+                        "maturityHeight": 0
+                      }
+                    ],
+                    "spentSiafundElements": []
+                  },
+                  "relevant": [
+                    "addr:11d68c52e67a800d0ca99867e410cfa9c0c3f5bc1726aa90e88f40b7ad0825c91841904dae10"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Get Unconfirmed Events",
+          "method": "GET",
+          "url": "{{baseURL}}/wallets/:id/events/unconfirmed",
+          "description": "Returns any unconfirmed events relevant to the wallet.",
+          "responses": [
+            {
+              "name": "Get Unconfirmed Events",
+              "status": 200,
+              "body": [
+                {
+                  "id": "h:2fbcdef46cdbf82aabd79a09bd6101716f1db7780c1b3a5adb7abe2b78a815cb",
+                  "index": {
+                    "height": 76633,
+                    "id": "bid:0000000000000000000000000000000000000000000000000000000000000000"
+                  },
+                  "timestamp": "2024-06-28T14:38:50.376296692Z",
+                  "maturityHeight": 76634,
+                  "type": "v1Transaction",
+                  "data": {
+                    "transaction": {
+                      "siacoinInputs": [
+                        {
+                          "parentID": "scoid:d465a1231d6c7c33b6eb755392a2c132a878d8cbf9d3346420f92c23b91a283e",
+                          "unlockConditions": {
+                            "timelock": 0,
+                            "publicKeys": [
+                              "ed25519:afe8e21257d6e2eb2ee72acb0b3e092e68c47a7ecacd8059f832462e45fe4b48"
+                            ],
+                            "signaturesRequired": 1
+                          }
+                        }
+                      ],
+                      "siacoinOutputs": [
+                        {
+                          "value": "999942060000000000000000000000000",
+                          "address": "addr:241352c83da002e61f57e96b14f3a5f8b5de22156ce83b753ea495e64f1affebae88736b2347"
+                        }
+                      ],
+                      "minerFees": [
+                        "1000000000000000000000000"
+                      ],
+                      "signatures": [
+                        {
+                          "parentID": "h:d465a1231d6c7c33b6eb755392a2c132a878d8cbf9d3346420f92c23b91a283e",
+                          "publicKeyIndex": 0,
+                          "coveredFields": {
+                            "wholeTransaction": true
+                          },
+                          "signature": "fP5JbwkMIBW1upYDRDprhTXdAAD7MSmb1xiwrdO8iTGDyvojJhCNQilGsEsBnBzb7QQapYOVzw0/Fa4LDQThDA=="
+                        }
+                      ]
+                    },
+                    "spentSiacoinElements": null,
+                    "spentSiafundElements": null
+                  },
+                  "relevant": [
+                    "addr:ef2267b47ecbee9ce92e27df1fa1be9ca8f68d4c67c299e1346c86e36111f7c7f1e97d12e323"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Get Wallet Balance",
+          "method": "GET",
+          "url": "{{baseURL}}/wallets/:id/balance",
+          "description": "",
+          "responses": [
+            {
+              "name": "Get Wallet Balance",
+              "status": 200,
+              "body": {
+                "siacoins": "4753670739104888640626937618",
+                "immatureSiacoins": "2289834978889526661285953",
+                "siafunds": 0
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Wallet Siacoin UTXOs",
+          "method": "GET",
+          "url": "{{baseURL}}/wallets/:id/outputs/siacoin?limit=10&offset=0",
+          "description": "Returns a paginated list of Siacoin UTXOs. Immature UTXOs are also returned.",
+          "responses": [
+            {
+              "name": "Get Wallet Siacoin UTXOs",
+              "status": 200,
+              "body": [
+                {
+                  "id": "h:934a3ada04fe81a14692b66f0ddfd51bae7aeaae54d7714ab9da713c96e848ec",
+                  "leafIndex": 1423227,
+                  "merkleProof": [
+                    "h:e95edf1719db6d69fbdb5fd23f9cec7437783888e87891cae6bdb18238bf08a4"
+                  ],
+                  "siacoinOutput": {
+                    "value": "36702868650570051790683896",
+                    "address": "addr:ef2267b47ecbee9ce92e27df1fa1be9ca8f68d4c67c299e1346c86e36111f7c7f1e97d12e323"
+                  },
+                  "maturityHeight": 75363
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Get Wallet Siafund UTXOs",
+          "method": "GET",
+          "url": "{{baseURL}}/wallets/:id/outputs/siafund?limit=100&offset=0",
+          "description": "Returns a paginated list of Siafund UTXOs. The UTXOs are sorted by value, descending.",
+          "responses": [
+            {
+              "name": "Get Wallet Siafund UTXOs",
+              "status": 200,
+              "body": [
+                {
+                  "id": "h:2620429bf34926d2829e24082409eeb847a8b753c565fee300cc8e5bc5ca184f",
+                  "leafIndex": 136156,
+                  "merkleProof": [
+                    "h:c7a63903ab28c24d2da157d8a62db876f0a3d571bdcbb5c4824035f177eb7e49"
+                  ],
+                  "siafundOutput": {
+                    "value": 9900,
+                    "address": "addr:053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807"
+                  },
+                  "claimStart": "22611075066038780363920560000"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Fund Transaction",
+          "method": "POST",
+          "url": "{{baseURL}}/wallets/:id/fund",
+          "description": "Funds a transaction using UTXOs from the wallet. The UTXOs are locked for future use. If the transaction is not going to be broadcast, call the release endpoint to free the UTXOs. Signatures must be added externally in order to broadcast the transaction.",
+          "requestBody": {
+            "transaction": {
+              "siacoinOutputs": [
+                {
+                  "value": "1000000000000000000000000",
+                  "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                }
+              ],
+              "minerFees": [
+                "7000000000000000000000"
+              ]
+            },
+            "amount": "1007000000000000000000000",
+            "changeAddress": "addr:ecd44853e455f1536fe9f697442cbf1efea459d960bc187dac90c0bcbd3744b5d1469f8f2758"
+          },
+          "responses": [
+            {
+              "name": "Fund Transaction",
+              "status": 200,
+              "body": {
+                "transaction": {
+                  "siacoinInputs": [
+                    {
+                      "parentID": "scoid:9f65eaee153e4e9f695240e174c672aa9a1ad2f1c2cea486c603306ab4b8caa8",
+                      "unlockConditions": {
+                        "timelock": 0,
+                        "publicKeys": null,
+                        "signaturesRequired": 0
+                      }
+                    }
+                  ],
+                  "siacoinOutputs": [
+                    {
+                      "value": "98993000000000000000000000",
+                      "address": "addr:ecd44853e455f1536fe9f697442cbf1efea459d960bc187dac90c0bcbd3744b5d1469f8f2758"
+                    }
+                  ],
+                  "minerFees": [
+                    "7000000000000000000000"
+                  ]
+                },
+                "toSign": [
+                  "h:9f65eaee153e4e9f695240e174c672aa9a1ad2f1c2cea486c603306ab4b8caa8"
+                ],
+                "dependsOn": null
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reserve UTXOs",
+          "method": "POST",
+          "url": "{{baseURL}}/wallets/:id/reserve",
+          "description": "Reserves UTXOs preventing them from being used by the fund endpoint. To unlock the UTXOs and allow other transactions to use them, call the release endpoint.\n\nDuration is the time to lock the UTXOs in nanoseconds. If duration is zero, the outputs will be locked for 10 minutes.",
+          "requestBody": {
+            "siacoinOutputs": [
+              "scoid:9f65eaee153e4e9f695240e174c672aa9a1ad2f1c2cea486c603306ab4b8caa8"
+            ],
+            "siafundOutputs": [],
+            "duration": 60000000000
+          }
+        },
+        {
+          "name": "Release UTXOs",
+          "method": "POST",
+          "url": "{{baseURL}}/wallets/:name/release",
+          "description": "Release unlocks UTXOs so they can be used to fund transactions when calling the fund endpoint.",
+          "requestBody": {
+            "siacoinOutputs": [
+              "scoid:9f65eaee153e4e9f695240e174c672aa9a1ad2f1c2cea486c603306ab4b8caa8"
+            ],
+            "siafundOutputs": []
+          }
+        },
+        {
+          "name": "Rescan Status",
+          "method": "GET",
+          "url": "{{baseURL}}/rescan",
+          "description": "Gets the status of an in progress rescan. This endpoint will error if the index mode is not \"personal.\"",
+          "responses": [
+            {
+              "name": "In Progress Scan",
+              "status": 200,
+              "body": {
+                "startIndex": {
+                  "height": 100,
+                  "id": "bid:000000024262ba6208115c832655e62a5234af0fd5f6b468bf085d2f1c5b1d26"
+                },
+                "index": {
+                  "height": 3350,
+                  "id": "bid:000000006f5bf55b5352d9c16ac9e061b40cb92f0792b1ab8acc10defb6235c7"
+                },
+                "startTime": "2024-05-31T03:18:36.60859209Z"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Start Rescan",
+          "method": "POST",
+          "url": "{{baseURL}}/rescan",
+          "description": "Starts a scan to find state from the specified height.\n\nThis endpoint should not be used when in \"full\" mode.",
+          "requestBody": 100
+        }
+      ]
+    },
+    {
+      "name": "Addresses",
+      "item": [
+        {
+          "name": "Get Balance",
+          "method": "GET",
+          "url": "{{baseURL}}/addresses/:addr/balance",
+          "description": "Gets the balance of an individual address.\n\nWhen index mode is personal, the address must be associated with an existing wallet.\n\nWhen index mode is full, the balance of any address can be checked.",
+          "responses": [
+            {
+              "name": "Get Balance",
+              "status": 200,
+              "body": {
+                "siacoins": "1538700188948356661249852067020800",
+                "immatureSiacoins": "43200012708057487668016904243200",
+                "siafunds": 0
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Events",
+          "method": "GET",
+          "url": "{{baseURL}}/addresses/:addr/events?limit=100&offset=0",
+          "description": "",
+          "responses": [
+            {
+              "name": "Get Events",
+              "status": 200,
+              "body": [
+                {
+                  "id": "h:fdcacbed22f91070b0709337f8df7880db67e53f33bf889e2082f34615e463eb",
+                  "index": {
+                    "height": 76623,
+                    "id": "bid:00000000130939be94450b6eaefc43c3fe8e9f70cc69bcaeb58cb2a3c30563a5"
+                  },
+                  "timestamp": "2024-06-28T13:47:14Z",
+                  "maturityHeight": 76768,
+                  "type": "miner",
+                  "data": {
+                    "siacoinElement": {
+                      "id": "h:fdcacbed22f91070b0709337f8df7880db67e53f33bf889e2082f34615e463eb",
+                      "leafIndex": 1672201,
+                      "merkleProof": null,
+                      "siacoinOutput": {
+                        "value": "300000000000000000000000000000",
+                        "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                      },
+                      "maturityHeight": 76767
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Get Unconfirmed Events",
+          "method": "GET",
+          "url": "{{baseURL}}/addresses/:addr/events/unconfirmed?limit=10&offset=0",
+          "description": "Returns any unconfirmed events for a specific address.",
+          "responses": [
+            {
+              "name": "Get Unconfirmed Events",
+              "status": 200,
+              "body": [
+                {
+                  "id": "h:b4cfd02405ee0bd8f668f426a54f86195e1167bb21d2d1df4f4f8a9956862643",
+                  "index": {
+                    "height": 76634,
+                    "id": "bid:0000000000000000000000000000000000000000000000000000000000000000"
+                  },
+                  "timestamp": "2024-06-28T14:47:00.152393345Z",
+                  "maturityHeight": 76634,
+                  "type": "v1Transaction",
+                  "data": {
+                    "transaction": {
+                      "siacoinInputs": [
+                        {
+                          "parentID": "scoid:dae280d0aa8c9d00eb074293707ad1c65dc3fccc6b6693c2acef4b862be947fe",
+                          "unlockConditions": {
+                            "timelock": 0,
+                            "publicKeys": [
+                              "ed25519:65d490ee4c5994fbf80f5e570cb923f77acd038e59d380319281bb7c9ff979f0"
+                            ],
+                            "signaturesRequired": 1
+                          }
+                        }
+                      ],
+                      "siacoinOutputs": [
+                        {
+                          "value": "153863942633111598306242383",
+                          "address": "addr:ef2267b47ecbee9ce92e27df1fa1be9ca8f68d4c67c299e1346c86e36111f7c7f1e97d12e323"
+                        }
+                      ],
+                      "minerFees": [
+                        "3930000000000000000000"
+                      ],
+                      "signatures": [
+                        {
+                          "parentID": "h:dae280d0aa8c9d00eb074293707ad1c65dc3fccc6b6693c2acef4b862be947fe",
+                          "publicKeyIndex": 0,
+                          "coveredFields": {
+                            "wholeTransaction": true
+                          },
+                          "signature": "g05sXFJxoBrIVUP5nGRCm5VqGCUyE/MKMofQS2iU+7/r7yo3ATcIWiOc1K+Lmm6fgtr3Xr0qiYyQ2FP4AbpCCw=="
+                        }
+                      ]
+                    },
+                    "spentSiacoinElements": [
+                      {
+                        "id": "h:dae280d0aa8c9d00eb074293707ad1c65dc3fccc6b6693c2acef4b862be947fe",
+                        "leafIndex": 967611,
+                        "merkleProof": [],
+                        "siacoinOutput": {
+                          "value": "163863942633111598306242383",
+                          "address": "addr:ef2267b47ecbee9ce92e27df1fa1be9ca8f68d4c67c299e1346c86e36111f7c7f1e97d12e323"
+                        },
+                        "maturityHeight": 71752
+                      }
+                    ],
+                    "spentSiafundElements": null
+                  },
+                  "relevant": [
+                    "addr:053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Get Siacoin UTXOs",
+          "method": "GET",
+          "url": "{{baseURL}}/addresses/:addr/outputs/siacoin?limit=100&offset=0",
+          "description": "Get any Siacoin UTXOs owned by the address",
+          "responses": [
+            {
+              "name": "Get Siacoin UTXOs",
+              "status": 200,
+              "body": [
+                {
+                  "id": "h:b96cf57c327aef88ef6468e55d97ee160d1f125667a039642fd751094c299e50",
+                  "leafIndex": 1127807,
+                  "merkleProof": [
+                    "h:e6d51d49a587e85a36617a002757cad2dbdfb82d9a249a57abc6581da39a1bbb"
+                  ],
+                  "siacoinOutput": {
+                    "value": "0",
+                    "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                  },
+                  "maturityHeight": 72513
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Get Siafund UTXOs",
+          "method": "GET",
+          "url": "{{baseURL}}/addresses/:addr/outputs/siafund?limit=10&offset=0",
+          "description": "",
+          "responses": [
+            {
+              "name": "Get Siafund UTXOs",
+              "status": 200,
+              "body": [
+                {
+                  "id": "h:2620429bf34926d2829e24082409eeb847a8b753c565fee300cc8e5bc5ca184f",
+                  "leafIndex": 136156,
+                  "merkleProof": [
+                    "h:c7a63903ab28c24d2da157d8a62db876f0a3d571bdcbb5c4824035f177eb7e49"
+                  ],
+                  "siafundOutput": {
+                    "value": 9900,
+                    "address": "addr:053b2def3cbdd078c19d62ce2b4f0b1a3c5e0ffbeeff01280efb1f8969b2f5bb4fdc680f0807"
+                  },
+                  "claimStart": "22611075066038780363920560000"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Get Event",
+          "method": "GET",
+          "url": "{{baseURL}}/events/:id",
+          "description": "Returns data on a confirmed event\n\n- In \"personal\" mode, the events must be relevant to an existing wallet.\n    \n- In \"full\" mode, any event that occurred on chain can be used.",
+          "responses": [
+            {
+              "name": "Get Event",
+              "status": 200,
+              "body": {
+                "id": "h:2fbcdef46cdbf82aabd79a09bd6101716f1db7780c1b3a5adb7abe2b78a815cb",
+                "index": {
+                  "height": 76633,
+                  "id": "bid:00000000afc28d36e868779b57011590c941bb598e6acf993420c88671229bc8"
+                },
+                "timestamp": "2024-06-28T14:38:52Z",
+                "maturityHeight": 76633,
+                "type": "v1Transaction",
+                "data": {
+                  "transaction": {
+                    "siacoinInputs": [
+                      {
+                        "parentID": "scoid:d465a1231d6c7c33b6eb755392a2c132a878d8cbf9d3346420f92c23b91a283e",
+                        "unlockConditions": {
+                          "timelock": 0,
+                          "publicKeys": [
+                            "ed25519:afe8e21257d6e2eb2ee72acb0b3e092e68c47a7ecacd8059f832462e45fe4b48"
+                          ],
+                          "signaturesRequired": 1
+                        }
+                      }
+                    ],
+                    "siacoinOutputs": [
+                      {
+                        "value": "999942060000000000000000000000000",
+                        "address": "addr:241352c83da002e61f57e96b14f3a5f8b5de22156ce83b753ea495e64f1affebae88736b2347"
+                      }
+                    ],
+                    "minerFees": [
+                      "1000000000000000000000000"
+                    ],
+                    "signatures": [
+                      {
+                        "parentID": "h:d465a1231d6c7c33b6eb755392a2c132a878d8cbf9d3346420f92c23b91a283e",
+                        "publicKeyIndex": 0,
+                        "coveredFields": {
+                          "wholeTransaction": true
+                        },
+                        "signature": "fP5JbwkMIBW1upYDRDprhTXdAAD7MSmb1xiwrdO8iTGDyvojJhCNQilGsEsBnBzb7QQapYOVzw0/Fa4LDQThDA=="
+                      }
+                    ]
+                  },
+                  "spentSiacoinElements": [
+                    {
+                      "id": "h:d465a1231d6c7c33b6eb755392a2c132a878d8cbf9d3346420f92c23b91a283e",
+                      "leafIndex": 1423736,
+                      "merkleProof": null,
+                      "siacoinOutput": {
+                        "value": "999962061000000000000000000000000",
+                        "address": "addr:241352c83da002e61f57e96b14f3a5f8b5de22156ce83b753ea495e64f1affebae88736b2347"
+                      },
+                      "maturityHeight": 0
+                    }
+                  ],
+                  "spentSiafundElements": []
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Get State",
+      "method": "GET",
+      "url": "{{baseURL}}/state",
+      "description": "Gets the current state of the running walletd node",
+      "responses": [
+        {
+          "name": "Get State",
+          "status": 200,
+          "body": {
+            "version": "0a0e235",
+            "commit": "0a0e235",
+            "os": "linux",
+            "buildTime": "2024-05-17T21:11:59Z",
+            "startTime": "2024-05-31T03:12:26.586322129Z",
+            "indexMode": "personal"
+          }
+        }
+      ]
+    }
+  ]
+}

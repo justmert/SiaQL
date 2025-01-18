@@ -1,18 +1,23 @@
 # siaql/graphql/schemas/walletd/__init__.py
 import strawberry
-from .addresses import AddressQueries
-from .consensus import ConsensusQueries
-from .events import EventQueries
-from .syncer import SyncerQueries, SyncerMutations
-from .txpool import TransactionPoolQueries, TransactionPoolMutations
+from siaql.graphql.schemas.walletd.addresses import AddressQueries
+from siaql.graphql.schemas.walletd.consensus import ConsensusQueries
+from siaql.graphql.schemas.walletd.syncer import SyncerQueries
+from siaql.graphql.schemas.walletd.txpool import TxpoolQueries
+from siaql.graphql.schemas.walletd.wallets import WalletQueries
+from siaql.graphql.schemas.walletd.txpool import TxpoolMutations
+from siaql.graphql.schemas.walletd.syncer import SyncerMutations
+from siaql.graphql.schemas.walletd.wallets import WalletMutations
+
+
 
 @strawberry.type
 class Query(
     AddressQueries,
-    EventQueries,
     ConsensusQueries,
     SyncerQueries,
-    TransactionPoolQueries
+    TxpoolQueries,
+    WalletQueries,
 ):
     @strawberry.field
     def hello(self) -> str:
@@ -22,18 +27,7 @@ class Query(
 @strawberry.type
 class Mutation(
     SyncerMutations,
-    TransactionPoolMutations
+    # TxpoolMutations,
+    # WalletMutations
 ):
     pass
-
-__all__ = [
-    'Query',
-    'Mutation',
-    'AddressQueries',
-    'ConsensusQueries',
-    'EventQueries',
-    'SyncerQueries',
-    'SyncerMutations',
-    'TransactionPoolQueries',
-    'TransactionPoolMutations'
-]

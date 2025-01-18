@@ -18,42 +18,73 @@ console = Console()
 @app.command()
 def serve(
     host: str = typer.Option(
-        os.getenv("HOST", "127.0.0.1"), 
+        None, 
         help="Host to bind the server to",
         envvar="HOST"
     ),
     port: int = typer.Option(
-        int(os.getenv("PORT", "8000")), 
+        None, 
         help="Port to bind the server to",
         envvar="PORT"
     ),
     walletd_url: str = typer.Option(
-        os.getenv("SIAQL_WALLETD_URL", "http://localhost:9980"), 
+        None, 
         help="Walletd API URL",
-        envvar="SIAQL_WALLETD_URL"
+        envvar="WALLETD_URL"
     ),
     walletd_password: Optional[str] = typer.Option(
         None, 
-        help="Walletd API password. If not provided, will prompt securely.",
-        envvar="SIAQL_WALLETD_PASSWORD"
+        help="Walletd API password",
+        envvar="WALLETD_PASSWORD"
     ),
     renterd_url: str = typer.Option(
-        os.getenv("SIAQL_RENTERD_URL", "http://localhost:9980"), 
+        None, 
         help="Renterd API URL",
-        envvar="SIAQL_RENTERD_URL"
+        envvar="RENTERD_URL"
     ),
     renterd_password: Optional[str] = typer.Option(
         None,
-        help="Renterd API password. If not provided, will prompt securely.",
-        envvar="SIAQL_RENTERD_PASSWORD"
+        help="Renterd API password",
+        envvar="RENTERD_PASSWORD"
     ),
+    hostd_url: str = typer.Option(
+        None, 
+        help="Hostd API URL",
+        envvar="HOSTD_URL"
+    ),
+    hostd_password: Optional[str] = typer.Option(
+        None,
+        help="Hostd API password",
+        envvar="HOSTD_PASSWORD"
+    )
 ):
     """Start the GraphQL server"""
-    if walletd_password is None:
-        walletd_password = Prompt.ask("Enter walletd API password", password=True, console=console)
     
-    if renterd_password is None:
-        renterd_password = Prompt.ask("Enter renterd API password", password=True, console=console)
+    # Set defaults
+    DEFAULT_HOST = "127.0.0.1"
+    DEFAULT_PORT = 8000
+    DEFAULT_WALLETD_URL = "http://localhost:9980"
+    DEFAULT_RENTERD_URL = "http://localhost:9980"
+    DEFAULT_HOSTD_URL = "http://localhost:9980"
+
+    # Get values from environment or use defaults
+    host = host or os.getenv("HOST") or DEFAULT_HOST
+    port = port or int(os.getenv("PORT", "0")) or DEFAULT_PORT
+    
+    # Handle URLs in order of precedence: CLI args > env vars > interactive input
+    walletd_url = walletd_url or os.getenv("WALLETD_URL") or Prompt.ask("Enter walletd URL", default=DEFAULT_WALLETD_URL)
+    renterd_url = renterd_url or os.getenv("RENTERD_URL") or Prompt.ask("Enter renterd URL", default=DEFAULT_RENTERD_URL)
+    hostd_url = hostd_url or os.getenv("HOSTD_URL") or Prompt.ask("Enter hostd URL", default=DEFAULT_HOSTD_URL)
+
+    # Handle passwords
+    if not walletd_password:
+        walletd_password = os.getenv("WALLETD_PASSWORD") or Prompt.ask("Enter walletd API password", password=True)
+    
+    if not renterd_password:
+        renterd_password = os.getenv("RENTERD_PASSWORD") or Prompt.ask("Enter renterd API password", password=True)
+        
+    if not hostd_password:
+        hostd_password = os.getenv("HOSTD_PASSWORD") or Prompt.ask("Enter hostd API password", password=True)
 
     console.print(f"Starting SiaQL server on http://{host}:{port}/graphql")
     console.print(f"GraphiQL interface available at http://{host}:{port}/graphql")
@@ -62,7 +93,9 @@ def serve(
         walletd_url=walletd_url,
         walletd_password=walletd_password,
         renterd_url=renterd_url,
-        renterd_password=renterd_password
+        renterd_password=renterd_password,
+        hostd_url=hostd_url,
+        hostd_password=hostd_password
     )
     
     uvicorn.run(graphql_app, host=host, port=port, log_level="info")

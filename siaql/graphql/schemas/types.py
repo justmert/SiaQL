@@ -1,11 +1,100 @@
 from typing import List, Optional, Union
 from strawberry.types import Info
 import strawberry
-from datetime import datetime
+import datetime
 from siaql.graphql.resolvers.walletd import WalletdBaseResolver
 from strawberry.scalars import JSON
 from typing import List, Optional, Dict, Any
 from enum import Enum
+
+from dataclasses import dataclass
+from typing import Type, TypeVar, get_type_hints, Optional, get_origin, get_args
+from strawberry.field import StrawberryField
+from functools import wraps
+
+T = TypeVar('T')
+
+def create_dual_field(field_type: Type, **kwargs):
+    """Creates a field that can be used for both input and output"""
+    original_field = strawberry.field(**kwargs)
+    
+    @wraps(original_field)
+    def wrapped(*args, **kwargs):
+        # Check if this field is being used in an argument context
+        if 'argument' in kwargs and kwargs['argument']:
+            # If it's an argument, use the input version
+            if hasattr(field_type, '__input_type__'):
+                return strawberry.field(type_=field_type.__input_type__, **kwargs)
+        # Otherwise use the original type
+        return original_field(*args, **kwargs)
+    
+    return wrapped
+
+def generate_input_type(cls: Type[T]) -> Type[T]:
+    """Creates an input type version of a class with the same fields"""
+    hints = get_type_hints(cls)
+    input_hints = {}
+    
+    for field_name, field_type in hints.items():
+        if get_origin(field_type) is Optional:
+            base_type = get_args(field_type)[0]
+            if hasattr(base_type, '__input_type__'):
+                input_hints[field_name] = Optional[base_type.__input_type__]
+            else:
+                input_hints[field_name] = field_type
+        elif get_origin(field_type) is list:
+            element_type = get_args(field_type)[0]
+            if hasattr(element_type, '__input_type__'):
+                input_hints[field_name] = list[element_type.__input_type__]
+            else:
+                input_hints[field_name] = field_type
+        elif hasattr(field_type, '__input_type__'):
+            input_hints[field_name] = field_type.__input_type__
+        else:
+            input_hints[field_name] = field_type
+
+    input_cls_name = f"{cls.__name__}Input"
+    input_cls = type(input_cls_name, (), {
+        '__annotations__': input_hints,
+        '__module__': cls.__module__
+    })
+    
+    for field_name in hints:
+        if hasattr(cls, field_name):
+            field = getattr(cls, field_name)
+            if hasattr(field, 'graphql_type'):
+                setattr(input_cls, field_name, strawberry.field(
+                    name=field.graphql_name,
+                    description=field.description
+                ))
+
+    return strawberry.input(input_cls)
+
+def dual_type(cls: Type[T]) -> Type[T]:
+    """
+    Decorator that generates both output and input types.
+    Automatically handles field conversion in mutations.
+    """
+    # First, process all fields to make them dual-capable
+    for field_name, field_type in get_type_hints(cls).items():
+        if hasattr(cls, field_name):
+            field = getattr(cls, field_name)
+            if isinstance(field, StrawberryField):
+                # Create a new dual field with the same properties
+                new_field = create_dual_field(
+                    field_type,
+                    name=field.graphql_name,
+                    description=field.description
+                )
+                setattr(cls, field_name, new_field)
+
+    # Generate the types
+    output_cls = strawberry.type(cls)
+    input_cls = generate_input_type(cls)
+    output_cls.__input_type__ = input_cls
+    
+    return output_cls
+
 
 
 # ****************************************
@@ -13,8 +102,7 @@ from enum import Enum
 @strawberry.interface
 class SiaType:
     """Base interface for types converted from Sia network API responses"""
-    pass
-
+    __name__: str
 
 @strawberry.interface
 class NewType:
@@ -24,105 +112,255 @@ class NewType:
 
 @strawberry.scalar(description="An unsigned amount of Hastings, the smallest unit of currency in Sia. 1 Siacoin (SC) equals 10^24 Hastings (H). | Pattern: ^\d+$ | Max length: 39")
 class Currency(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'Currency':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'Currency') -> str:
+        return str(value)
 
 
 @strawberry.scalar(description="A unique identifier for a file contract | Pattern: ^fcid:[0-9a-fA-F]{64}$")
 class FileContractID(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'FileContractID':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'FileContractID') -> str:
+        return str(value)
 
 
 @strawberry.scalar(description="A 256-bit blake2b hash | Pattern: ^[0-9a-fA-F]{64}$")
 class Hash256(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'Hash256':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'Hash256') -> str:
+        return str(value)
 
 
-@strawberry.scalar(description="A ed25519 public key | Pattern: ^ed25519:[0-9a-fA-F]{64}$")
+@strawberry.scalar(description="A ed25519 public key | Pattern: ^ed25519:[0-9a-fA-F]{64}$") 
 class PublicKey(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'PublicKey':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'PublicKey') -> str:
+        return str(value)
 
 
 @strawberry.scalar(description="A ed25519 signature | Pattern: [0-9a-fA-F]{64} | Format: byte")
 class Signature(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'Signature':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'Signature') -> str:
+        return str(value)
 
 
 @strawberry.scalar(description="A signed amount of Hastings, the smallest unit of currency in Sia. 1 Siacoin (SC) equals 10^24 Hastings (H). | Pattern: ^-?\d+$ | Max length: 39")
 class SignedCurrency(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'SignedCurrency':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'SignedCurrency') -> str:
+        return str(value)
 
 
 @strawberry.scalar(description="The height of a block | Format: uint64 | Example: 92813")
 class BlockHeight(int):
-    pass
+    @classmethod
+    def parse_value(cls, value: int) -> 'BlockHeight':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'BlockHeight') -> int:
+        return int(value)
 
 
 @strawberry.scalar(description="The name of the bucket. | Pattern: (?!(^xn--|.+-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ | Example: default")
 class BucketName(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'BucketName':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'BucketName') -> str:
+        return str(value)
 
 
 @strawberry.scalar(description="A duration in milliseconds | Format: int64 | Example: 30000")
 class DurationMS(int):
-    pass
+    @classmethod
+    def parse_value(cls, value: int) -> 'DurationMS':
+        return cls(value)
 
+    @classmethod
+    def serialize(cls, value: 'DurationMS') -> int:
+        return int(value)
 
 
 @strawberry.scalar(description="A duration in hours | Format: int64 | Example: 3")
 class DurationH(int):
-    pass
+    @classmethod
+    def parse_value(cls, value: int) -> 'DurationH':
+        return cls(value)
 
+    @classmethod
+    def serialize(cls, value: 'DurationH') -> int:
+        return int(value)
 
 
 @strawberry.scalar(description="A key used to encrypt and decrypt data. The key is either a regular key (key) or a salted key (skey). The latter requires a seed to be used for encryption and decryption. | Pattern: ^(key|skey):[0-9a-fA-F]{64}$")
 class EncryptionKey(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'EncryptionKey':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'EncryptionKey') -> str:
+        return str(value)
 
 
 @strawberry.scalar(description="An ETag representing a resource | Pattern: ^(W/)?""$ | Example: W")
 class ETag(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'ETag':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'ETag') -> str:
+        return str(value)
 
 
 @strawberry.scalar(description="A unique identifier for a multipart upload | Pattern: ^[0-9a-fA-F]{64}$")
 class MultipartUploadID(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'MultipartUploadID':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'MultipartUploadID') -> str:
+        return str(value)
 
 
 @strawberry.scalar(description="The revision number of the contract | Format: uint64 | Example: 246")
 class RevisionNumber(int):
-    pass
+    @classmethod
+    def parse_value(cls, value: int) -> 'RevisionNumber':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'RevisionNumber') -> int:
+        return int(value)
+
 
 
 @strawberry.scalar(description="Represents a semantic version as an array of three unsigned 8-bit integers: [major, minor, patch] | Example: [1, 2, 3]")
 class SemVer(List[int]):
-    pass
+    @classmethod
+    def parse_value(cls, value: List[int]) -> 'SemVer':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'SemVer') -> List[int]:
+        return value
 
 
 @strawberry.scalar(description="A 16-byte unique identifier represented as a hex string. | Format: byte | Example: 4d3b2a1c9f8e7d6c5b4a3f2e1d0c9b8a")
 class SettingsID(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'SettingsID':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'SettingsID') -> str:
+        return str(value)
 
 
 @strawberry.scalar(description="A 32-byte unique identifier represented as a hex string. | Format: byte | Example: f1e2d3c4b5a697887776665544332211ffeeddccbbaa99887766554433221100")
 class UploadID(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'UploadID':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'UploadID') -> str:
+        return str(value)
 
 
-@strawberry.scalar(description="The address of the syncer | Example: 118.92.232.145:9981")
+@strawberry.scalar(description="The address of the syncer | Example: 118.92.232.145:9981") 
 class SyncerAddress(str):
-    pass
+    @classmethod
+    def parse_value(cls, value: str) -> 'SyncerAddress':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'SyncerAddress') -> str:
+        return str(value)
 
 
-@strawberry.type(description="Unique identifier for a Siacoin output.")
-class SiacoinOutputID(Hash256):
-    pass
+@strawberry.scalar(description="Unique identifier for a Siacoin output.")
+class SiacoinOutputID(str):
+    @classmethod
+    def parse_value(cls, value: str) -> 'SiacoinOutputID':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'SiacoinOutputID') -> str:
+        return str(value)
 
 
-@strawberry.type(description="Unique identifier for a Siafund output.")
-class SiafundOutputID(Hash256):
-    pass
+@strawberry.scalar(description="Unique identifier for a Siafund output.")
+class SiafundOutputID(str):
+    @classmethod
+    def parse_value(cls, value: str) -> 'SiafundOutputID':
+        return cls(value)
 
+    @classmethod
+    def serialize(cls, value: 'SiafundOutputID') -> str:
+        return str(value)
+
+@strawberry.scalar(description="Unique identifier for a transaction.")
+class TransactionID(str):
+    @classmethod
+    def parse_value(cls, value: str) -> 'TransactionID':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'TransactionID') -> str:
+        return str(value)
+
+
+@strawberry.scalar(description="The hash of a set of UnlockConditions | Pattern: ^[0-9a-fA-F]{64}$")
+class Address(str):
+    @classmethod 
+    def parse_value(cls, value: str) -> 'Address':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'Address') -> str:
+        return str(value)
+
+
+@strawberry.scalar(description="A unique identifier for a block")
+class BlockID(str):
+    @classmethod
+    def parse_value(cls, value: str) -> 'BlockID':
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: 'BlockID') -> str:
+        return str(value)
 
 
 @strawberry.type
@@ -130,10 +368,6 @@ class StateElement(SiaType):
     leaf_index: Optional[int] = strawberry.field(description="The index of the element in the Merkle tree | Format: uint64", name="leafIndex")
     merkle_proof: Optional[List[Hash256]] = strawberry.field(description="The Merkle proof demonstrating the inclusion of the leaf", name="merkleProof")
 
-
-@strawberry.type(description="Unique identifier for a transaction.")
-class TransactionID(Hash256):
-    pass
 
 
 @strawberry.type
@@ -175,10 +409,6 @@ class Account(SiaType):
     requires_sync: Optional[bool] = strawberry.field(description="Whether the account requires a sync with the host. This is usually the case when the host reports insufficient balance for an account that the worker still believes to be funded.", name="requiresSync")
 
 
-@strawberry.type(description="The hash of a set of UnlockConditions")
-class Address(Hash256):
-    pass
-
 
 # @strawberry.type
 # class Alert(SiaType):
@@ -215,6 +445,7 @@ class HostsConfig(SiaType):
     min_protocol_version: Optional[str] = strawberry.field(description="The minimum supported protocol version of a host to be considered good", name="minProtocolVersion")
 
 
+
 @strawberry.type
 class AutopilotConfig(SiaType):
     enabled: Optional[bool] = strawberry.field(description="Whether the autopilot is enabled", name="enabled")
@@ -222,7 +453,7 @@ class AutopilotConfig(SiaType):
     hosts: Optional[HostsConfig] = strawberry.field(name="hosts")
 
 
-@strawberry.type
+@dual_type
 class SiacoinOutput(SiaType):
     value: Optional[Currency] = strawberry.field(description="The amount of Siacoins in the output", name="value")
     address: Optional[Address] = strawberry.field(name="address")
@@ -398,20 +629,26 @@ class V2BlockData(SiaType):
     commitment: Optional[Hash256] = strawberry.field(name="commitment")
     transactions: Optional[List[V2Transaction]] = strawberry.field(name="transactions")
 
+@dual_type
+class X(SiaType):
+    name: Optional[str] = strawberry.field(name="name")
 
 
-@strawberry.type(description="A unique identifier for a block")
-class BlockID(Hash256):
-    pass
-
-@strawberry.type
+@dual_type
 class Block(SiaType):
-    parent_id: Optional[BlockID] = strawberry.field(description="The ID of the parent block", name="parentID")
     nonce: Optional[int] = strawberry.field(description="The nonce used to mine the block | Format: uint64", name="nonce")
-    timestamp: Optional[datetime.datetime] = strawberry.field(description="The time the block was mined | Format: date-time", name="timestamp")
-    miner_payouts: Optional[List[SiacoinOutput]] = strawberry.field(name="minerPayouts")
-    transactions: Optional[List[Transaction]] = strawberry.field(name="transactions")
-    v2: Optional[V2BlockData] = strawberry.field(name="v2")
+    name: X = strawberry.field(name="name")
+
+
+
+# @dual_type
+# class Block(SiaType):
+#     parent_id: Optional[BlockID] = strawberry.field(description="The ID of the parent block", name="parentID")
+#     nonce: Optional[int] = strawberry.field(description="The nonce used to mine the block | Format: uint64", name="nonce")
+#     timestamp: Optional[datetime.datetime] = strawberry.field(description="The time the block was mined | Format: date-time", name="timestamp")
+#     miner_payouts: Optional[List[SiacoinOutput]] = strawberry.field(name="minerPayouts")
+#     transactions: Optional[List[Transaction]] = strawberry.field(name="transactions")
+#     v2: Optional[V2BlockData] = strawberry.field(name="v2")
 
 
 @strawberry.type
@@ -781,22 +1018,77 @@ class MultipartUpload(SiaType):
 
 
 @strawberry.type
+class HardforkDevAddr(SiaType):
+    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
+    old_address: Optional[Address] = strawberry.field(name="oldAddress")
+    new_address: Optional[Address] = strawberry.field(name="newAddress")
+
+@strawberry.type
+class HardforkTax(SiaType):
+    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
+
+@strawberry.type
+class HardforkStorageProof(SiaType):
+    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
+
+@strawberry.type
+class HardforkOak(SiaType):
+    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
+    fix_height: Optional[int] = strawberry.field(description="Format: uint64", name="fixHeight")
+    genesis_timestamp: Optional[datetime.datetime] = strawberry.field(name="genesisTimestamp")
+
+@strawberry.type
+class HardforkASIC(SiaType):
+    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
+    oak_time: Optional[DurationMS] = strawberry.field(name="oakTime")
+    oak_target: Optional[BlockID] = strawberry.field(name="oakTarget")
+
+@strawberry.type
+class HardforkFoundation(SiaType):
+    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
+    primary_address: Optional[Address] = strawberry.field(name="primaryAddress")
+    failsafe_address: Optional[Address] = strawberry.field(name="failsafeAddress")
+
+@strawberry.type
+class HardforkV2(SiaType):
+    allow_height: Optional[int] = strawberry.field(description="Format: uint64", name="allowHeight")
+    require_height: Optional[int] = strawberry.field(description="Format: uint64", name="requireHeight")
+
+@strawberry.type
 class Network(SiaType):
     name: Optional[str] = strawberry.field(description="The name of the network", name="name")
     initial_coinbase: Optional[Currency] = strawberry.field(description="The initial coinbase reward", name="initialCoinbase")
     minimum_coinbase: Optional[Currency] = strawberry.field(description="The minimum coinbase reward", name="minimumCoinbase")
     initial_target: Optional[BlockID] = strawberry.field(description="The initial target", name="initialTarget")
-    block_interval: Optional[int] = strawberry.field(description="The block interval | Format: uint64", default=600000000000, name="blockInterval")
+    block_interval: Optional[int] = strawberry.field(description="The block interval | Format: uint64", default=600000000000, name="blockInterval") # time.Duration
     maturity_delay: Optional[int] = strawberry.field(description="The maturity delay | Format: uint64", default=144, name="maturityDelay")
-    hardfork_dev_addr: Optional[JSON] = strawberry.field(name="hardforkDevAddr")
-    hardfork_tax: Optional[JSON] = strawberry.field(name="hardforkTax")
-    hardfork_storage_proof: Optional[JSON] = strawberry.field(name="hardforkStorageProof")
-    hardfork_oak: Optional[JSON] = strawberry.field(name="hardforkOak")
-    hardfork_asic: Optional[JSON] = strawberry.field(name="hardforkASIC")
-    hardfork_foundation: Optional[JSON] = strawberry.field(name="hardforkFoundation")
-    hardfork_v2: Optional[JSON] = strawberry.field(name="hardforkV2")
+    hardfork_dev_addr: Optional[HardforkDevAddr] = strawberry.field(name="hardforkDevAddr")
+    hardfork_tax: Optional[HardforkTax] = strawberry.field(name="hardforkTax")
+    hardfork_storage_proof: Optional[HardforkStorageProof] = strawberry.field(name="hardforkStorageProof")
+    hardfork_oak: Optional[HardforkOak] = strawberry.field(name="hardforkOak")
+    hardfork_asic: Optional[HardforkASIC] = strawberry.field(name="hardforkASIC")
+    hardfork_foundation: Optional[HardforkFoundation] = strawberry.field(name="hardforkFoundation")
+    hardfork_v2: Optional[HardforkV2] = strawberry.field(name="hardforkV2")
 
 
+@strawberry.type
+class State(SiaType):
+    network: Optional[Network] = strawberry.field(default=None)
+    index: Optional[ChainIndex] = strawberry.field(name="index")
+    prev_timestamps: Optional[List[datetime.datetime]] = strawberry.field(name="prevTimestamps")
+    depth: Optional[BlockID] = strawberry.field(name="depth") 
+    child_target: Optional[BlockID] = strawberry.field(name="childTarget")
+    siafund_tax_revenue: Optional[Currency] = strawberry.field(name="siafundTaxRevenue")
+    oak_time: Optional[DurationMS] = strawberry.field(name="oakTime")
+    oak_target: Optional[BlockID] = strawberry.field(name="oakTarget")
+    foundation_subsidy_address: Optional[Address] = strawberry.field(name="foundationSubsidyAddress")
+    foundation_management_address: Optional[Address] = strawberry.field(name="foundationManagementAddress")
+    total_work: Optional[str] = strawberry.field(name="totalWork") # Work type
+    difficulty: Optional[str] = strawberry.field(name="difficulty") # Work type  
+    oak_work: Optional[str] = strawberry.field(name="oakWork") # Work type
+    elements: Optional[JSON] = strawberry.field(name="elements") # ElementAccumulator
+    attestations: Optional[int] = strawberry.field(name="attestations")
+    
 @strawberry.type
 class ObjectMetadata(SiaType):
     bucket: Optional[BucketName] = strawberry.field(name="bucket")
@@ -934,7 +1226,7 @@ class WebhookQueueInfo(SiaType):
     last_error_message: Optional[str] = strawberry.field(description="Message from last failed delivery", name="lastErrorMessage")
 
 @strawberry.enum
-class Severity(SiaType):
+class Severity(Enum):
     INFO: int = strawberry.enum_value(1, description="Indicates that the alert is informational.")
     WARNING: int = strawberry.enum_value(2, description="Indicates that the alert is a warning.")
     ERROR: int = strawberry.enum_value(3, description="Indicates that the alert is an error.")
@@ -1587,12 +1879,11 @@ class UsabilityUpdate(SiaType):
 
 # ------ walletd --------
 
-
 @strawberry.enum
-class IndexMode(SiaType):
-    PERSONAL = "personal"
-    FULL = "full"
-    NONE = "none"
+class IndexMode(Enum):
+    PERSONAL: str = strawberry.enum_value("personal", description="Personal mode - indexes only relevant transactions.")
+    FULL: str = strawberry.enum_value("full", description="Full mode - indexes all transactions.")
+    NONE: str = strawberry.enum_value("none", description="None mode - does not index transactions.")
 
 
 @strawberry.type
@@ -1643,8 +1934,9 @@ class TxpoolTransactionsResponse(SiaType):
 
 @strawberry.type
 class BalanceResponse(Balance):
-    # wallet.Balance details; represent as JSON or separate fields if known.
-    balance_data: Optional[JSON] = strawberry.field(description="wallet.Balance")
+    # # wallet.Balance details; represent as JSON or separate fields if known.
+    # balance_data: Optional[JSON] = strawberry.field(description="wallet.Balance")
+    pass
 
 @strawberry.type
 class WalletReserveRequest(SiaType):

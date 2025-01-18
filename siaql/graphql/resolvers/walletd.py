@@ -15,9 +15,9 @@ class WalletdBaseResolver:
     async def handle_api_call(
         cls,
         info: Info, 
-        method: str, 
+        method: str,
         transform_func: Optional[Callable[[Dict], T]] = None,
-        *args, 
+        *args,
         **kwargs
     ) -> Any:
         """Generic method to handle API calls with error handling"""
@@ -29,5 +29,4 @@ class WalletdBaseResolver:
                 return transform_func(result)
             return result
         except Exception as e:
-            # TODO: Add proper error handling/logging
             raise e
