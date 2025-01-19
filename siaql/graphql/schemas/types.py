@@ -9,30 +9,13 @@ from enum import Enum
 
 from dataclasses import dataclass
 from typing import Type, TypeVar, get_type_hints, Optional, get_origin, get_args
-from strawberry.field import StrawberryField
+# from strawberry.field import StrawberryField
 from functools import wraps
 from dataclasses import dataclass, fields
 T = TypeVar('T')
 
 # Cache for input types
 _input_type_cache: Dict[str, Any] = {}
-
-# class DictFieldResolver:
-#     def __init__(self, data: Dict[str, Any]):
-#         self._data = data
-
-#     def __getattr__(self, name: str) -> Any:
-#         # First try to find field in class definition
-#         for field in fields(self.__class__):
-#             if field.name == name:
-#                 # Get the graphql name from field metadata
-#                 graphql_name = field.metadata.get('strawberry', {}).get('name', name)
-#                 if graphql_name in self._data:
-#                     return self._data[graphql_name]
-#                 return None
-        
-#         # Fallback to original name
-#         return self._data.get(name)
 
 def _process_field_type(field_type):
     """Process field type to handle Optional and List types"""
@@ -118,7 +101,6 @@ class SiaType:
         """Convert dictionary data to this type"""
         if not isinstance(data, dict):
             return data
-        print('data:', data)
         result = {}
         for field in fields(cls):
             field_name = field.name
@@ -126,7 +108,6 @@ class SiaType:
             
             if json_name in data:
                 result[field_name] = data[json_name]
-        print('result:', result)
         return result
 
     @classmethod
@@ -141,6 +122,7 @@ class SiaType:
                 _input_type_cache[cache_key] = input_type
         
         return _input_type_cache.get(cache_key)
+
 
 # ****************************************
 
@@ -832,7 +814,7 @@ class Event(SiaType):
     confirmations: Optional[int] = strawberry.field(description="The number of blocks on top of the block that triggered the creation of this event | Format: uint64", name="confirmations")
     type: Optional[str] = strawberry.field(description="The type of the event | Allowed values: miner, foundation, siafundClaim, v1Transaction, v1ContractResolution, v2Transaction, v2ContractResolution", name="type")
     data: Optional[JSON] = strawberry.field(name="data")
-    maturityHeight: Optional[str] = strawberry.field(description="The block height at which the payout matures.", name="maturityHeight")
+    maturity_height: Optional[BlockHeight] = strawberry.field(description="The block height at which the payout matures.", name="maturityHeight")
     timestamp: Optional[datetime.datetime] = strawberry.field(description="The time the event was created | Format: date-time", name="timestamp")
     relevant: Optional[List[Address]] = strawberry.field(name="relevant")
 

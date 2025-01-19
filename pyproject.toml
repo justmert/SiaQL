@@ -8,7 +8,7 @@ packages = [{include = "siaql"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-strawberry-graphql = {extras = ["debug-server"], version = "^0.219.0"}
+strawberry-graphql = {extras = ["debug-server"], version = "^0.258.0"}
 typer = {extras = ["all"], version = "^0.9.0"}
 httpx = "^0.27.0"
 uvicorn = {extras = ["standard"], version = "^0.27.0"}
