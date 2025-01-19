@@ -2,12 +2,18 @@
 import strawberry
 from siaql.graphql.schemas.walletd.addresses import AddressQueries
 from siaql.graphql.schemas.walletd.consensus import ConsensusQueries
+from siaql.graphql.schemas.walletd.state import StateQueries
 from siaql.graphql.schemas.walletd.syncer import SyncerQueries
 from siaql.graphql.schemas.walletd.txpool import TxpoolQueries
 from siaql.graphql.schemas.walletd.wallets import WalletQueries
 from siaql.graphql.schemas.walletd.txpool import TxpoolMutations
 from siaql.graphql.schemas.walletd.syncer import SyncerMutations
 from siaql.graphql.schemas.walletd.wallets import WalletMutations
+from siaql.graphql.schemas.walletd.rescan import RescanQueries
+from siaql.graphql.schemas.walletd.rescan import RescanMutations
+from siaql.graphql.schemas.walletd.events import EventQueries
+
+
 
 
 
@@ -15,6 +21,9 @@ from siaql.graphql.schemas.walletd.wallets import WalletMutations
 class Query(
     AddressQueries,
     ConsensusQueries,
+    EventQueries,
+    RescanQueries,
+    StateQueries,
     SyncerQueries,
     TxpoolQueries,
     WalletQueries,
@@ -26,8 +35,9 @@ class Query(
 
 @strawberry.type
 class Mutation(
+    RescanMutations,
     SyncerMutations,
     # TxpoolMutations,
-    # WalletMutations
+    # WalletMutations,
 ):
     pass

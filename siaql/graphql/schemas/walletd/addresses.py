@@ -14,7 +14,6 @@ from siaql.graphql.schemas.types import (
 @strawberry.type
 class AddressQueries:
 
-
     @strawberry.field
     async def address_balance(self, info: Info, address: str) -> BalanceResponse:
         """Get balance for address"""

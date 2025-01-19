@@ -11,103 +11,138 @@ from dataclasses import dataclass
 from typing import Type, TypeVar, get_type_hints, Optional, get_origin, get_args
 from strawberry.field import StrawberryField
 from functools import wraps
-
+from dataclasses import dataclass, fields
 T = TypeVar('T')
 
-def create_dual_field(field_type: Type, **kwargs):
-    """Creates a field that can be used for both input and output"""
-    original_field = strawberry.field(**kwargs)
+# Cache for input types
+_input_type_cache: Dict[str, Any] = {}
+
+# class DictFieldResolver:
+#     def __init__(self, data: Dict[str, Any]):
+#         self._data = data
+
+#     def __getattr__(self, name: str) -> Any:
+#         # First try to find field in class definition
+#         for field in fields(self.__class__):
+#             if field.name == name:
+#                 # Get the graphql name from field metadata
+#                 graphql_name = field.metadata.get('strawberry', {}).get('name', name)
+#                 if graphql_name in self._data:
+#                     return self._data[graphql_name]
+#                 return None
+        
+#         # Fallback to original name
+#         return self._data.get(name)
+
+def _process_field_type(field_type):
+    """Process field type to handle Optional and List types"""
+    if get_origin(field_type) is Optional:
+        args = get_args(field_type)
+        base_type = _process_field_type(args[0])
+        return Optional[base_type]
+    elif get_origin(field_type) is list:
+        args = get_args(field_type)
+        base_type = _process_field_type(args[0])
+        return list[base_type]
     
-    @wraps(original_field)
-    def wrapped(*args, **kwargs):
-        # Check if this field is being used in an argument context
-        if 'argument' in kwargs and kwargs['argument']:
-            # If it's an argument, use the input version
-            if hasattr(field_type, '__input_type__'):
-                return strawberry.field(type_=field_type.__input_type__, **kwargs)
-        # Otherwise use the original type
-        return original_field(*args, **kwargs)
+    # If it's a SiaType, get its input version
+    if isinstance(field_type, type) and issubclass(field_type, SiaType):
+        return field_type.Input
     
-    return wrapped
+    return field_type
 
-def generate_input_type(cls: Type[T]) -> Type[T]:
-    """Creates an input type version of a class with the same fields"""
-    hints = get_type_hints(cls)
-    input_hints = {}
+def is_valid_input_type(field_type):
+    """Check if a type can be used as input"""
+    basic_types = (str, int, float, bool, datetime.datetime, datetime.date)
     
-    for field_name, field_type in hints.items():
-        if get_origin(field_type) is Optional:
-            base_type = get_args(field_type)[0]
-            if hasattr(base_type, '__input_type__'):
-                input_hints[field_name] = Optional[base_type.__input_type__]
-            else:
-                input_hints[field_name] = field_type
-        elif get_origin(field_type) is list:
-            element_type = get_args(field_type)[0]
-            if hasattr(element_type, '__input_type__'):
-                input_hints[field_name] = list[element_type.__input_type__]
-            else:
-                input_hints[field_name] = field_type
-        elif hasattr(field_type, '__input_type__'):
-            input_hints[field_name] = field_type.__input_type__
-        else:
-            input_hints[field_name] = field_type
-
-    input_cls_name = f"{cls.__name__}Input"
-    input_cls = type(input_cls_name, (), {
-        '__annotations__': input_hints,
-        '__module__': cls.__module__
-    })
+    # Handle Optional and List
+    if get_origin(field_type) in (Optional, list):
+        field_type = get_args(field_type)[0]
     
-    for field_name in hints:
-        if hasattr(cls, field_name):
-            field = getattr(cls, field_name)
-            if hasattr(field, 'graphql_type'):
-                setattr(input_cls, field_name, strawberry.field(
-                    name=field.graphql_name,
-                    description=field.description
-                ))
+    # Check if it's a basic type or SiaType
+    return (
+        isinstance(field_type, type) and (
+            issubclass(field_type, basic_types) or
+            issubclass(field_type, SiaType)
+        )
+    )
 
-    return strawberry.input(input_cls)
+def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
+    """Create an input version of a type"""
+    cache_key = f"{cls.__module__}.{cls.__name__}"
+    if cache_key in _input_type_cache:
+        return _input_type_cache[cache_key]
 
-def dual_type(cls: Type[T]) -> Type[T]:
-    """
-    Decorator that generates both output and input types.
-    Automatically handles field conversion in mutations.
-    """
-    # First, process all fields to make them dual-capable
-    for field_name, field_type in get_type_hints(cls).items():
-        if hasattr(cls, field_name):
-            field = getattr(cls, field_name)
-            if isinstance(field, StrawberryField):
-                # Create a new dual field with the same properties
-                new_field = create_dual_field(
-                    field_type,
-                    name=field.graphql_name,
-                    description=field.description
-                )
-                setattr(cls, field_name, new_field)
+    class_dict = {}
+    annotations = {}
 
-    # Generate the types
-    output_cls = strawberry.type(cls)
-    input_cls = generate_input_type(cls)
-    output_cls.__input_type__ = input_cls
+    # Process fields
+    for field in fields(cls):
+        if not is_valid_input_type(field.type):
+            continue
+
+        try:
+            field_type = _process_field_type(field.type)
+            annotations[field.name] = field_type
+
+            if hasattr(field, 'metadata'):
+                metadata = field.metadata.get('strawberry', {})
+                field_kwargs = {k: v for k, v in metadata.items() 
+                              if k in ('name', 'description')}
+                class_dict[field.name] = strawberry.field(**field_kwargs)
+        except Exception:
+            continue
+
+    if not annotations:
+        return None
+
+    input_cls = strawberry.input(type(
+        f"{cls.__name__}Input",
+        (),
+        {
+            '__annotations__': annotations,
+            **class_dict,
+            '__module__': cls.__module__
+        }
+    ))
     
-    return output_cls
+    _input_type_cache[cache_key] = input_cls
+    return input_cls
 
+@strawberry.type
+class SiaType:
+    """Base class for all Sia types"""
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> Any:
+        """Convert dictionary data to this type"""
+        if not isinstance(data, dict):
+            return data
+        print('data:', data)
+        result = {}
+        for field in fields(cls):
+            field_name = field.name
+            json_name = field.metadata.get('strawberry', {}).get('name', field_name)
+            
+            if json_name in data:
+                result[field_name] = data[json_name]
+        print('result:', result)
+        return result
 
+    @classmethod
+    @property
+    def Input(cls) -> Type:
+        """Dynamically create and cache input type when accessed"""
+        cache_key = f"{cls.__module__}.{cls.__name__}"
+        
+        if cache_key not in _input_type_cache:
+            input_type = create_input_type(cls)
+            if input_type is not None:
+                _input_type_cache[cache_key] = input_type
+        
+        return _input_type_cache.get(cache_key)
 
 # ****************************************
-
-@strawberry.interface
-class SiaType:
-    """Base interface for types converted from Sia network API responses"""
-    __name__: str
-
-@strawberry.interface
-class NewType:
-    """Base interface for types converted from Sia network API responses"""
-    pass
 
 
 @strawberry.scalar(description="An unsigned amount of Hastings, the smallest unit of currency in Sia. 1 Siacoin (SC) equals 10^24 Hastings (H). | Pattern: ^\d+$ | Max length: 39")
@@ -453,13 +488,14 @@ class AutopilotConfig(SiaType):
     hosts: Optional[HostsConfig] = strawberry.field(name="hosts")
 
 
-@dual_type
+@strawberry.type
 class SiacoinOutput(SiaType):
     value: Optional[Currency] = strawberry.field(description="The amount of Siacoins in the output", name="value")
     address: Optional[Address] = strawberry.field(name="address")
 
 
-@strawberry.type(description="A storage agreement between a renter and a host.")
+# @strawberry.type(description="A storage agreement between a renter and a host.")
+@strawberry.type
 class FileContract(SiaType):
     filesize: Optional[int] = strawberry.field(description="The size of the contract in bytes. | Format: uint64", name="filesize")
     file_merkle_root: Optional[Hash256] = strawberry.field(description="The Merkle root of the contract's data.", name="fileMerkleRoot")
@@ -472,7 +508,8 @@ class FileContract(SiaType):
     revision_number: Optional[RevisionNumber] = strawberry.field(name="revisionNumber")
 
 
-@strawberry.type(description="Represents a revision to an existing file contract.")
+# @strawberry.type(description="Represents a revision to an existing file contract.")
+@strawberry.type
 class FileContractRevision(SiaType):
     parent_id: Optional[FileContractID] = strawberry.field(description="The ID of the parent file contract being revised.", name="parentID")
     unlock_conditions: Optional[UnlockConditions] = strawberry.field(description="The conditions required to unlock the contract for revision.", name="unlockConditions")
@@ -492,20 +529,23 @@ class SiacoinInput(SiaType):
     unlock_conditions: Optional[UnlockConditions] = strawberry.field(description="The unlock conditions required to spend the output", name="unlockConditions")
 
 
-@strawberry.type(description="Represents an input used to spend an unspent Siafund output.")
+# @strawberry.type(description="Represents an input used to spend an unspent Siafund output.")
+@strawberry.type
 class SiafundInput(SiaType):
     parent_id: Optional[SiafundOutputID] = strawberry.field(description="The ID of the parent Siafund output being spent.", name="parentID")
     unlock_conditions: Optional[UnlockConditions] = strawberry.field(description="The conditions required to unlock the parent Siafund output.", name="unlockConditions")
     claim_address: Optional[Address] = strawberry.field(description="The address receiving the Siacoin claim generated by the Siafund output.", name="claimAddress")
 
 
-@strawberry.type(description="Represents an output created to distribute Siafund.")
+# @strawberry.type(description="Represents an output created to distribute Siafund.")
+@strawberry.type
 class SiafundOutput(SiaType):
     value: Optional[int] = strawberry.field(description="The amount of Siafund in the output. | Format: uint64", name="value")
     address: Optional[Address] = strawberry.field(description="The address receiving the Siafund.", name="address")
 
 
-@strawberry.type(description="Represents a proof of storage for a file contract.")
+# @strawberry.type(description="Represents a proof of storage for a file contract.")
+@strawberry.type
 class StorageProof(SiaType):
     parent_id: Optional[FileContractID] = strawberry.field(description="The ID of the file contract being proven.", name="parentID")
     leaf: Optional[str] = strawberry.field(description="The selected leaf from the Merkle tree of the file's data. | Format: byte", name="leaf")
@@ -629,26 +669,27 @@ class V2BlockData(SiaType):
     commitment: Optional[Hash256] = strawberry.field(name="commitment")
     transactions: Optional[List[V2Transaction]] = strawberry.field(name="transactions")
 
-@dual_type
-class X(SiaType):
-    name: Optional[str] = strawberry.field(name="name")
+# @strawberry.type
+# class X(SiaType):
+#     name: Optional[str] = strawberry.field(name="name")
 
 
-@dual_type
-class Block(SiaType):
-    nonce: Optional[int] = strawberry.field(description="The nonce used to mine the block | Format: uint64", name="nonce")
-    name: X = strawberry.field(name="name")
-
-
-
-# @dual_type
+# @strawberry.type
 # class Block(SiaType):
-#     parent_id: Optional[BlockID] = strawberry.field(description="The ID of the parent block", name="parentID")
 #     nonce: Optional[int] = strawberry.field(description="The nonce used to mine the block | Format: uint64", name="nonce")
-#     timestamp: Optional[datetime.datetime] = strawberry.field(description="The time the block was mined | Format: date-time", name="timestamp")
+#     name: X = strawberry.field(name="name")
+#     parent_id: Optional[BlockID] = strawberry.field(description="The ID of the parent block", name="parentID")
 #     miner_payouts: Optional[List[SiacoinOutput]] = strawberry.field(name="minerPayouts")
-#     transactions: Optional[List[Transaction]] = strawberry.field(name="transactions")
-#     v2: Optional[V2BlockData] = strawberry.field(name="v2")
+
+
+@strawberry.type
+class Block(SiaType):
+    parent_id: Optional[BlockID] = strawberry.field(description="The ID of the parent block", name="parentID")
+    nonce: Optional[int] = strawberry.field(description="The nonce used to mine the block | Format: uint64", name="nonce")
+    timestamp: Optional[datetime.datetime] = strawberry.field(description="The time the block was mined | Format: date-time", name="timestamp")
+    miner_payouts: Optional[List[SiacoinOutput]] = strawberry.field(name="minerPayouts")
+    transactions: Optional[List[Transaction]] = strawberry.field(name="transactions")
+    v2: Optional[V2BlockData] = strawberry.field(name="v2")
 
 
 @strawberry.type
@@ -783,14 +824,15 @@ class ContractSize(SiaType):
 
 
 
-@strawberry.type(description="A transaction or other event that affects the wallet including miner payouts, siafund claims, and file contract payouts.")
+# @strawberry.type(description="A transaction or other event that affects the wallet including miner payouts, siafund claims, and file contract payouts.")
+@strawberry.type
 class Event(SiaType):
     id: Optional[Hash256] = strawberry.field(description="The event's ID", name="id")
     index: Optional[ChainIndex] = strawberry.field(description="Information about the block that triggered the creation of this event", name="index")
     confirmations: Optional[int] = strawberry.field(description="The number of blocks on top of the block that triggered the creation of this event | Format: uint64", name="confirmations")
     type: Optional[str] = strawberry.field(description="The type of the event | Allowed values: miner, foundation, siafundClaim, v1Transaction, v1ContractResolution, v2Transaction, v2ContractResolution", name="type")
     data: Optional[JSON] = strawberry.field(name="data")
-    maturity_height: Optional[BlockHeight] = strawberry.field(description="The block height at which the payout matures.", name="maturityHeight")
+    maturityHeight: Optional[str] = strawberry.field(description="The block height at which the payout matures.", name="maturityHeight")
     timestamp: Optional[datetime.datetime] = strawberry.field(description="The time the event was created | Format: date-time", name="timestamp")
     relevant: Optional[List[Address]] = strawberry.field(name="relevant")
 
@@ -866,7 +908,8 @@ class HostInteractions(SiaType):
     failed_interactions: Optional[float] = strawberry.field(description="The number of failed interactions with the host. | Format: float", name="failedInteractions")
 
 
-@strawberry.type(description="A detailed price table containing cost and configuration values for a host.")
+# @strawberry.type(description="A detailed price table containing cost and configuration values for a host.")
+@strawberry.type
 class HostPriceTable(SiaType):
     uid: Optional[SettingsID] = strawberry.field(description="Unique specifier that identifies this price table.", name="uid")
     validity: Optional[int] = strawberry.field(description="Duration (in nanoseconds) for which the host guarantees these prices are valid. | Format: int64 | Example: 3600000000000", name="validity")
@@ -1100,19 +1143,22 @@ class ObjectMetadata(SiaType):
     mime_type: Optional[str] = strawberry.field(description="The MIME type of the object", name="mimeType")
 
 
-@strawberry.type(description="User-defined metadata about an object provided through X-Sia-Meta- headers")
+# @strawberry.type(description="User-defined metadata about an object provided through X-Sia-Meta- headers")
+@strawberry.type
 class ObjectUserMetadata(SiaType):
     _dummy: Optional[str] = strawberry.field(default=None)
 
 
-@strawberry.type(description="A slab of data to migrate")
+# @strawberry.type(description="A slab of data to migrate")
+@strawberry.type
 class Slab(SiaType):
     health: Optional[float] = strawberry.field(description="Minimum: 0 | Maximum: 1 | Format: float", name="health")
     encryption_key: Optional[EncryptionKey] = strawberry.field(description="The encryption key used to encrypt the slab's shards", name="encryptionKey")
     min_shards: Optional[int] = strawberry.field(description="The number of data shards the slab is split into | Minimum: 1 | Maximum: 255 | Format: uint8", name="minShards")
 
 
-@strawberry.type(description="A contiguous region within a slab")
+# @strawberry.type(description="A contiguous region within a slab")
+@strawberry.type
 class SlabSlice(SiaType):
     slab: Optional[Slab] = strawberry.field(name="slab")
     offset: Optional[int] = strawberry.field(description="Format: uint32", name="offset")
@@ -1934,8 +1980,6 @@ class TxpoolTransactionsResponse(SiaType):
 
 @strawberry.type
 class BalanceResponse(Balance):
-    # # wallet.Balance details; represent as JSON or separate fields if known.
-    # balance_data: Optional[JSON] = strawberry.field(description="wallet.Balance")
     pass
 
 @strawberry.type

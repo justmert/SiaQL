@@ -12,15 +12,6 @@ from siaql.graphql.schemas.types import (
     SiafundElement,
     StateResponse,
     RescanResponse,
-    WalletFundResponse,
-    AddressBalance,  # not exist
-    GatewayPeer,
-    WalletConstructV2Response,
-    WalletConstructResponse,
-    Balance,
-    Event,
-    Address,
-    Wallet,
     ConsensusState,
     Network,
     BalanceResponse,
@@ -278,9 +269,232 @@ class WalletdClient:
     @handle_api_errors(WalletdError)
     async def get_address_events(self, address: str, offset: int = 0, limit: int = 500) -> List[Dict[str, Any]]:
         """Get events for an address"""
-        response = await self.client.get(f"/addresses/{address}/events", params={"offset": offset, "limit": limit})
-        response.raise_for_status()
-        return response.json()
+        # response = await self.client.get(f"/addresses/{address}/events", params={"offset": offset, "limit": limit})
+        response = [
+  {
+    "id": "h:b0a50a2e2f3b6acf1c7a5974989133dcce69696ce174f63fe0344855d519e2d2",
+    "index": {
+      "height": 76633,
+      "id": "bid:00000000afc28d36e868779b57011590c941bb598e6acf993420c88671229bc8"
+    },
+    "timestamp": "2024-06-28T14:38:52Z",
+    "maturityHeight": 76778,
+    "type": "miner",
+    "data": {
+      "siacoinElement": {
+        "id": "h:b0a50a2e2f3b6acf1c7a5974989133dcce69696ce174f63fe0344855d519e2d2",
+        "leafIndex": 1673774,
+        "merkleProof": None,
+        "siacoinOutput": {
+          "value": "300001173550000000000000000000",
+          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+        },
+        "maturityHeight": 76777
+      }
+    }
+  },
+  {
+    "id": "h:474478405fa966ddf32c1782374f46a89fc8012c3b37e8d17f010da33619abd7",
+    "index": {
+      "height": 76631,
+      "id": "bid:0000000045be7569ac4dad7346dda6b5a0294b6b9145428c275f92e0689be27d"
+    },
+    "timestamp": "2024-06-28T14:32:22Z",
+    "maturityHeight": 76776,
+    "type": "miner",
+    "data": {
+      "siacoinElement": {
+        "id": "h:474478405fa966ddf32c1782374f46a89fc8012c3b37e8d17f010da33619abd7",
+        "leafIndex": 1673431,
+        "merkleProof": None,
+        "siacoinOutput": {
+          "value": "300000000000000000000000000000",
+          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+        },
+        "maturityHeight": 76775
+      }
+    }
+  },
+  {
+    "id": "h:0e1a3157ccb4b50ca90407f696f9d4c25e166872266712d6cf88f561e39c7111",
+    "index": {
+      "height": 76630,
+      "id": "bid:0000000004a1aacfcfb5c696cc763dd629fa20eb58e07ae77ee4db6ad6a2694d"
+    },
+    "timestamp": "2024-06-28T14:22:42Z",
+    "maturityHeight": 76775,
+    "type": "miner",
+    "data": {
+      "siacoinElement": {
+        "id": "h:0e1a3157ccb4b50ca90407f696f9d4c25e166872266712d6cf88f561e39c7111",
+        "leafIndex": 1673429,
+        "merkleProof": None,
+        "siacoinOutput": {
+          "value": "300001012590000000000000000000",
+          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+        },
+        "maturityHeight": 76774
+      }
+    }
+  },
+  {
+    "id": "h:f4c6d086b01bffc6b6b750ce3029b4e3a351010a7977fce8475355b6396b541c",
+    "index": {
+      "height": 76629,
+      "id": "bid:00000000c48e6bc7498ddee7e63114f6a982999f7040b67cac6ead9af333575a"
+    },
+    "timestamp": "2024-06-28T14:13:33Z",
+    "maturityHeight": 76774,
+    "type": "miner",
+    "data": {
+      "siacoinElement": {
+        "id": "h:f4c6d086b01bffc6b6b750ce3029b4e3a351010a7977fce8475355b6396b541c",
+        "leafIndex": 1673095,
+        "merkleProof": None,
+        "siacoinOutput": {
+          "value": "300000000000000000000000000000",
+          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+        },
+        "maturityHeight": 76773
+      }
+    }
+  },
+  {
+    "id": "h:d8ad9dda724c9ea66dcf0f777f1b5ec482ef71939129aa82c694bd636b86e5a3",
+    "index": {
+      "height": 76628,
+      "id": "bid:00000000e86291aae657d756c3614de6f250524d1b7c833afeca8d33b0e40576"
+    },
+    "timestamp": "2024-06-28T14:13:11Z",
+    "maturityHeight": 76773,
+    "type": "miner",
+    "data": {
+      "siacoinElement": {
+        "id": "h:d8ad9dda724c9ea66dcf0f777f1b5ec482ef71939129aa82c694bd636b86e5a3",
+        "leafIndex": 1673093,
+        "merkleProof": None,
+        "siacoinOutput": {
+          "value": "300000640970000000000000000000",
+          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+        },
+        "maturityHeight": 76772
+      }
+    }
+  },
+  {
+    "id": "h:4beedcec5d1d0fafc941f4cb305a712f17672fd2d4829f068dc207b7d03f0ce5",
+    "index": {
+      "height": 76627,
+      "id": "bid:0000000044e4e65d9fe6ba7593e16369162b29531c7b780f6d22606017294cf6"
+    },
+    "timestamp": "2024-06-28T14:09:22Z",
+    "maturityHeight": 76772,
+    "type": "miner",
+    "data": {
+      "siacoinElement": {
+        "id": "h:4beedcec5d1d0fafc941f4cb305a712f17672fd2d4829f068dc207b7d03f0ce5",
+        "leafIndex": 1672871,
+        "merkleProof": None,
+        "siacoinOutput": {
+          "value": "300000000000000000000000000000",
+          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+        },
+        "maturityHeight": 76771
+      }
+    }
+  },
+  {
+    "id": "h:3acbfc71fbd088e0f3298bf5422e1948713db90d994aa36a4b6a0f0fc5b7e705",
+    "index": {
+      "height": 76626,
+      "id": "bid:000000003873b3df7e9f9cd157dbb3222307b7bd1c450e6f6076545846b00f91"
+    },
+    "timestamp": "2024-06-28T14:06:30Z",
+    "maturityHeight": 76771,
+    "type": "miner",
+    "data": {
+      "siacoinElement": {
+        "id": "h:3acbfc71fbd088e0f3298bf5422e1948713db90d994aa36a4b6a0f0fc5b7e705",
+        "leafIndex": 1672869,
+        "merkleProof": None,
+        "siacoinOutput": {
+          "value": "300000307230000000000000000000",
+          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+        },
+        "maturityHeight": 76770
+      }
+    }
+  },
+  {
+    "id": "h:b2ae335aab760aced353f291b0974233825884aa85e7f99e3a2833636a3119de",
+    "index": {
+      "height": 76625,
+      "id": "bid:000000008f5d8ad18c8948e291e23792d2efceaab13d3f62af89cdc2770efb4d"
+    },
+    "timestamp": "2024-06-28T14:02:26Z",
+    "maturityHeight": 76770,
+    "type": "miner",
+    "data": {
+      "siacoinElement": {
+        "id": "h:b2ae335aab760aced353f291b0974233825884aa85e7f99e3a2833636a3119de",
+        "leafIndex": 1672757,
+        "merkleProof": None,
+        "siacoinOutput": {
+          "value": "300001640970000000000000000000",
+          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+        },
+        "maturityHeight": 76769
+      }
+    }
+  },
+  {
+    "id": "h:a012dd2099c2fd8582f5130d4e46f281a364133d721c8510f57b572f1ae8026b",
+    "index": {
+      "height": 76624,
+      "id": "bid:0000000077679d98d24c7f67ecba8eb451c7ccdfa78e833ac6dfda8734cd8fd3"
+    },
+    "timestamp": "2024-06-28T13:54:43Z",
+    "maturityHeight": 76769,
+    "type": "miner",
+    "data": {
+      "siacoinElement": {
+        "id": "h:a012dd2099c2fd8582f5130d4e46f281a364133d721c8510f57b572f1ae8026b",
+        "leafIndex": 1672533,
+        "merkleProof": None,
+        "siacoinOutput": {
+          "value": "300000948200000000000000000000",
+          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+        },
+        "maturityHeight": 76768
+      }
+    }
+  },
+  {
+    "id": "h:fdcacbed22f91070b0709337f8df7880db67e53f33bf889e2082f34615e463eb",
+    "index": {
+      "height": 76623,
+      "id": "bid:00000000130939be94450b6eaefc43c3fe8e9f70cc69bcaeb58cb2a3c30563a5"
+    },
+    "timestamp": "2024-06-28T13:47:14Z",
+    "maturityHeight": 76768,
+    "type": "miner",
+    "data": {
+      "siacoinElement": {
+        "id": "h:fdcacbed22f91070b0709337f8df7880db67e53f33bf889e2082f34615e463eb",
+        "leafIndex": 1672201,
+        "merkleProof": None,
+        "siacoinOutput": {
+          "value": "300000000000000000000000000000",
+          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+        },
+        "maturityHeight": 76767
+      }
+    }
+  }
+]
+        # response.raise_for_status()
+        # return response.json()
+        return response
 
     @handle_api_errors(WalletdError)
     async def get_address_unconfirmed_events(self, address: str) -> List[Dict[str, Any]]:

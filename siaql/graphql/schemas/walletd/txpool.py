@@ -36,9 +36,9 @@ class TxpoolMutations:
     async def txpool_broadcast(
         self,
         info: Info,
-        basis: ChainIndex,
-        transactions: List[Transaction],
-        v2transactions: List[V2Transaction]
+        basis: ChainIndex.Input,
+        transactions: List[Transaction.Input],
+        v2transactions: List[V2Transaction.Input]
     ) -> bool:
         """Broadcast transactions to the network"""
         await WalletdBaseResolver.handle_api_call(

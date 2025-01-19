@@ -9,7 +9,8 @@ from siaql.graphql.schemas.types import (
     State,        # From consensus.State 
     Network,      # From consensus.Network
     ApplyUpdate,  # From consensus.ApplyUpdate
-    RevertUpdate  # From consensus.RevertUpdate
+    RevertUpdate,  # From consensus.RevertUpdate
+    Block
 )
 
 @strawberry.type
@@ -51,7 +52,7 @@ class ConsensusQueries(WalletdBaseResolver):
     async def consensus_updates(
         self, 
         info: Info, 
-        index: ChainIndex, 
+        index: ChainIndex.Input, 
         limit: int = 10
     ) -> List[Union[ApplyUpdate, RevertUpdate]]:
         """Get consensus updates since specified index"""

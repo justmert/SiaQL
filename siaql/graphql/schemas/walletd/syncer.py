@@ -29,7 +29,7 @@ class SyncerMutations:
         return True
 
     @strawberry.mutation
-    async def syncer_broadcast_block(self, info: Info, block: Block) -> bool:
+    async def syncer_broadcast_block(self, info: Info, block: Block.Input) -> bool:
         """Broadcast a block to all peers"""
         await WalletdBaseResolver.handle_api_call(
             info,
