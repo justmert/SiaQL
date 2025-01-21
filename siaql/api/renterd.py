@@ -99,7 +99,6 @@ class RenterdClient:
         response = await self.worker_client.delete(f"/objects/{key}", params=params)
         response.raise_for_status()
 
-
     @handle_api_errors(RenterdError)
     async def get_worker_object(self, bucket: str, key: str, opts: DownloadObjectOptions) -> GetObjectResponse:
         """Download object from worker"""
@@ -181,7 +180,6 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
     @handle_api_errors(RenterdError)
     async def get_download_stats(self) -> DownloadStatsResponse:
         response = await self.worker_client.get("/stats/downloads")
@@ -202,8 +200,6 @@ class RenterdClient:
         response = await self.worker_client.put(f"/multipart/{key}", params=params)
         response.raise_for_status()
         return response.json()
-
-
 
     # ----------------------------------------
 
@@ -230,8 +226,6 @@ class RenterdClient:
         )
         response.raise_for_status()
         return response.json()
-    
-
 
     @handle_api_errors(RenterdError)
     async def unlock_account(self, account_id: str, lockID: int) -> None:
@@ -244,7 +238,6 @@ class RenterdClient:
         response = await self.bus_client.post(f"/account/{account_id}/add", json=request)
         response.raise_for_status()
 
-
     @handle_api_errors(RenterdError)
     async def update_account_balance(self, account_id: str, request: AccountsUpdateBalanceRequest) -> None:
         response = await self.bus_client.post(f"/account/{account_id}/update", json=request)
@@ -256,14 +249,11 @@ class RenterdClient:
         response = await self.client.post(f"/account/{account_id}/requiressync", json=request)
         response.raise_for_status()
 
-
     @handle_api_errors(RenterdError)
     async def reset_drift_account(self, account_id: str) -> None:
         """Reset account drift"""
         response = await self.client.post(f"/account/{account_id}/resetdrift")
         response.raise_for_status()
-
-
 
     @handle_api_errors(RenterdError)
     async def get_alerts(self, severity: str, offset: int, limit: int) -> AlertsResponse:
@@ -283,7 +273,7 @@ class RenterdClient:
         response.raise_for_status()
 
     # Autopilot endpoints
-    @handle_api_errors(RenterdError) #  MISSING
+    @handle_api_errors(RenterdError)  #  MISSING
     async def get_autopilots(self) -> List[AutopilotConfig]:
         """Get all autopilot configurations"""
         response = await self.client.get("/autopilots")
@@ -303,13 +293,11 @@ class RenterdClient:
         response = await self.client.put(f"/autopilot/{autopilot_id}", json=config)
         response.raise_for_status()
 
-
     @handle_api_errors(RenterdError)
     async def get_buckets(self) -> List[Bucket]:
         response = await self.bus_client.get("/buckets")
         response.raise_for_status()
         return response.json()
-
 
     @handle_api_errors(RenterdError)
     async def create_bucket(self, name: str, policy: BucketPolicy) -> None:
@@ -332,18 +320,17 @@ class RenterdClient:
         response.raise_for_status()
 
         # Consensus endpoints
+
     @handle_api_errors(RenterdError)
     async def accept_block(self, block: Block) -> None:
         response = await self.bus_client.post("/consensus/acceptblock", json=block)
         response.raise_for_status()
-
 
     @handle_api_errors(RenterdError)
     async def get_consensus_state(self) -> ConsensusState:
         response = await self.bus_client.get("/consensus/state")
         response.raise_for_status()
         return response.json()
-    
 
     @handle_api_errors(RenterdError)
     async def get_consensus_siafundfee(self, payout: Currency) -> Currency:
@@ -351,7 +338,6 @@ class RenterdClient:
         response = await self.client.get(f"/consensus/siafundfee/{payout}")
         response.raise_for_status()
         return response.json()
-
 
     @handle_api_errors(RenterdError)
     async def get_contract(self, id: str) -> ContractMetadata:
@@ -364,7 +350,6 @@ class RenterdClient:
         """Delete a contract"""
         response = await self.client.delete(f"/contract/{contract_id}")
         response.raise_for_status()
-
 
     @handle_api_errors(RenterdError)
     async def post_contract(self, contract_id: str, contract: ContractAddRequest) -> None:
@@ -381,8 +366,6 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
-
     @handle_api_errors(RenterdError)
     async def post_contract_keepalive(self, contract_id: str, request: ContractKeepaliveRequest) -> None:
         """Extend duration on an already acquired lock"""
@@ -395,13 +378,12 @@ class RenterdClient:
         response = await self.bus_client.get(f"/contract/{contract_id}/ancestors", params=params)
         response.raise_for_status()
         return response.json()
-    
+
     @handle_api_errors(RenterdError)
     async def release_contract(self, contract_id: str, lock_id: int) -> None:
         response = await self.bus_client.post(f"/contract/{contract_id}/release", json={"lockID": lock_id})
         response.raise_for_status()
 
-    
     @handle_api_errors(RenterdError)
     async def get_contract_roots(self, contract_id: str) -> List[Hash256]:
         response = await self.bus_client.get(f"/contract/{contract_id}/roots")
@@ -414,7 +396,7 @@ class RenterdClient:
         response = await self.client.get(f"/contract/{contract_id}/size")
         response.raise_for_status()
         return response.json()
-    
+
     @handle_api_errors(RenterdError)
     async def get_contracts(self, filter_mode: str = "active") -> List[ContractMetadata]:
         response = await self.bus_client.get("/contracts", params={"filtermode": filter_mode})
@@ -427,14 +409,11 @@ class RenterdClient:
         response = await self.client.post("/contracts/archive", json=to_archive)
         response.raise_for_status()
 
-
     @handle_api_errors(RenterdError)
     async def delete_contracts_all(self) -> None:
         """Delete all contracts"""
         response = await self.client.delete("/contracts/all")
         response.raise_for_status()
-
-
 
     @handle_api_errors(RenterdError)
     async def get_contracts_prunable(self) -> ContractsPrunableDataResponse:
@@ -442,8 +421,6 @@ class RenterdClient:
         response = await self.client.get("/contracts/prunable")
         response.raise_for_status()
         return response.json()
-    
-
 
     @handle_api_errors(RenterdError)
     async def get_contracts_renewed(self, contract_id: str) -> ContractMetadata:
@@ -470,7 +447,6 @@ class RenterdClient:
         response = await self.client.get("/contracts/sets")
         response.raise_for_status()
         return response.json()
-  
 
     @handle_api_errors(RenterdError)
     async def post_contracts_spending(self, records: List[ContractSpendingRecord]) -> None:
@@ -486,13 +462,11 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
     @handle_api_errors(RenterdError)
     async def reset_lost_sectors(self, pubkey: str) -> None:
         """Reset lost sectors for a host"""
         response = await self.client.post(f"/host/{pubkey}/resetlostsectors")
         response.raise_for_status()
-
 
     @handle_api_errors(RenterdError)
     async def get_hosts(self, offset: int, limit: int) -> List[Host]:
@@ -508,7 +482,6 @@ class RenterdClient:
         response = await self.client.get("/hosts/allowlist")
         response.raise_for_status()
         return response.json()
-
 
     @handle_api_errors(RenterdError)
     async def update_hosts_allowlist(self, request: UpdateAllowlistRequest) -> None:
@@ -526,8 +499,6 @@ class RenterdClient:
         response = await self.bus_client.put("/hosts/blocklist", json=request)
         response.raise_for_status()
 
-
-
     @handle_api_errors(RenterdError)
     async def post_hosts_interactions(self, interactions: List[HostScan]) -> None:
         """Record host interactions"""
@@ -541,7 +512,6 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
     @handle_api_errors(RenterdError)
     async def get_hosts_scanning(self, offset: int, limit: int, last_scan: str) -> List[Host]:
         """Get hosts for scanning"""
@@ -554,11 +524,7 @@ class RenterdClient:
     @handle_api_errors(RenterdError)
     async def get_metrics(self, key: str, start: str, n: int, interval: str) -> Any:
         """Get metrics"""
-        params = {
-            "start": start,
-            "n": n,
-            "interval": interval
-        }
+        params = {"start": start, "n": n, "interval": interval}
         response = await self.client.get(f"/metric/{key}", params=params)
         response.raise_for_status()
         return response.json()
@@ -570,13 +536,11 @@ class RenterdClient:
         response = await self.client.delete(f"/metric/{key}", params=params)
         response.raise_for_status()
 
-
     @handle_api_errors(RenterdError)
     async def abort_multipart_upload(self, request: MultipartAbortRequest) -> None:
         response = await self.bus_client.post("/multipart/abort", json=request)
         response.raise_for_status()
 
-  
     @handle_api_errors(RenterdError)
     async def complete_multipart_upload(self, request: MultipartCompleteRequest) -> MultipartCompleteResponse:
         response = await self.bus_client.post("/multipart/complete", json=request)
@@ -607,7 +571,7 @@ class RenterdClient:
         """Add a new part to multipart upload"""
         response = await self.client.put("/multipart/part", json=request)
         response.raise_for_status()
-  
+
     # Object endpoints
     @handle_api_errors(RenterdError)
     async def get_object(self, key: str) -> Object:
@@ -621,7 +585,6 @@ class RenterdClient:
         """Store object metadata"""
         response = await self.client.put(f"/objects/{key}", json=request)
         response.raise_for_status()
-
 
     @handle_api_errors(RenterdError)
     async def delete_object(self, key: str) -> None:
@@ -649,8 +612,6 @@ class RenterdClient:
         response = await self.client.post("/objects/rename", json=request)
         response.raise_for_status()
 
-
-
     # Params endpoints
     @handle_api_errors(RenterdError)
     async def get_download_params(self) -> DownloadParams:
@@ -673,7 +634,6 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
     # Search endpoints
     @handle_api_errors(RenterdError)
     async def post_search_hosts(self, request: HostsRequest) -> List[Host]:
@@ -682,16 +642,10 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
     @strawberry.field
     async def search_hosts(self, info: Info, request: HostsRequest) -> List[Host]:
         """Search hosts"""
-        return await self.handle_api_call(
-            info,
-            "post_search_hosts",
-            request=request
-        )
-
+        return await self.handle_api_call(info, "post_search_hosts", request=request)
 
     @handle_api_errors(RenterdError)
     async def get_search_objects(self, bucket: str, key: str, offset: int, limit: int) -> List[str]:
@@ -701,7 +655,6 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
     # Settings endpoints
     @handle_api_errors(RenterdError)
     async def get_settings(self) -> List[str]:
@@ -709,8 +662,6 @@ class RenterdClient:
         response = await self.client.get("/settings")
         response.raise_for_status()
         return response.json()
-
-
 
     @handle_api_errors(RenterdError)
     async def get_setting(self, key: str) -> Any:
@@ -731,18 +682,11 @@ class RenterdClient:
         response = await self.client.delete(f"/setting/{key}")
         response.raise_for_status()
 
-
-
-
-
-
     @handle_api_errors(RenterdError)
     async def get_slabs_for_migration(self, request: MigrationSlabsRequest) -> SlabsForMigrationResponse:
         response = await self.bus_client.post("/slabs/migration", json=request)
         response.raise_for_status()
         return response.json()
-
-
 
     @handle_api_errors(RenterdError)
     async def get_partial_slab(self, key: EncryptionKey, offset: int, length: int) -> bytes:
@@ -751,21 +695,19 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
     @handle_api_errors(RenterdError)
     async def add_partial_slab(self, data: bytes, min_shards: int, total_shards: int) -> AddPartialSlabResponse:
         params = {"minshards": min_shards, "totalshards": total_shards}
         response = await self.bus_client.post("/slabs/partial", data=data, params=params)
         response.raise_for_status()
         return response.json()
-    
+
     # Slab endpoints
     @handle_api_errors(RenterdError)
     async def get_slab(self, key: EncryptionKey) -> Slab:
         response = await self.bus_client.get(f"/slab/{key}")
         response.raise_for_status()
         return response.json()
-
 
     @handle_api_errors(RenterdError)
     async def get_slab_objects(self, key: str) -> SlabObjects:
@@ -774,31 +716,24 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
     @handle_api_errors(RenterdError)
     async def update_slab(self, key: str, sectors: List[UploadedSector]) -> None:
         """Update a slab"""
         response = await self.client.put(f"/slab/{key}", json=sectors)
         response.raise_for_status()
 
-
-
-
     @handle_api_errors(RenterdError)
     async def refresh_health(self) -> None:
         response = await self.bus_client.post("/slabs/refreshhealth")
         response.raise_for_status()
 
-
-
-   # State endpoint
+    # State endpoint
     @handle_api_errors(RenterdError)
     async def get_state(self) -> BusStateResponse:
         """Get bus state"""
         response = await self.client.get("/state")
         response.raise_for_status()
         return response.json()
-
 
     # Stats endpoint
     @handle_api_errors(RenterdError)
@@ -808,23 +743,18 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
     # Syncer endpoints
     @handle_api_errors(RenterdError)
     async def get_syncer_address(self) -> str:
         response = await self.bus_client.get("/syncer/address")
         response.raise_for_status()
         return response.json()
-    
-
-
 
     @handle_api_errors(RenterdError)
     async def post_syncer_connect(self, address: str) -> None:
         """Connect to peer"""
         response = await self.client.post("/syncer/connect", json=address)
         response.raise_for_status()
-
 
     @handle_api_errors(RenterdError)
     async def get_syncer_peers(self) -> List[str]:
@@ -839,7 +769,6 @@ class RenterdClient:
         response = await self.client.post("/txpool/broadcast", json=transactions)
         response.raise_for_status()
 
-
     @handle_api_errors(RenterdError)
     async def get_txpool_recommendedfee(self) -> Currency:
         """Get recommended transaction fee"""
@@ -847,14 +776,12 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
     @handle_api_errors(RenterdError)
     async def get_txpool_transactions(self) -> List[Transaction]:
         """Get transaction pool transactions"""
         response = await self.client.get("/txpool/transactions")
         response.raise_for_status()
         return response.json()
-
 
     @handle_api_errors(RenterdError)
     async def track_upload(self, upload_id: str) -> None:
@@ -870,7 +797,6 @@ class RenterdClient:
     async def add_upload_sector(self, upload_id: str, roots: List[Hash256]) -> None:
         response = await self.worker_client.post(f"/upload/{upload_id}/sector", json=roots)
         response.raise_for_status()
-
 
     # Wallet endpoints
     @handle_api_errors(RenterdError)
@@ -957,7 +883,6 @@ class RenterdClient:
         response.raise_for_status()
         return response.json()
 
-
     # Webhook endpoints
     @handle_api_errors(RenterdError)
     async def get_webhooks(self) -> WebhookResponse:
@@ -979,348 +904,3 @@ class RenterdClient:
     async def broadcast_webhook_action(self, action: Event) -> None:
         response = await self.bus_client.post("/webhooks/action", json=action)
         response.raise_for_status()
-
-
-    # continue ----------------------------------------
-
-
-    @handle_api_errors(RenterdError)
-    async def save_accounts(self, accounts: List[Account]) -> None:
-        response = await self.bus_client.post("/accounts", json={"accounts": accounts})
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def fund_account(self, request: AccountsFundRequest) -> AccountsFundResponse:
-        response = await self.bus_client.post("/accounts/fund", json=request)
-        response.raise_for_status()
-        return response.json()
-
-
-
-
-
-
-
-    @handle_api_errors(RenterdError)
-    async def get_metrics(self, key: str, start: str, n: int, interval: str) -> List[Any]:
-        params = {"start": start, "n": n, "interval": interval}
-        response = await self.bus_client.get(f"/metric/{key}", params=params)
-        response.raise_for_status()
-        return response.json()
-
-
-
-
-
-
-
-
-
-
-
-
-    # Multi-part upload endpoints
-
-
-    # Settings endpoints
-    @handle_api_errors(RenterdError)
-    async def get_gouging_settings(self) -> GougingSettings:
-        response = await self.bus_client.get("/settings/gouging")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def update_gouging_settings(self, settings: GougingSettings) -> None:
-        response = await self.bus_client.put("/settings/gouging", json=settings)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def get_upload_settings(self) -> UploadSettings:
-        response = await self.bus_client.get("/settings/upload")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def update_upload_settings(self, settings: UploadSettings) -> None:
-        response = await self.bus_client.put("/settings/upload", json=settings)
-        response.raise_for_status()
-
-
-    # @handle_api_errors(RenterdError)
-    # async def update_slab(self, key: EncryptionKey, sectors: List[UploadedSector]) -> None:
-    #     response = await self.bus_client.put(f"/slab/{key}", json=sectors)
-    #     response.raise_for_status()
-
-
-
-
-
-    # Object stats endpoints
-    @handle_api_errors(RenterdError)
-    async def get_object_stats(self, bucket: Optional[str] = None) -> ObjectsStatsResponse:
-        params = {}
-        if bucket:
-            params["bucket"] = bucket
-        response = await self.bus_client.get("/stats/objects", params=params)
-        response.raise_for_status()
-        return response.json()
-
-
- 
-
-    # Transaction pool endpoints
-    @handle_api_errors(RenterdError)
-    async def get_txpool_fee(self) -> Currency:
-        response = await self.bus_client.get("/txpool/recommendedfee")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_txpool_transactions(self) -> List[Transaction]:
-        response = await self.bus_client.get("/txpool/transactions")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def broadcast_transaction(self, txns: List[Transaction]) -> None:
-        response = await self.bus_client.post("/txpool/broadcast", json=txns)
-        response.raise_for_status()
-
-    # Metrics endpoints
-    @handle_api_errors(RenterdError)
-    async def get_contract_metrics(
-        self, ctx: str, start: TimeRFC3339, n: int, interval: DurationMS, opts: ContractMetricsQueryOpts
-    ) -> List[ContractMetric]:
-        params = {"start": start, "n": n, "interval": interval, **opts.__dict__}
-        response = await self.bus_client.get(f"/metrics/{ctx}", params=params)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_contract_prune_metrics(
-        self, start: TimeRFC3339, n: int, interval: DurationMS, opts: ContractPruneMetricsQueryOpts
-    ) -> List[ContractPruneMetric]:
-        params = {"start": start, "n": n, "interval": interval, **opts.__dict__}
-        response = await self.bus_client.get("/metrics/contractprune", params=params)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def record_contract_prune_metric(self, metrics: List[ContractPruneMetric]) -> None:
-        response = await self.bus_client.put("/metric/contractprune", json={"metrics": metrics})
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def prune_metrics(self, metric: str, cutoff: TimeRFC3339) -> None:
-        params = {"cutoff": cutoff}
-        response = await self.bus_client.delete(f"/metric/{metric}", params=params)
-        response.raise_for_status()
-
-
-
-
-
-
-    # Metrics endpoints
-    @handle_api_errors(RenterdError)
-    async def get_contract_metrics(
-        self, start: TimeRFC3339, n: int, interval: DurationMS, opts: ContractMetricsQueryOpts
-    ) -> List[ContractMetric]:
-        params = {"start": str(start), "n": n, "interval": str(interval), **opts.__dict__}
-        response = await self.bus_client.get("/metric/contract", params=params)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_wallet_metrics(
-        self, start: TimeRFC3339, n: int, interval: DurationMS, opts: WalletMetricsQueryOpts
-    ) -> List[WalletMetric]:
-        params = {"start": str(start), "n": n, "interval": str(interval), **opts.__dict__}
-        response = await self.bus_client.get("/metric/wallet", params=params)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def record_contract_prune_metric(self, metrics: List[ContractPruneMetric]) -> None:
-        response = await self.bus_client.put("/metric/contract-prune", json={"metrics": metrics})
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def record_contract_metric(self, metrics: List[ContractMetric]) -> None:
-        response = await self.bus_client.put("/metric/contract", json={"metrics": metrics})
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def prune_metrics(self, metric: str, cutoff: TimeRFC3339) -> None:
-        params = {"cutoff": str(cutoff)}
-        response = await self.bus_client.delete(f"/metric/{metric}", params=params)
-        response.raise_for_status()
-
-    # Bus object endpoints
-    @handle_api_errors(RenterdError)
-    async def get_object(self, bucket: str, key: str) -> Object:
-        params = {"bucket": bucket}
-        response = await self.bus_client.get(f"/object/{key}", params=params)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def put_object(self, bucket: str, key: str, obj: Object) -> None:
-        response = await self.bus_client.put(f"/object/{key}", json={"bucket": bucket, "object": obj})
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def copy_object(
-        self, src_bucket: str, dst_bucket: str, src_key: str, dst_key: str, opts: CopyObjectOptions
-    ) -> ObjectMetadata:
-        response = await self.bus_client.post(
-            "/objects/copy",
-            json={
-                "sourceBucket": src_bucket,
-                "destinationBucket": dst_bucket,
-                "sourcePath": src_key,
-                "destinationPath": dst_key,
-                "mimeType": opts.mime_type,
-                "metadata": opts.metadata,
-            },
-        )
-        response.raise_for_status()
-        return response.json()
-
-    # Bus settings endpoints
-    # @handle_api_errors(RenterdError)
-    # async def get_s3_settings(self) -> S3Settings:
-    #     response = await self.bus_client.get("/settings/s3")
-    #     response.raise_for_status()
-    #     return response.json()
-
-    # @handle_api_errors(RenterdError)
-    # async def update_s3_settings(self, settings: S3Settings) -> None:
-    #     response = await self.bus_client.put("/settings/s3", json=settings)
-    #     response.raise_for_status()
-
-    # @handle_api_errors(RenterdError)
-    # async def get_pinned_settings(self) -> PinnedSettings:
-    #     response = await self.bus_client.get("/settings/pinned")
-    #     response.raise_for_status()
-    #     return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def update_pinned_settings(self, settings: PinnedSettings) -> None:
-        response = await self.bus_client.put("/settings/pinned", json=settings)
-        response.raise_for_status()
-
-    # Bus backup endpoints
-    @handle_api_errors(RenterdError)
-    async def backup(self, database: str, path: str) -> None:
-        response = await self.bus_client.post("/system/sqlite3/backup", json={"database": database, "path": path})
-        response.raise_for_status()
-
-    # Bus slab endpoints
-
-
-
-
-
-
-    @handle_api_errors(RenterdError)
-    async def host_scan(self, host_key: str, timeout: Optional[int] = None) -> HostScanResponse:
-        params = {}
-        if timeout:
-            params["timeout"] = timeout
-        response = await self.bus_client.post(f"/host/{host_key}/scan", params=params)
-        response.raise_for_status()
-        return response.json()
-
-    # Bus worker endpoints
-    @handle_api_errors(RenterdError)
-    async def get_worker_state(self) -> WorkerStateResponse:
-        response = await self.worker_client.get("/state")
-        response.raise_for_status()
-        return response.json()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    @handle_api_errors(RenterdError)
-    async def get_host(self, pubkey: PublicKey) -> Host:
-        """Get host information"""
-        response = await self.client.get(f"/host/{pubkey}")
-        response.raise_for_status()
-        return response.json()
-
-
-    # Host management endpoints
-    @handle_api_errors(RenterdError)
-    async def put_hosts_allowlist(self, add: List[PublicKey], remove: List[PublicKey], clear: bool) -> None:
-        """Update hosts allowlist"""
-        response = await self.client.put("/hosts/allowlist", json={"add": add, "remove": remove, "clear": clear})
-        response.raise_for_status()
-
-
-
-
-
-
-    # Metrics endpoints
-    @handle_api_errors(RenterdError)
-    async def get_metrics(self, key: str, params: Dict[str, Any]) -> Any:
-        """Get metrics for given key"""
-        response = await self.client.get(f"/metric/{key}", params=params)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def delete_metrics(self, key: str, cutoff: str) -> None:
-        """Delete metrics for given key"""
-        response = await self.client.delete(f"/metric/{key}", params={"cutoff": cutoff})
-        response.raise_for_status()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # Upload endpoints
-    @handle_api_errors(RenterdError)
-    async def post_upload(self, upload_id: str) -> None:
-        """Track upload"""
-        response = await self.client.post(f"/upload/{upload_id}")
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def delete_upload(self, upload_id: str) -> None:
-        """Delete upload"""
-        response = await self.client.delete(f"/upload/{upload_id}")
-        response.raise_for_status()
-

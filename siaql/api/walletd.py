@@ -273,7 +273,6 @@ class WalletdClient:
         response.raise_for_status()
         return response.json()
 
-
     @handle_api_errors(WalletdError)
     async def get_address_unconfirmed_events(self, address: str) -> List[Dict[str, Any]]:
         """Get unconfirmed events for an address"""
