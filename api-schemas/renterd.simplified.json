@@ -1,0 +1,4173 @@
+{
+  "item": [
+    {
+      "name": "bus",
+      "item": [
+        {
+          "name": "/accounts",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/accounts",
+          "description": "Returns all known ephemeral accounts from the bus.",
+          "responses": [
+            {
+              "name": "/accounts",
+              "status": 200,
+              "body": [
+                {
+                  "id": "ed25519:17858d080d30689ed0484ef64be7a41dc27b47fc5b7ab249c53043bca990598d",
+                  "host": "ed25519:f0a9ea162218799f0b25efdda6e66c06f0768f7afda2d2659599619c523cef9e",
+                  "balance": 9.924075099999958e+23,
+                  "drift": 9.924078879999968e+23,
+                  "requiresSync": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/account/:id",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/account/:id",
+          "description": "Returns the account with the given ID. If it doesn't exist, it will be created. The provided host's key will be attached to the account as additional metadata.",
+          "requestBody": {
+            "hostKey": "ed25519:0c920d0254011f1065eeb99aa909c644b991780c1155ce0aa34cce09e6eabdc9"
+          },
+          "responses": [
+            {
+              "name": "add",
+              "status": 200,
+              "body": {
+                "id": "ed25519:99611c808ccb74402f0c80ea0b22cefe3b46a73abe1072c90687658d44dead75",
+                "host": "ed25519:0c920d0254011f1065eeb99aa909c644b991780c1155ce0aa34cce09e6eabdc9",
+                "balance": 1e+24,
+                "drift": 1e+24,
+                "requiresSync": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "/account/:id/lock",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/account/:id/lock",
+          "description": "Commonly used by the worker, this endpoint allows for locking an account either exclusively or not. Usually workers will deposit and withdraw from accounts with a regular lock but for syncing the account balance with hosts an exclusive lock is required.\n\nThe duration specifies the time after which the account is unlocked automatically. The returned lock id can be used to unlock the account again sooner.",
+          "requestBody": {
+            "hostKey": "ed25519:0c920d0254011f1065eeb99aa909c644b991780c1155ce0aa34cce09e6eabdc9",
+            "exclusive": false,
+            "duration": "1000"
+          },
+          "responses": [
+            {
+              "name": "lock",
+              "status": 200,
+              "body": {
+                "account": {
+                  "id": "ed25519:99611c808ccb74402f0c80ea0b22cefe3b46a73abe1072c90687658d44dead75",
+                  "host": "ed25519:0c920d0254011f1065eeb99aa909c644b991780c1155ce0aa34cce09e6eabdc9",
+                  "balance": 1e+24,
+                  "drift": 1e+24,
+                  "requiresSync": false
+                },
+                "lockID": 13874228167312385374
+              }
+            }
+          ]
+        },
+        {
+          "name": "/account/:id/unlock",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/account/:id/unlock",
+          "description": "This is the counterpart to the account locking endpoint. The lock id returned when locking an account can be used to unlock it again before the locking duration has passed and the account gets unlocked automatically.",
+          "requestBody": {
+            "lockID": 13874228167312385374
+          }
+        },
+        {
+          "name": "/account/:id/add",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/account/:id/add",
+          "description": "Endpoint used for depositing or withdrawing tokens into/from an ephemeral account. The caller should hold a non-exlusive lock on the account.",
+          "requestBody": {
+            "host": "ed25519:0c920d0254011f1065eeb99aa909c644b991780c1155ce0aa34cce09e6eabdc9",
+            "amount": 1000000
+          }
+        },
+        {
+          "name": "/account/:id/update",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/account/:id/update",
+          "description": "Updates the balance of an account to the provided value. The caller should acquire an exclusive lock before calling this endpoint.",
+          "requestBody": {
+            "hostKey": "ed25519:8ed341e2a788850d397647b976f08a4090482e5e5c9720c305bc8c25b5d3192c",
+            "amount": 0
+          }
+        },
+        {
+          "name": "/account/:id/requiressync",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/account/:id/requiressync",
+          "description": "This endpoint marks the accoutn as requiring a balance sync. Usually set by workers when operations fail with an error indicating an insufficient balance.\n\nThe autopilot (if enabled) will periodically check for accounts that require syncing and initialise the sync automatically.",
+          "requestBody": {
+            "hostKey": "ed25519:0247d704dd9140c40243ec2e18344a7d5b62069ef4c062bc2928e74112aa90a3"
+          }
+        },
+        {
+          "name": "/account/:id/resetdrift",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/account/:id/resetdrift",
+          "description": "Resets the drift on ephemeral accounts. The drift tracks by how much Siacoin the expected balance of `renterd` differs from the host's over time. If the drift is too large, the autopilot refuses to pour more money into a host's account. Resetting the drift will cause the autopilot to fund the account again."
+        },
+        {
+          "name": "/alerts",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/alerts?offset=0&limit=-1",
+          "description": "Lists all the currently registered alerts.",
+          "responses": [
+            {
+              "name": "/alerts",
+              "status": 200,
+              "body": [
+                {
+                  "id": "h:804f827c66292c17c6388aecf3a98bc25c09c32ddefc289e754899bf0e93f78b",
+                  "severity": "error",
+                  "message": "failed to refill account: couldn't fund account: unable to fetch revision with contract: LatestRevision: DialStream: could not dial transport: dial tcp 47.201.106.209:9983: connect: no route to host (3.100356859s)\n",
+                  "data": {
+                    "accountID": "ed25519:a82e28057ddac68ae2677709635146ca6bac788fa927d18e750bb3a95be17931",
+                    "contractID": "fcid:890f1d21493fd478eef18e79572560d2297e52dba3740584f7104ffb4bfbb13d",
+                    "hostKey": "ed25519:a71661d9f854a4d6f93e9b120f07efc75facfd9bd2cb26de4c3559b74316eb75",
+                    "origin": "autopilot.autopilot"
+                  },
+                  "timestamp": "2023-08-30T12:20:49.611086295Z"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/alerts/dismiss",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/alerts/dismiss?all=true",
+          "description": "Dismisses alerts with the given ids.",
+          "requestBody": [
+            "h:804f827c66292c17c6388aecf3a98bc25c09c32ddefc289e754899bf0e93f78b"
+          ]
+        },
+        {
+          "name": "/alerts/register",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/alerts/register",
+          "description": "Registers a new alert. This is usually called by workers and the autopilot. An alert requires a unique `id`, a `severity` (`info|warning/error|critical`) and a message das describes the reason of the alert. Additional information can optionally be provided through the `data field.`",
+          "requestBody": {
+            "id": "h:804f827c66292c17c6388aecf3a98bc25c09c32ddefc289e754899bf0e93f78b",
+            "severity": "error",
+            "message": "failed to refill account: couldn't fund account: unable to fetch revision with contract: LatestRevision: DialStream: could not dial transport: dial tcp 47.201.106.209:9983: connect: no route to host (3.100356859s)\n",
+            "data": {
+              "accountID": "ed25519:a82e28057ddac68ae2677709635146ca6bac788fa927d18e750bb3a95be17931",
+              "contractID": "fcid:890f1d21493fd478eef18e79572560d2297e52dba3740584f7104ffb4bfbb13d",
+              "hostKey": "ed25519:a71661d9f854a4d6f93e9b120f07efc75facfd9bd2cb26de4c3559b74316eb75",
+              "origin": "autopilot.autopilot"
+            },
+            "timestamp": "2023-08-30T12:20:49.611086295Z"
+          }
+        },
+        {
+          "name": "/autopilots",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/autopilots",
+          "description": "Returns all autopilot configurations stored in the bus",
+          "responses": [
+            {
+              "name": "/autopilots",
+              "status": 200,
+              "body": [
+                {
+                  "id": "autopilot",
+                  "config": {
+                    "contracts": {
+                      "set": "autopilot",
+                      "amount": 300,
+                      "allowance": "150000000000000000000000000000",
+                      "period": 6048,
+                      "renewWindow": 2016,
+                      "download": 1000000000000,
+                      "upload": 100000000000000,
+                      "storage": 101000000000000
+                    },
+                    "hosts": {
+                      "allowRedundantIPs": false,
+                      "maxDowntimeHours": 1440,
+                      "scoreOverrides": {}
+                    },
+                    "wallet": {
+                      "defragThreshold": 1000
+                    }
+                  },
+                  "currentPeriod": 428982
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/autopilot/:id",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/autopilot/:id",
+          "description": "Returns the autopilot for a given id",
+          "responses": [
+            {
+              "name": "/autopilot/:id",
+              "status": 200,
+              "body": {
+                "id": "autopilot",
+                "config": {
+                  "contracts": {
+                    "set": "autopilot",
+                    "amount": 100,
+                    "allowance": "5595800000000000000000000000",
+                    "period": 6048,
+                    "renewWindow": 2016,
+                    "download": 1400000000000,
+                    "upload": 1400000000000,
+                    "storage": 1000000000000,
+                    "prune": true
+                  },
+                  "hosts": {
+                    "allowRedundantIPs": false,
+                    "maxDowntimeHours": 336,
+                    "minProtocolVersion": "1.6.0",
+                    "minRecentScanFailures": 10,
+                    "scoreOverrides": null
+                  }
+                },
+                "currentPeriod": 462236
+              }
+            }
+          ]
+        },
+        {
+          "name": "/autopilot/:id",
+          "method": "PUT",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/autopilot/:id",
+          "description": "Update the autopilot",
+          "requestBody": {
+            "id": "autopilot",
+            "config": {
+              "contracts": {
+                "set": "autopilot",
+                "amount": 300,
+                "allowance": "150000000000000000000000000000",
+                "period": 6048,
+                "renewWindow": 2016,
+                "download": 1000000000000,
+                "upload": 100000000000000,
+                "storage": 101000000000000
+              },
+              "hosts": {
+                "allowRedundantIPs": false,
+                "maxDowntimeHours": 1440,
+                "scoreOverrides": {}
+              },
+              "wallet": {
+                "defragThreshold": 1000
+              }
+            },
+            "currentPeriod": 428982
+          }
+        },
+        {
+          "name": "/buckets",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/buckets",
+          "description": "Returns all buckets known to the bus.",
+          "responses": [
+            {
+              "name": "/buckets",
+              "status": 200,
+              "body": [
+                {
+                  "createdAt": "2023-09-22T19:30:21.728956389Z",
+                  "name": "test",
+                  "policy": {
+                    "publicReadAccess": false
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/buckets",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/buckets",
+          "description": "Creates a new bucket.",
+          "requestBody": {
+            "name": "movies"
+          }
+        },
+        {
+          "name": "/bucket/:name",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/bucket/:name",
+          "description": "Returns the bucket with the given name.",
+          "responses": [
+            {
+              "name": "/bucket/:name",
+              "status": 200,
+              "body": {
+                "createdAt": "2023-09-25T09:18:05.32864594Z",
+                "name": "movies",
+                "policy": {
+                  "publicReadAccess": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "/bucket/:name",
+          "method": "DELETE",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/bucket/:name",
+          "description": "Deletes the bucket with the given name. Even the `default` bucket can be deleted."
+        },
+        {
+          "name": "/bucket/:name/policy",
+          "method": "PUT",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/bucket/:name/policy",
+          "description": "Updates the policy of a bucket.\n\nNote: The policy will be overwritten so make sure to provide all fields on every request.\n\n| Policy | Description |\n| --- | --- |\n| `publicReadAccess` | Gives readonly access to the bucket through the S3 API |",
+          "requestBody": {
+            "policy": {
+              "publicReadAccess": true
+            }
+          }
+        },
+        {
+          "name": "/consensus/acceptblock",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/consensus/acceptblock",
+          "description": "Accepts a mined block. Upon success, the block is forwarded to the node's peers and the whole p2p network.",
+          "requestBody": {
+            "ParentID": "bid:56e4d337f8554ce34071743b1976e164da01728d824b4963761154c965fb5625",
+            "Nonce": 0,
+            "Timestamp": "2023-03-31T10:39:58+02:00",
+            "MinerPayouts": [
+              {
+                "Value": "299999000000000000000000000000",
+                "Address": "addr:162a2c565d0c10997ad21697c78c80688807296b09ea599f402c2304730ee6f67563d7c53145"
+              }
+            ],
+            "Transactions": [
+              {
+                "SiacoinInputs": [],
+                "SiacoinOutputs": [],
+                "FileContracts": [],
+                "FileContractRevisions": [],
+                "StorageProofs": [],
+                "SiafundInputs": [],
+                "SiafundOutputs": [],
+                "MinerFees": [],
+                "ArbitraryData": [
+                  "Tm9uU2lhAAAAAAAAAAAAADuAtj8zRWfR3ulRHvz7fb0="
+                ],
+                "Signatures": []
+              }
+            ]
+          }
+        },
+        {
+          "name": "/consensus/state",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/consensus/state",
+          "description": "Returns some info regarding the current state of the consensus.",
+          "responses": [
+            {
+              "name": "/consensus/state",
+              "status": 200,
+              "body": {
+                "blockHeight": 436326,
+                "lastBlockTime": "2023-09-22T14:37:32Z",
+                "synced": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "/consensus/siafundfee/payout",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/consensus/siafundfee/:payout",
+          "description": "Given the total payout of a contract, this endpoint returns the appropriate siafund fee to pay.",
+          "responses": [
+            {
+              "name": "/consensus/siafundfee/payout",
+              "status": 200,
+              "body": "3900000"
+            }
+          ]
+        },
+        {
+          "name": "/contract/:id",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contract/:id",
+          "description": "Returns contract metadata for an active contract with the provided contract id.",
+          "responses": [
+            {
+              "name": "/contract/:id",
+              "status": 200,
+              "body": {
+                "id": "fcid:76db85736f888e8d5715124de37d0bcef81b2ae2cac2155aa8b8c64103e5a434",
+                "hostIP": "hostorian.ddns.net:9982",
+                "hostKey": "ed25519:090911c5182da4eb257807dc068c9fc4e3363b8b8208acdfb6a8b00ced08c45c",
+                "siamuxAddr": "hostorian.ddns.net:9983",
+                "proofHeight": 0,
+                "revisionHeight": 0,
+                "revisionNumber": 0,
+                "startHeight": 407091,
+                "windowStart": 0,
+                "windowEnd": 0,
+                "renewedFrom": "fcid:477cdd6753cb50e3f340d30bc6946d938127af203d612b5ba1e85d64f4bd6678",
+                "spending": {
+                  "uploads": "9741556256158783707932580",
+                  "downloads": "15017527838764016348138480",
+                  "fundAccount": "9865494506873240513457111",
+                  "deletions": "0",
+                  "sectorRoots": "0"
+                },
+                "totalCost": "80000000000000000000000000"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/contract/:id",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contract/:id",
+          "description": "Adds a contract to the bus. Usually called by workers after forming a new contract.",
+          "requestBody": {
+            "contract": {
+              "Revision": {
+                "ParentID": "fcid:73ba641471a92a14ec694b301d905656daadf63dbf8cb261833cd1a1578b6f04",
+                "UnlockConditions": {
+                  "Timelock": 0,
+                  "PublicKeys": [
+                    {
+                      "Algorithm": "ed25519",
+                      "Key": "ENim2sagtqV7if+28uHztT/srt9aXSrsJB+fJRUSI4Q="
+                    },
+                    {
+                      "Algorithm": "ed25519",
+                      "Key": "oqQXuBGQDvZnbB/vLmJ0ZHRekRTTURA32Hw2+oIpG6o="
+                    }
+                  ],
+                  "SignaturesRequired": 2
+                },
+                "Filesize": 0,
+                "FileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                "WindowStart": 126,
+                "WindowEnd": 131,
+                "Payout": "0",
+                "ValidProofOutputs": [
+                  {
+                    "Value": "16666666666666666666666666",
+                    "Address": "addr:d4beaa23055aaef738074c56302bfcdd9cff173ef1f1f1b16cffc7c40fe3c81e119a4c04942a"
+                  },
+                  {
+                    "Value": "441285052982572071957200",
+                    "Address": "addr:f7c1b26ecfe35c2a85a888796b3adca5f18714478ff75b6410c33ad4928535a23038db1cf8b4"
+                  }
+                ],
+                "MissedProofOutputs": [
+                  {
+                    "Value": "16666666666666666666666666",
+                    "Address": "addr:d4beaa23055aaef738074c56302bfcdd9cff173ef1f1f1b16cffc7c40fe3c81e119a4c04942a"
+                  },
+                  {
+                    "Value": "441285052982572071957200",
+                    "Address": "addr:f7c1b26ecfe35c2a85a888796b3adca5f18714478ff75b6410c33ad4928535a23038db1cf8b4"
+                  },
+                  {
+                    "Value": "0",
+                    "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                  }
+                ],
+                "UnlockHash": "h:0323007ecae633b0d0a901e83a321313f50fa36135189cf6c46d40b2fd08651a",
+                "RevisionNumber": 1
+              },
+              "Signatures": [
+                {
+                  "ParentID": "h:73ba641471a92a14ec694b301d905656daadf63dbf8cb261833cd1a1578b6f04",
+                  "PublicKeyIndex": 0,
+                  "Timelock": 0,
+                  "CoveredFields": {
+                    "WholeTransaction": false,
+                    "SiacoinInputs": null,
+                    "SiacoinOutputs": null,
+                    "FileContracts": null,
+                    "FileContractRevisions": [
+                      0
+                    ],
+                    "StorageProofs": null,
+                    "SiafundInputs": null,
+                    "SiafundOutputs": null,
+                    "MinerFees": null,
+                    "ArbitraryData": null,
+                    "Signatures": null
+                  },
+                  "Signature": "gLpSJzlw4M3vsgauGgjuKP+4SOZAPR7DbubSlWVRa2q/BGYex+Qw1d7hsrz1vVIk7FFkcSM0t3lQrWsZFNPaDg=="
+                },
+                {
+                  "ParentID": "h:73ba641471a92a14ec694b301d905656daadf63dbf8cb261833cd1a1578b6f04",
+                  "PublicKeyIndex": 0,
+                  "Timelock": 0,
+                  "CoveredFields": {
+                    "WholeTransaction": false,
+                    "SiacoinInputs": [],
+                    "SiacoinOutputs": [],
+                    "FileContracts": [],
+                    "FileContractRevisions": [
+                      0
+                    ],
+                    "StorageProofs": [],
+                    "SiafundInputs": [],
+                    "SiafundOutputs": [],
+                    "MinerFees": [],
+                    "ArbitraryData": [],
+                    "Signatures": []
+                  },
+                  "Signature": "zdp5r0P97mX0a5L6XU399xIlJ/OM2PFcItsdAMForEkZMBxe8G3EVEVXf5vKfA+XOcrEBqxY3gPHldNlM+bkDw=="
+                }
+              ]
+            },
+            "startHeight": 53,
+            "totalCost": "16666666666666666666666666"
+          },
+          "responses": [
+            {
+              "name": "/contract/:id",
+              "status": 200,
+              "body": {
+                "id": "fcid:73ba641471a92a14ec694b301d905656daadf63dbf8cb261833cd1a1578b6f04",
+                "hostIP": "127.0.0.1:65018",
+                "hostKey": "ed25519:a2a417b811900ef6676c1fef2e627464745e9114d3511037d87c36fa82291baa",
+                "siamuxAddr": "127.0.0.1:65019",
+                "proofHeight": 0,
+                "revisionHeight": 0,
+                "revisionNumber": 0,
+                "startHeight": 53,
+                "windowStart": 126,
+                "windowEnd": 131,
+                "renewedFrom": "fcid:0000000000000000000000000000000000000000000000000000000000000000",
+                "spending": {
+                  "uploads": "0",
+                  "downloads": "0",
+                  "fundAccount": "0"
+                },
+                "totalCost": "16666666666666666666666666"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/contract/:id",
+          "method": "DELETE",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contract/:id",
+          "description": "Deletes a contract from the bus. This doesn't remove the contract from the blockchain. The bus only stops being aware of the contract's existence and will therefore stop using it."
+        },
+        {
+          "name": "/contract/:id/acquire",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contract/:id/acquire",
+          "description": "Acquires a contract for up to a given duration. Similar to ephemeral accounts, contracts can be unlocked ahead of time using the unlock endpoint with the returned lock id.\n\nContracts are implicitly acquired by the workers whenever they need to revise them.",
+          "requestBody": {
+            "duration": "10000",
+            "priority": 10
+          },
+          "responses": [
+            {
+              "name": "/contract/:id/acquire",
+              "status": 200,
+              "body": {
+                "lockID": 609920465282217447
+              }
+            }
+          ]
+        },
+        {
+          "name": "/contract/:id/keepalive",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contract/:id/keepalive",
+          "description": "Extends the lock duration on a contract that has been previously acquired.",
+          "requestBody": {
+            "duration": "10000",
+            "priority": 10
+          },
+          "responses": [
+            {
+              "name": "/contract/:id/keepalive",
+              "status": 200,
+              "body": {
+                "lockID": 609920465282217447
+              }
+            }
+          ]
+        },
+        {
+          "name": "/contract/:id/ancestors",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contract/:id/ancestors",
+          "description": "Returns a chain of ancestors for a given contract. Ancestors are archived contracts which form a chain of renewals up to the requested contract.",
+          "responses": [
+            {
+              "name": "/contract/:id/ancestors",
+              "status": 200,
+              "body": [
+                {
+                  "id": "fcid:c92cee85afbf62e6905be22100b47ed5f0db5ad17df49d579053cf69ca217352",
+                  "hostKey": "ed25519:dfb16d76de07c537ad62647b39cba0497a6e339dfb1644bd8f8cda95893b1f16",
+                  "renewedTo": "fcid:3fb5e0b9c3526b0998a16eab9863b16452a87de319d88696c5153c04838215f3",
+                  "spending": {
+                    "uploads": "666479193656818139791360",
+                    "downloads": "0",
+                    "fundAccount": "4500778226686476151712781",
+                    "deletions": "0",
+                    "sectorRoots": "0"
+                  },
+                  "proofHeight": 0,
+                  "revisionHeight": 422777,
+                  "revisionNumber": 18446744073709551615,
+                  "size": 0,
+                  "startHeight": 416731,
+                  "state": "complete",
+                  "windowStart": 424792,
+                  "windowEnd": 424936
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/contract/:id/release",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contract/:id/release",
+          "description": "Releases a previously acquired contract using the obtained lock id.",
+          "requestBody": {
+            "lockID": 609920465282217447
+          }
+        },
+        {
+          "name": "/contract/:id/renewed",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contract/:id/renewed",
+          "description": "Similar to the `/contract/:id POST` endpoint, this endpoint adds a new contract to the bus but it also archives the contract that the new contract has been renewed from.",
+          "requestBody": {
+            "contract": {
+              "Revision": {
+                "ParentID": "fcid:269fea22643fb4651df94c83bdbdb7c62eaf86b9b5be145c6767a358ba946f45",
+                "UnlockConditions": {
+                  "Timelock": 0,
+                  "PublicKeys": [
+                    {
+                      "Algorithm": "ed25519",
+                      "Key": "SBQ/0x7UJ1zapagmuepGKmMwcVjwsmnjlIOzxxDvaE4="
+                    },
+                    {
+                      "Algorithm": "ed25519",
+                      "Key": "fNaE03Jrt0pAm79/+vmFOhb/oMTe0nixcr+qKrAyxfM="
+                    }
+                  ],
+                  "SignaturesRequired": 2
+                },
+                "Filesize": 0,
+                "FileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                "WindowStart": 176,
+                "WindowEnd": 181,
+                "Payout": "0",
+                "ValidProofOutputs": [
+                  {
+                    "Value": "16666666666666666666666666",
+                    "Address": "addr:2ad815dbdd945019c7f6e9391b49312c8d77bcf8c658288b50ba3a1ea6504ea973586aedc22c"
+                  },
+                  {
+                    "Value": "533069390249021689235728",
+                    "Address": "addr:511a06c313561ba094be3869e4106ac99fd20ddc2dbfdd8b7bbc46be38b0eec5a62dd9cb2858"
+                  }
+                ],
+                "MissedProofOutputs": [
+                  {
+                    "Value": "16666666666666666666666666",
+                    "Address": "addr:2ad815dbdd945019c7f6e9391b49312c8d77bcf8c658288b50ba3a1ea6504ea973586aedc22c"
+                  },
+                  {
+                    "Value": "533069390249021689235728",
+                    "Address": "addr:511a06c313561ba094be3869e4106ac99fd20ddc2dbfdd8b7bbc46be38b0eec5a62dd9cb2858"
+                  },
+                  {
+                    "Value": "0",
+                    "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                  }
+                ],
+                "UnlockHash": "h:655d25079aa409467e79ec528db1ea4ebbb3617b12d6377eb2a4cc5d183180ba",
+                "RevisionNumber": 1
+              },
+              "Signatures": [
+                {
+                  "ParentID": "h:269fea22643fb4651df94c83bdbdb7c62eaf86b9b5be145c6767a358ba946f45",
+                  "PublicKeyIndex": 0,
+                  "Timelock": 0,
+                  "CoveredFields": {
+                    "WholeTransaction": false,
+                    "SiacoinInputs": null,
+                    "SiacoinOutputs": null,
+                    "FileContracts": null,
+                    "FileContractRevisions": [
+                      0
+                    ],
+                    "StorageProofs": null,
+                    "SiafundInputs": null,
+                    "SiafundOutputs": null,
+                    "MinerFees": null,
+                    "ArbitraryData": null,
+                    "Signatures": null
+                  },
+                  "Signature": "+G+SK4meJ8xg3KGu/mk1JqVjXtloAO3bSNz3ZrA4TQ0cWYuNkANtY6e6sIqOZqYni7hP3rmWLhrY4W2z34e9Aw=="
+                },
+                {
+                  "ParentID": "h:269fea22643fb4651df94c83bdbdb7c62eaf86b9b5be145c6767a358ba946f45",
+                  "PublicKeyIndex": 0,
+                  "Timelock": 0,
+                  "CoveredFields": {
+                    "WholeTransaction": false,
+                    "SiacoinInputs": [],
+                    "SiacoinOutputs": [],
+                    "FileContracts": [],
+                    "FileContractRevisions": [
+                      0
+                    ],
+                    "StorageProofs": [],
+                    "SiafundInputs": [],
+                    "SiafundOutputs": [],
+                    "MinerFees": [],
+                    "ArbitraryData": [],
+                    "Signatures": []
+                  },
+                  "Signature": "+G+SK4meJ8xg3KGu/mk1JqVjXtloAO3bSNz3ZrA4TQ0cWYuNkANtY6e6sIqOZqYni7hP3rmWLhrY4W2z34e9Aw=="
+                }
+              ]
+            },
+            "renewedFrom": "fcid:cb2d808860e482a9fa7fd2374507240c4114221af04001cf61edba605b1b5774",
+            "startHeight": 102,
+            "totalCost": "16666666666666666666666666"
+          },
+          "responses": [
+            {
+              "name": "/contract/:id/renewed",
+              "status": 200,
+              "body": {
+                "id": "fcid:269fea22643fb4651df94c83bdbdb7c62eaf86b9b5be145c6767a358ba946f45",
+                "hostIP": "127.0.0.1:64795",
+                "hostKey": "ed25519:7cd684d3726bb74a409bbf7ffaf9853a16ffa0c4ded278b172bfaa2ab032c5f3",
+                "siamuxAddr": "127.0.0.1:64796",
+                "proofHeight": 0,
+                "revisionHeight": 0,
+                "revisionNumber": 0,
+                "startHeight": 102,
+                "windowStart": 176,
+                "windowEnd": 181,
+                "renewedFrom": "fcid:cb2d808860e482a9fa7fd2374507240c4114221af04001cf61edba605b1b5774",
+                "spending": {
+                  "uploads": "0",
+                  "downloads": "0",
+                  "fundAccount": "0"
+                },
+                "totalCost": "16666666666666666666666666"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/contract/:id/roots",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contract/:id/roots",
+          "description": "Returns the roots of all used sectors for a given contract in the bus.\n\nNOTE: This may return fewer sectors than the counterpart endpoint on the bus since it only returns the roots belonging to objects known to the bus. The contract might store more roots than that.",
+          "responses": [
+            {
+              "name": "/contract/:id/roots",
+              "status": 200,
+              "body": {
+                "roots": [
+                  "h:fda69eaaab99f5b7bb7f4100da4499548901550041ae3b05fe43f1894054c408"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/contract/:id/size",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contract/:id/size",
+          "description": "Returns the total contract size and the amount of data that is prunable for a given contract.",
+          "responses": [
+            {
+              "name": "/contract/:id/size",
+              "status": 200,
+              "body": {
+                "prunable": 144149839872,
+                "size": 377936150528
+              }
+            }
+          ]
+        },
+        {
+          "name": "/contracts",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contracts?contractset=autopilot",
+          "description": "Returns all active contracts the bus is aware of. This includes all contracts that have not expired, have not been renewed and also not manually archived yet. Contracts are also active if they are not part of a contract set.\n\nA returned contract can have one of the following states:\n\n- \"invalid\", \"unknown\": indicates missing/invalid state information\n    \n- \"pending\": contract was added to the bus but not yet confirmed on chain\n    \n- \"active\": contract has been confirmed on chain\n    \n- \"complete\": contract was either renewed or expired with a successful storage proof\n    \n- \"failed\": contract expired without a successful storage proof",
+          "responses": [
+            {
+              "name": "/contracts",
+              "status": 200,
+              "body": [
+                {
+                  "id": "fcid:c663d05f6e8f38b1cfa6fac0cdcda7c595960426ab167512ded0ef8ad41f9aea",
+                  "hostIP": "c96b217.online-server.cloud:9982",
+                  "hostKey": "ed25519:20214e772c77aee6a5d2608155a7573e2cf5b896207337689c2df197a7fc45b6",
+                  "siamuxAddr": "c96b217.online-server.cloud:9983",
+                  "proofHeight": 0,
+                  "revisionHeight": 448240,
+                  "revisionNumber": 1251,
+                  "size": 2541748224,
+                  "startHeight": 448238,
+                  "state": "active",
+                  "windowStart": 452156,
+                  "windowEnd": 452300,
+                  "contractPrice": "200000000000000000000000",
+                  "renewedFrom": "fcid:d9f533d3984395bb926133fe332da98dfd7b3c43b1f8cd9c6bbeccfa35f7621f",
+                  "spending": {
+                    "uploads": "321219427073300245512192",
+                    "downloads": "0",
+                    "fundAccount": "1000000000000000000000001",
+                    "deletions": "0",
+                    "sectorRoots": "0"
+                  },
+                  "totalCost": "2614400000000000000000000",
+                  "sets": [
+                    "autopilot"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/contracts/archive",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contracts/archive",
+          "description": "Archives the contracts with the provided contract ids. The request body is a json map that maps from contract ids to strings. The strings should be a short description of the reason for the archival.",
+          "requestBody": {
+            "fcid:a0b28586a59457d0a8f7c3d06bcc1c45470c95a02d5e4ff9c1ee9972f712d1f0": "Some reason for the archival"
+          }
+        },
+        {
+          "name": "/contracts/all",
+          "method": "DELETE",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contracts/all",
+          "description": "Deletes all contracts from the bus. The contracts are not removed from the blockchain."
+        },
+        {
+          "name": "/contracts/prunable",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contracts/prunable",
+          "description": "Returns the total amount of data in all contracts and how much of that data is prunable. The response contains a breakdown per contract.",
+          "responses": [
+            {
+              "name": "/contracts/prunable",
+              "status": 200,
+              "body": {
+                "contracts": [
+                  {
+                    "id": "fcid:5a40eba5f91a266a02d43b05de25be1150c2013d17b1962a2c450d864b8ba2e7",
+                    "prunable": 1927324631040,
+                    "size": 2774909583360
+                  }
+                ],
+                "totalPrunable": 72393854812160,
+                "totalSize": 250864786735104
+              }
+            }
+          ]
+        },
+        {
+          "name": "/contracts/renewed/:id",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contracts/renewed/:id",
+          "description": "Returns the contract that was formed as part of the renewal of the contract with the provided id. In other words the successor that the data was moved over to.",
+          "responses": [
+            {
+              "name": "/contracts/renewed/:id",
+              "status": 200,
+              "body": {
+                "id": "fcid:9573152b5a294ef910f08a3f18af8bf7b51a4c6ae108c0bd7c3d973db7d6c89e",
+                "hostIP": "foo.ddns.net:9982",
+                "hostKey": "ed25519:e156553dd877e99f24a5c02b72d1c1edd75dce76c663f6b939f20d3f7e9f01d9",
+                "siamuxAddr": "foo.ddns.net:9983",
+                "proofHeight": 0,
+                "revisionHeight": 436278,
+                "revisionNumber": 15427,
+                "size": 377873235968,
+                "startHeight": 436132,
+                "windowStart": 443094,
+                "windowEnd": 443238,
+                "renewedFrom": "fcid:e26dcafdbddcede53cb9d24a03caa4917a8196d3733790389b638af6c9b5564b",
+                "spending": {
+                  "uploads": "7008537397331625806659584",
+                  "downloads": "0",
+                  "fundAccount": "0",
+                  "deletions": "0",
+                  "sectorRoots": "0"
+                },
+                "totalCost": "210322766068155344749882792"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/contracts/set/:set",
+          "method": "PUT",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contracts/set/:set",
+          "description": "Creates a new named contractset from a list of contract ids.",
+          "requestBody": [
+            "fcid:93c26cb56eb1048da7582f0f929415389a8352ca91cece7b2885297e5d5703a7",
+            "fcid:76db85736f888e8d5715124de37d0bcef81b2ae2cac2155aa8b8c64103e5a434"
+          ]
+        },
+        {
+          "name": "/contracts/set/:set",
+          "method": "DELETE",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contracts/set/:set",
+          "description": "Deletes the contract set with the given name."
+        },
+        {
+          "name": "/contracts/sets",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contracts/sets",
+          "description": "Returns the names of all contract sets known to the bus.",
+          "responses": [
+            {
+              "name": "/contracts/sets",
+              "status": 200,
+              "body": [
+                "autopilot"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/contracts/spending",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/contracts/spending",
+          "description": "Updates the spending of the contract with the given id by adding the provided values to the existing spending of the contract and updating the cached size and revision number of the contract in the bus.",
+          "requestBody": [
+            {
+              "contractID": "fcid:76db85736f888e8d5715124de37d0bcef81b2ae2cac2155aa8b8c64103e5a434",
+              "revisionNumber": 1,
+              "size": 4194304,
+              "uploads": 100,
+              "deletions": 0,
+              "downloads": 0,
+              "fundAccount": 0,
+              "sectorRoots": 0
+            }
+          ]
+        },
+        {
+          "name": "/host/:pubkey",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/host/:pubkey",
+          "description": "Returns some information about the host identified by a given public key.",
+          "responses": [
+            {
+              "name": "/host/:pubkey",
+              "status": 200,
+              "body": {
+                "knownSince": "2023-02-20T19:05:14.419+01:00",
+                "publicKey": "ed25519:b050c0c63f9f3b4d5a89acadf628e8d8c6f8768e38fbe731e429334e0fd2cece",
+                "netAddress": "78.197.237.216:9982",
+                "priceTable": {
+                  "uid": "224738b6f0b77080c186cf47a12c4645",
+                  "validity": 600000000000,
+                  "hostblockheight": 410801,
+                  "updatepricetablecost": "1",
+                  "accountbalancecost": "1",
+                  "fundaccountcost": "1",
+                  "latestrevisioncost": "407200000000000000",
+                  "subscriptionmemorycost": "1",
+                  "subscriptionnotificationcost": "0",
+                  "initbasecost": "0",
+                  "memorytimecost": "1",
+                  "downloadbandwidthcost": "150000000000000",
+                  "uploadbandwidthcost": "50000000000000",
+                  "dropsectorsbasecost": "1",
+                  "dropsectorsunitcost": "1",
+                  "hassectorbasecost": "1",
+                  "readbasecost": "0",
+                  "readlengthcost": "1",
+                  "renewcontractcost": "100000000000000000",
+                  "revisionbasecost": "0",
+                  "swapsectorcost": "1",
+                  "writebasecost": "1",
+                  "writelengthcost": "1",
+                  "writestorecost": "81018518518",
+                  "txnfeeminrecommended": "10000000000000000000",
+                  "txnfeemaxrecommended": "30000000000000000000",
+                  "contractprice": "150000000000000000000000",
+                  "collateralcost": "81018518518",
+                  "maxcollateral": "5000000000000000000000000000",
+                  "maxduration": 25920,
+                  "windowsize": 144,
+                  "registryentriesleft": 0,
+                  "registryentriestotal": 0
+                },
+                "settings": {
+                  "acceptingcontracts": true,
+                  "baserpcprice": "0",
+                  "collateral": "81018518518",
+                  "contractprice": "150000000000000000000000",
+                  "downloadbandwidthprice": "150000000000000",
+                  "ephemeralaccountexpiry": 604800000000000,
+                  "maxcollateral": "5000000000000000000000000000",
+                  "maxdownloadbatchsize": 17825792,
+                  "maxduration": 25920,
+                  "maxephemeralaccountbalance": "1000000000000000000000000",
+                  "maxrevisebatchsize": 17825792,
+                  "netaddress": "78.197.237.216:9982",
+                  "remainingstorage": 2877292544,
+                  "revisionnumber": 44846666,
+                  "sectoraccessprice": "0",
+                  "sectorsize": 4194304,
+                  "siamuxport": "9983",
+                  "storageprice": "81018518518",
+                  "totalstorage": 3999956729856,
+                  "unlockhash": "50344392179ea814d5b98f281dd459894171ca5e9064ab04596363031cddd886f16409aceed1",
+                  "uploadbandwidthprice": "50000000000000",
+                  "version": "1.5.4",
+                  "windowsize": 144
+                },
+                "interactions": {
+                  "TotalScans": 36,
+                  "LastScan": "2023-03-29T15:42:34.501324171+02:00",
+                  "LastScanSuccess": true,
+                  "SecondToLastScanSuccess": true,
+                  "Uptime": 3163048968672609,
+                  "Downtime": 0,
+                  "SuccessfulInteractions": 72,
+                  "FailedInteractions": 0
+                },
+                "blocked": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "/host/:pubkey/resetlostsectors",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/host/:pubkey/resetlostsectors",
+          "description": "Resets the count of lost sectors for a host"
+        },
+        {
+          "name": "/hosts",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/hosts?offset=0&limit=-1",
+          "description": "Returns information about all hosts known to the bus.",
+          "responses": [
+            {
+              "name": "/hosts",
+              "status": 200,
+              "body": [
+                {
+                  "knownSince": "2023-02-20T19:05:14.419+01:00",
+                  "publicKey": "ed25519:b050c0c63f9f3b4d5a89acadf628e8d8c6f8768e38fbe731e429334e0fd2cece",
+                  "netAddress": "78.197.237.216:9982",
+                  "priceTable": {
+                    "uid": "224738b6f0b77080c186cf47a12c4645",
+                    "validity": 600000000000,
+                    "hostblockheight": 410801,
+                    "updatepricetablecost": "1",
+                    "accountbalancecost": "1",
+                    "fundaccountcost": "1",
+                    "latestrevisioncost": "407200000000000000",
+                    "subscriptionmemorycost": "1",
+                    "subscriptionnotificationcost": "0",
+                    "initbasecost": "0",
+                    "memorytimecost": "1",
+                    "downloadbandwidthcost": "150000000000000",
+                    "uploadbandwidthcost": "50000000000000",
+                    "dropsectorsbasecost": "1",
+                    "dropsectorsunitcost": "1",
+                    "hassectorbasecost": "1",
+                    "readbasecost": "0",
+                    "readlengthcost": "1",
+                    "renewcontractcost": "100000000000000000",
+                    "revisionbasecost": "0",
+                    "swapsectorcost": "1",
+                    "writebasecost": "1",
+                    "writelengthcost": "1",
+                    "writestorecost": "81018518518",
+                    "txnfeeminrecommended": "10000000000000000000",
+                    "txnfeemaxrecommended": "30000000000000000000",
+                    "contractprice": "150000000000000000000000",
+                    "collateralcost": "81018518518",
+                    "maxcollateral": "5000000000000000000000000000",
+                    "maxduration": 25920,
+                    "windowsize": 144,
+                    "registryentriesleft": 0,
+                    "registryentriestotal": 0
+                  },
+                  "settings": {
+                    "acceptingcontracts": true,
+                    "baserpcprice": "0",
+                    "collateral": "81018518518",
+                    "contractprice": "150000000000000000000000",
+                    "downloadbandwidthprice": "150000000000000",
+                    "ephemeralaccountexpiry": 604800000000000,
+                    "maxcollateral": "5000000000000000000000000000",
+                    "maxdownloadbatchsize": 17825792,
+                    "maxduration": 25920,
+                    "maxephemeralaccountbalance": "1000000000000000000000000",
+                    "maxrevisebatchsize": 17825792,
+                    "netaddress": "78.197.237.216:9982",
+                    "remainingstorage": 2877292544,
+                    "revisionnumber": 44846666,
+                    "sectoraccessprice": "0",
+                    "sectorsize": 4194304,
+                    "siamuxport": "9983",
+                    "storageprice": "81018518518",
+                    "totalstorage": 3999956729856,
+                    "unlockhash": "50344392179ea814d5b98f281dd459894171ca5e9064ab04596363031cddd886f16409aceed1",
+                    "uploadbandwidthprice": "50000000000000",
+                    "version": "1.5.4",
+                    "windowsize": 144
+                  },
+                  "interactions": {
+                    "TotalScans": 36,
+                    "LastScan": "2023-03-29T15:42:34.501324171+02:00",
+                    "LastScanSuccess": true,
+                    "SecondToLastScanSuccess": true,
+                    "Uptime": 3163048968672609,
+                    "Downtime": 0,
+                    "SuccessfulInteractions": 72,
+                    "FailedInteractions": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/hosts/allowlist",
+          "method": "PUT",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/hosts/allowlist",
+          "description": "Updates the allowlist of the bus by adding/removing hosts by their public key.",
+          "requestBody": {
+            "add": [],
+            "remove": [
+              "ed25519:6f7ac63891fa2eadeb3031b75817a4beaae91070f485c3d139f1ffd3107d6aa8"
+            ],
+            "clear": false
+          }
+        },
+        {
+          "name": "/hosts/allowlist",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/hosts/allowlist",
+          "description": "Returns the current allowlist of the bus."
+        },
+        {
+          "name": "/hosts/blocklist",
+          "method": "PUT",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/hosts/blocklist",
+          "description": "Updates the blocklist of the bus by adding/removing hosts by their domain or IP address.",
+          "requestBody": {
+            "add": [],
+            "remove": [
+              "siacentral.ddnsfree.com",
+              "siacentral.mooo.com",
+              "51.158.108.244",
+              "45.148.30.56"
+            ],
+            "clear": false
+          }
+        },
+        {
+          "name": "/hosts/blocklist",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/hosts/blocklist",
+          "description": "Returns the current blocklist of the bus",
+          "responses": [
+            {
+              "name": "/hosts/blocklist",
+              "status": 200,
+              "body": [
+                "sia.foo.io:9982"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/hosts/interactions",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/hosts/interactions",
+          "description": "Records host ineractions in the bus. Commonly called by workers when scanning hosts.",
+          "requestBody": [
+            {
+              "host": "ed25519:06acb590d5a3e9f17c5870284818ae0ce93aa02aeaee50b02e490233ff56aafc",
+              "result": {},
+              "success": true,
+              "timestamp": "2023-03-31T15:58:41.642196+02:00",
+              "type": "dial"
+            },
+            {
+              "host": "ed25519:06acb590d5a3e9f17c5870284818ae0ce93aa02aeaee50b02e490233ff56aafc",
+              "result": {
+                "Error": "",
+                "priceTable": {
+                  "uid": "c7472fa8abb18bd9c57039431b915cdd",
+                  "validity": 600000000000,
+                  "hostblockheight": 93,
+                  "updatepricetablecost": "1",
+                  "accountbalancecost": "1",
+                  "fundaccountcost": "1",
+                  "latestrevisioncost": "204800000000000100",
+                  "subscriptionmemorycost": "1",
+                  "subscriptionnotificationcost": "1",
+                  "initbasecost": "100",
+                  "memorytimecost": "1",
+                  "downloadbandwidthcost": "100000000000000",
+                  "uploadbandwidthcost": "100000000000000",
+                  "dropsectorsbasecost": "1",
+                  "dropsectorsunitcost": "1",
+                  "hassectorbasecost": "1",
+                  "readbasecost": "100",
+                  "readlengthcost": "1",
+                  "renewcontractcost": "100000000000000000",
+                  "revisionbasecost": "0",
+                  "swapsectorcost": "1",
+                  "writebasecost": "100",
+                  "writelengthcost": "1",
+                  "writestorecost": "23148148148",
+                  "txnfeeminrecommended": "10000000000000000000",
+                  "txnfeemaxrecommended": "30000000000000000000",
+                  "contractprice": "250000000000000000000000",
+                  "collateralcost": "46296296296",
+                  "maxcollateral": "5000000000000000000000000000",
+                  "maxduration": 12960,
+                  "windowsize": 5,
+                  "registryentriesleft": 262144,
+                  "registryentriestotal": 262144
+                },
+                "settings": {
+                  "acceptingcontracts": true,
+                  "baserpcprice": "100",
+                  "collateral": "46296296296",
+                  "contractprice": "250000000000000000000000",
+                  "downloadbandwidthprice": "100000000000000",
+                  "ephemeralaccountexpiry": 0,
+                  "maxcollateral": "5000000000000000000000000000",
+                  "maxdownloadbatchsize": 20971520,
+                  "maxduration": 12960,
+                  "maxephemeralaccountbalance": "0",
+                  "maxrevisebatchsize": 20971520,
+                  "netaddress": "127.0.0.1:49382",
+                  "remainingstorage": 41943040,
+                  "revisionnumber": 0,
+                  "sectoraccessprice": "100",
+                  "sectorsize": 4194304,
+                  "siamuxport": "49383",
+                  "storageprice": "23148148148",
+                  "totalstorage": 41943040,
+                  "unlockhash": "924062adae8ceacb95dd0b1e36c74375e170fcb1dc758cc980cc217e6310ba32bac79faf1539",
+                  "uploadbandwidthprice": "100000000000000",
+                  "version": "2.0.0",
+                  "windowsize": 5
+                }
+              },
+              "success": true,
+              "timestamp": "2023-03-31T15:58:41.650072+02:00",
+              "type": "scan"
+            }
+          ]
+        },
+        {
+          "name": "/hosts/remove",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/hosts/remove?bucket=mybucket",
+          "description": "Removes all hosts with a given downtime and minimum number of total scans from the bus.",
+          "requestBody": {
+            "minRecentScanFailures": 3,
+            "maxDowntimeHours": "1000"
+          }
+        },
+        {
+          "name": "/hosts/scanning",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/hosts/scanning?offset=0&limit=10&lastScan=2023-03-30T15%3A45%3A52%2B02%3A00",
+          "description": "Returns a list of hosts for scanning. Hosts that have been scanned recently can be ignored by adjusting the lastScan argument.",
+          "responses": [
+            {
+              "name": "/hosts/scanning",
+              "status": 200,
+              "body": [
+                {
+                  "publicKey": "ed25519:de9e1fd0e7c19b23ac2271a3a4bceed161108d16ab708922c4573cf53fa82dfa",
+                  "netAddress": "87.255.6.177:9982"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/metrics",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/metric/:key?start=2023-11-15T14%3A12%3A48.693751%2B01%3A00&interval=3600000&n=100",
+          "description": "Returns the metrics for a given `key`. Following values are currently available:\n\n- `contract`: Historic changes to a contract such as its size, revision number or spending\n    - can be filtered using the `contractID` and `hostKey` query params\n- `churn`: Historic changes to contract churn such as why a contract got removed\n    - can be filtered using the `name`, `direction` and `reason` query params\n- `contractset`: Historic metrics about the contract set size\n    - can be filtered using the `name` query param\n- `contractprune`: Historic metrics about pruning contracts\n    - can be filtered using the `contractID`, `hostKey`and `hostVersion`\n- `wallet`: Historic metrics about the wallet balance",
+          "responses": [
+            {
+              "name": "contract",
+              "status": 200,
+              "body": [
+                {
+                  "timestamp": "2023-11-15T14:12:53.233Z",
+                  "contractID": "fcid:20b32f830c92cf3a50a194721d37d7de38e05093ee8a0bb367df9311babded7f",
+                  "hostKey": "ed25519:9501d2bc7d622f387c23630388e43339f02389aa45e709f9c5ef1a9ac51356b3",
+                  "remainingCollateral": "175701918250120093047546316",
+                  "remainingFunds": "75044554735529963303116337",
+                  "revisionNumber": 6068,
+                  "uploadSpending": "4952248376059614389469184",
+                  "downloadSpending": "0",
+                  "fundAccountSpending": "0",
+                  "deleteSpending": "0",
+                  "listSpending": "0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/metrics",
+          "method": "DELETE",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/metric/:key?cutoff=2023-12-5T14%3A12%3A48.693751%2B01%3A00",
+          "description": "Prunes the database for a given metric specified by `key`. All metrics before the specified `cutoff`\n\nare deleted. Check out the corresponding GET endpoint for a list of available keys."
+        },
+        {
+          "name": "/multipart/abort",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/multipart/abort",
+          "description": "Aborts an unfinished multipart upload.",
+          "requestBody": {
+            "bucket": "default",
+            "path": "/foo",
+            "uploadID": "cb9f15627f57f6f74a6bcc87296b0acfe958c252b1a3d46bffabaa2269ae59fd"
+          }
+        },
+        {
+          "name": "/multipart/complete",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/multipart/complete",
+          "description": "Completes a multipart upload, creating a new object from the specified parts. The parts need to be passed in ascending order alongside their eTags which are returned whenever a part is added.",
+          "requestBody": {
+            "bucket": "multipart",
+            "path": "/foo",
+            "uploadID": "096473fd324b681e2c3a6df7b69b046e5b10b5a1610de52201705fb33868920d",
+            "Parts": [
+              {
+                "partNumber": 1,
+                "eTag": "324dcf027dd4a30a932c441f365a25e86b173defa4b8e58948253471b81b72cf"
+              },
+              {
+                "partNumber": 2,
+                "eTag": "9a3440c9d1529b122faceef33739b6e814616658d53faaf6e4f129fb20edfb13"
+              },
+              {
+                "partNumber": 3,
+                "eTag": "0268be9dbd0446eaa217e1dec8f399249305e551d7fc1437dd84521f74aa621c"
+              }
+            ]
+          },
+          "responses": [
+            {
+              "name": "/multipart/complete",
+              "status": 200,
+              "body": {
+                "eTag": "8b4ef71509ce8c1720521c94bf2c28905420522955f7841f3691a6a3c445266d"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/multipart/create",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/multipart/create",
+          "description": "Creates a new multipart upload for a given bucket, path and encryption key. The key is used for encrypting the object before sharding. Random keys are used for the second layer of encryption after sharding the object into slabs. If the sentinel value `key:0000000000000000000000000000000000000000000000000000000000000000` is passed, the object won't be encrypted before sharding and instead only after sharding. If `generateKey` is set to `true`, a random key will be generated for the object.",
+          "requestBody": {
+            "bucket": "default",
+            "key": "key:0000000000000000000000000000000000000000000000000000000000000000",
+            "path": "/foo",
+            "generateKey": false
+          },
+          "responses": [
+            {
+              "name": "create with no-op key",
+              "status": 200,
+              "body": {
+                "uploadID": "cb9f15627f57f6f74a6bcc87296b0acfe958c252b1a3d46bffabaa2269ae59fd"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/multipart/listparts",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/multipart/listparts",
+          "description": "Lists parts within an unfinished multipart upload.",
+          "requestBody": {
+            "bucket": "default",
+            "path": "/test_256M",
+            "uploadID": "f5877b5688cff4bd3d1300329edaf595948e213e498cd0d438fdd752dbe1f40b",
+            "partNumberMarker": 0,
+            "limit": 1000
+          },
+          "responses": [
+            {
+              "name": "/multipart/listparts",
+              "status": 200,
+              "body": {
+                "hasMore": false,
+                "nextMarker": 0,
+                "parts": [
+                  {
+                    "partNumber": 3,
+                    "lastModified": "2023-09-25T11:57:16.050562Z",
+                    "eTag": "0268be9dbd0446eaa217e1dec8f399249305e551d7fc1437dd84521f74aa621c",
+                    "size": 1
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/multipart/listuploads",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/multipart/listuploads",
+          "description": "List all unfinished multipart uploads for a given bucket.",
+          "requestBody": {
+            "bucket": "default",
+            "prefix": "",
+            "pathMarker": "",
+            "uploadIDMarker": "",
+            "limit": 1000
+          },
+          "responses": [
+            {
+              "name": "/multipart/listuploads",
+              "status": 200,
+              "body": {
+                "uploads": [
+                  {
+                    "path": "/foo",
+                    "uploadID": "4a5220e051d446e947b97044aba3169bf5c65fadcbfecfe050c43e7617652d61",
+                    "createdAt": "2023-09-25T12:09:55.537472659Z"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/multipart/part",
+          "method": "PUT",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/multipart/part",
+          "description": "Adds a new part to a multipart upload. The number of the part needs to be in range 1-10000 but can be provided in any order. Parts can be overwritten by using the same part number again.",
+          "requestBody": {
+            "bucket": "default",
+            "eTag": "9a3440c9d1529b122faceef33739b6e814616658d53faaf6e4f129fb20edfb13",
+            "path": "/foo",
+            "contractSet": "autopilot",
+            "uploadID": "4a5220e051d446e947b97044aba3169bf5c65fadcbfecfe050c43e7617652d61",
+            "partialSlabs": [
+              {
+                "key": "key:5e8d561cc564dc51566804b5ef450a5251661fe8147a9d64368d5226a5669e95",
+                "offset": 0,
+                "length": 5
+              }
+            ],
+            "partNumber": 2,
+            "slices": null,
+            "usedContracts": {}
+          }
+        },
+        {
+          "name": "/objects/*key",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/objects/:key",
+          "description": "Fetches the metadata for the object at the given path or queries multiple objects if the specified path ends with '/'.",
+          "responses": [
+            {
+              "name": "Query with prefix",
+              "status": 200,
+              "body": [
+                {
+                  "name": "/Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film.mp4",
+                  "size": 1567419129,
+                  "health": 0.05
+                }
+              ]
+            },
+            {
+              "name": "Single Object",
+              "status": 200,
+              "body": {
+                "hasMore": false,
+                "object": {
+                  "eTag": "66f39b29be0d89fce0616008e07858062acdd9742de7b4569dc4ce300830281a",
+                  "health": 1,
+                  "mimeType": "application/octet-stream",
+                  "modTime": "2023-11-17T09:31:46.622587Z",
+                  "name": "/data_128",
+                  "size": 128,
+                  "key": "key:969a36eae5bfd5f4e18a99313558825b259e189b426428f97e45faf5eff2f067",
+                  "slabs": [
+                    {
+                      "slab": {
+                        "health": 1,
+                        "key": "key:47d6affcd3970ed5fc01ca32ad86a9fb78ee054d355a23ee56bb150566a2242a",
+                        "minShards": 2,
+                        "shards": [
+                          {
+                            "contracts": {
+                              "ed25519:a9b7458c9a10963dad8e23e3c57dc264daa00c0c20cff1ccd516f429f6f53659": [
+                                "fcid:20e35d79279aab2fe77dcf6ad8a50aea2724b60af7367938ed966c7bb851ebba"
+                              ]
+                            },
+                            "latestHost": "ed25519:a9b7458c9a10963dad8e23e3c57dc264daa00c0c20cff1ccd516f429f6f53659",
+                            "root": "h:c451f64133be7d1bc109eca9e9d9c529b0d8ec5aa8f5d61fa2ca99e8b86a909a"
+                          }
+                        ]
+                      },
+                      "offset": 0,
+                      "length": 128
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "/objects/*key",
+          "method": "PUT",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/objects/*key",
+          "description": "Stores metadata for an object in the bus, overwriting existing metadata in the process. Usually called by the worker after uploading an object to the network.",
+          "requestBody": {
+            "bucket": "default",
+            "contractSet": "testset",
+            "object": {
+              "key": "key:969a36eae5bfd5f4e18a99313558825b259e189b426428f97e45faf5eff2f067",
+              "slabs": [
+                {
+                  "slab": {
+                    "health": 0,
+                    "key": "key:47d6affcd3970ed5fc01ca32ad86a9fb78ee054d355a23ee56bb150566a2242a",
+                    "minShards": 2,
+                    "shards": [
+                      {
+                        "contracts": {
+                          "ed25519:cbaae2e138a0b2074c4f1da66d6416b903193e56e704c17b9870d7264ab814ec": [
+                            "fcid:814e2a70a3657d0c6371f4f4ad52fea2e5d168bf870c63ab9cec8415157ca384"
+                          ]
+                        },
+                        "latestHost": "ed25519:cbaae2e138a0b2074c4f1da66d6416b903193e56e704c17b9870d7264ab814ec",
+                        "root": "h:37e18e7dba3ddb81eee8136b64bee1c6d9de56fde92974a11240e4a64d6bb5dd"
+                      },
+                      {
+                        "contracts": {
+                          "ed25519:07f55dec5a097f5dddf1ca408efbf1f466a21b089e26c6442445b419b1f9a904": [
+                            "fcid:6e366c956c6b9e958e258784fa0d7a4ef140a1c1ddc9bda195e9fcbb64449c9d"
+                          ]
+                        },
+                        "latestHost": "ed25519:07f55dec5a097f5dddf1ca408efbf1f466a21b089e26c6442445b419b1f9a904",
+                        "root": "h:a0e0b2cb6020d7377e0e927b15aca71c125a063643a52bc9977fab6876465a86"
+                      },
+                      {
+                        "contracts": {
+                          "ed25519:a9b7458c9a10963dad8e23e3c57dc264daa00c0c20cff1ccd516f429f6f53659": [
+                            "fcid:20e35d79279aab2fe77dcf6ad8a50aea2724b60af7367938ed966c7bb851ebba"
+                          ]
+                        },
+                        "latestHost": "ed25519:a9b7458c9a10963dad8e23e3c57dc264daa00c0c20cff1ccd516f429f6f53659",
+                        "root": "h:c451f64133be7d1bc109eca9e9d9c529b0d8ec5aa8f5d61fa2ca99e8b86a909a"
+                      }
+                    ]
+                  },
+                  "offset": 0,
+                  "length": 128
+                }
+              ]
+            },
+            "mimeType": "application/octet-stream",
+            "eTag": "66f39b29be0d89fce0616008e07858062acdd9742de7b4569dc4ce300830281a"
+          }
+        },
+        {
+          "name": "/objects/*key",
+          "method": "DELETE",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/objects/",
+          "description": "Delete the object with the given key. If `batch` is true all keys starting with `path` will be removed."
+        },
+        {
+          "name": "/objects/copy",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/objects/copy",
+          "description": "Copies an object from a source path and bucket to a destination path and bucket.",
+          "requestBody": {
+            "sourceBucket": "default",
+            "sourcePath": "/sample.jpeg",
+            "destinationBucket": "default",
+            "destinationPath": "/samples/sample.jpeg"
+          }
+        },
+        {
+          "name": "/objects/list",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/objects/list",
+          "description": "Lists objects from a bucket given a prefix, marker and limit. A `marker` can be supplied to achieve pagination and the response will return the next marker to use if there is more data to retrieve as indicated by `hasMore`.",
+          "requestBody": {
+            "bucket": "default",
+            "limit": 10,
+            "prefix": "/encode-public/2008/",
+            "marker": ""
+          },
+          "responses": [
+            {
+              "name": "/objects/list",
+              "status": 200,
+              "body": {
+                "hasMore": true,
+                "nextMarker": "/encode-public/2008/11/24/1be34318-cf70-442e-856c-2135efb84ec1/ENCFF000ABX.broadPeak.bigbed",
+                "objects": [
+                  {
+                    "name": "/encode-public/2008/11/24/1be34318-cf70-442e-856c-2135efb84ec1/ENCFF000ABX.broadPeak.bigbed",
+                    "size": 23159182,
+                    "health": 0.85
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/objects/rename",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/objects/rename?bucket=mybucket",
+          "description": "Renames a single object or recursively renames multiple objects.",
+          "requestBody": {
+            "bucket": "mybucket",
+            "from": "<string>",
+            "to": "<string>",
+            "mode": "<string>"
+          }
+        },
+        {
+          "name": "/params/download",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/params/download",
+          "description": "Returns the default download parameters used by workers.",
+          "responses": [
+            {
+              "name": "/params/download",
+              "status": 200,
+              "body": {
+                "ContractSet": "autopilot",
+                "ConsensusState": {
+                  "BlockHeight": 411082,
+                  "Synced": true
+                },
+                "GougingSettings": {
+                  "minMaxCollateral": "0",
+                  "maxRPCPrice": "1000000000000000000000000",
+                  "maxContractPrice": "1000000000000000000000000",
+                  "maxDownloadPrice": "2500000000000000000000000000",
+                  "maxUploadPrice": "2500000000000000000000000000",
+                  "maxStoragePrice": "1000000000000000000000000",
+                  "hostBlockHeightLeeway": 3
+                },
+                "RedundancySettings": {
+                  "minShards": 10,
+                  "totalShards": 30
+                },
+                "TransactionFee": "30000000000000000000"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/params/gouging",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/params/gouging",
+          "description": "Returns the default gouging params used by workers.",
+          "responses": [
+            {
+              "name": "/params/gouging",
+              "status": 200,
+              "body": {
+                "ConsensusState": {
+                  "BlockHeight": 411082,
+                  "Synced": true
+                },
+                "GougingSettings": {
+                  "minMaxCollateral": "0",
+                  "maxRPCPrice": "1000000000000000000000000",
+                  "maxContractPrice": "1000000000000000000000000",
+                  "maxDownloadPrice": "2500000000000000000000000000",
+                  "maxUploadPrice": "2500000000000000000000000000",
+                  "maxStoragePrice": "1000000000000000000000000",
+                  "hostBlockHeightLeeway": 3
+                },
+                "RedundancySettings": {
+                  "minShards": 10,
+                  "totalShards": 30
+                },
+                "TransactionFee": "30000000000000000000"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/params/upload",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/params/upload",
+          "description": "Returns the default upload params used by workers.",
+          "responses": [
+            {
+              "name": "/params/upload",
+              "status": 200,
+              "body": {
+                "CurrentHeight": 411082,
+                "ContractSet": "autopilot",
+                "ConsensusState": {
+                  "BlockHeight": 411082,
+                  "Synced": true
+                },
+                "GougingSettings": {
+                  "minMaxCollateral": "0",
+                  "maxRPCPrice": "1000000000000000000000000",
+                  "maxContractPrice": "1000000000000000000000000",
+                  "maxDownloadPrice": "2500000000000000000000000000",
+                  "maxUploadPrice": "2500000000000000000000000000",
+                  "maxStoragePrice": "1000000000000000000000000",
+                  "hostBlockHeightLeeway": 3
+                },
+                "RedundancySettings": {
+                  "minShards": 10,
+                  "totalShards": 30
+                },
+                "TransactionFee": "30000000000000000000"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/search/hosts",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/search/hosts",
+          "description": "Returns all hosts matching a set of criteria.\n\nPossible values for the filter mode are:\n\n- \"all\" - return any host\n- \"allowed\" - only return allowed hosts\n- \"blocked\" - only return blocked hosts",
+          "requestBody": {
+            "offset": 0,
+            "limit": 10,
+            "filterMode": "all",
+            "usabilityMode": "all",
+            "addressContains": "",
+            "keyIn": []
+          },
+          "responses": [
+            {
+              "name": "/search/hosts",
+              "status": 200,
+              "body": [
+                {
+                  "knownSince": "2023-02-20T21:58:50.507+01:00",
+                  "public_key": "ed25519:96d684353df259686b77e84fae65f7cfb41c423708cfebe6a5eab102bf924694",
+                  "netAddress": "sia.thn.me:9982",
+                  "priceTable": null,
+                  "settings": {
+                    "acceptingcontracts": false,
+                    "baserpcprice": "100000000000000000",
+                    "collateral": "67129629629",
+                    "contractprice": "200000000000000000000000",
+                    "downloadbandwidthprice": "950000000000000",
+                    "ephemeralaccountexpiry": 604800000000000,
+                    "maxcollateral": "2000000000000000000000000000",
+                    "maxdownloadbatchsize": 50000000,
+                    "maxduration": 26208,
+                    "maxephemeralaccountbalance": "1000000000000000000000000",
+                    "maxrevisebatchsize": 50000000,
+                    "netaddress": "sia.thn.me:9982",
+                    "remainingstorage": 10583927685120,
+                    "revisionnumber": 32864373,
+                    "sectoraccessprice": "2000000000000000000",
+                    "sectorsize": 4194304,
+                    "siamuxport": "9983",
+                    "storageprice": "41666666666",
+                    "totalstorage": 11999064883200,
+                    "unlockhash": "342dd96c7142bf8c604b91e8563c8901475954b5ca516d19b24c36e7d3146ea5b963f3e34a0a",
+                    "uploadbandwidthprice": "120000000000000",
+                    "version": "1.5.9",
+                    "windowsize": 144
+                  },
+                  "interactions": {
+                    "TotalScans": 37,
+                    "LastScan": "2023-03-30T16:29:39.033358758+02:00",
+                    "LastScanSuccess": false,
+                    "SecondToLastScanSuccess": false,
+                    "Uptime": 990493822389392,
+                    "Downtime": 2261514406799055,
+                    "SuccessfulInteractions": 24,
+                    "FailedInteractions": 50
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/search/objects",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/search/objects?offset=1&limit=1&key=Garfield&bucket=mybucket",
+          "description": "Returns a list of objects that have a given key in their name.",
+          "responses": [
+            {
+              "name": "/search/objects",
+              "status": 200,
+              "body": [
+                "/uploader/0006270a45aefb7081227b627fc080bae5dbf8aa2d3bd53bacd378324bd17200/005 - Garfield's Moving Experience, Wade You're Afraid, Good Mousekeeping DVDRip XviD [PhZ].mp4"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/settings",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/settings",
+          "description": "Returns a list of keys for all available settings in the bus.",
+          "responses": [
+            {
+              "name": "/settings",
+              "status": 200,
+              "body": [
+                "uploadpacking"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/setting/:key",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/setting/:key",
+          "description": "Returns the current settings for a specific key.",
+          "responses": [
+            {
+              "name": "pricepinning",
+              "status": 200,
+              "body": {
+                "enabled": true,
+                "currency": "usd",
+                "forexEndpointURL": "https://api.siascan.com/exchange-rate/siacoin",
+                "threshold": 0.02,
+                "autopilots": {
+                  "autopilot": {
+                    "allowance": {
+                      "pinned": true,
+                      "value": 616
+                    }
+                  }
+                },
+                "gougingSettingsPins": {
+                  "maxDownload": {
+                    "pinned": true,
+                    "value": 15
+                  },
+                  "maxStorage": {
+                    "pinned": true,
+                    "value": 8
+                  },
+                  "maxUpload": {
+                    "pinned": true,
+                    "value": 2
+                  }
+                }
+              }
+            },
+            {
+              "name": "contractset",
+              "status": 200,
+              "body": {
+                "default": "autopilot"
+              }
+            },
+            {
+              "name": "gouging",
+              "status": 200,
+              "body": {
+                "maxRPCPrice": "10000000000000000000",
+                "maxContractPrice": "1000000000000000000000000",
+                "maxDownloadPrice": "3650070842521616108900000000",
+                "maxUploadPrice": "486676112336215481200000000",
+                "maxStoragePrice": "450626029940",
+                "hostBlockHeightLeeway": 18,
+                "minPriceTableValidity": 300000000000,
+                "minAccountExpiry": 86400000000000,
+                "minMaxEphemeralAccountBalance": "1000000000000000000000000",
+                "migrationSurchargeMultiplier": 10
+              }
+            },
+            {
+              "name": "redundancy",
+              "status": 200,
+              "body": {
+                "minShards": 10,
+                "totalShards": 30
+              }
+            },
+            {
+              "name": "s3authentication",
+              "status": 200,
+              "body": {
+                "v4Keypairs": {
+                  "4e664e664e664e664e664e664e664e664e66": "96ec96ec96ec96ec96ec96ec96ec96ec96ec"
+                }
+              }
+            },
+            {
+              "name": "uploadpacking",
+              "status": 200,
+              "body": {
+                "enabled": true,
+                "slabBufferMaxSizeSoft": 4294967296
+              }
+            }
+          ]
+        },
+        {
+          "name": "/setting/:key",
+          "method": "PUT",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/setting/:key",
+          "description": "Updates the settings for a given key.",
+          "responses": [
+            {
+              "name": "pricepinning",
+              "status": 200,
+              "body": {
+                "enabled": true,
+                "currency": "usd",
+                "forexEndpointURL": "https://api.siascan.com/exchange-rate/siacoin",
+                "threshold": 0.02,
+                "autopilots": {
+                  "autopilot": {
+                    "allowance": {
+                      "pinned": true,
+                      "value": 616
+                    }
+                  }
+                },
+                "gougingSettingsPins": {
+                  "maxDownload": {
+                    "pinned": true,
+                    "value": 15
+                  },
+                  "maxStorage": {
+                    "pinned": true,
+                    "value": 8
+                  },
+                  "maxUpload": {
+                    "pinned": true,
+                    "value": 2
+                  }
+                }
+              }
+            },
+            {
+              "name": "contractset",
+              "status": 200,
+              "body": {
+                "default": "autopilot"
+              }
+            },
+            {
+              "name": "gouging",
+              "status": 200,
+              "body": {
+                "maxRPCPrice": "10000000000000000000",
+                "maxContractPrice": "1000000000000000000000000",
+                "maxDownloadPrice": "3650070842521616108900000000",
+                "maxUploadPrice": "486676112336215481200000000",
+                "maxStoragePrice": "450626029940",
+                "hostBlockHeightLeeway": 18,
+                "minPriceTableValidity": 300000000000,
+                "minAccountExpiry": 86400000000000,
+                "minMaxEphemeralAccountBalance": "1000000000000000000000000",
+                "migrationSurchargeMultiplier": 10
+              }
+            },
+            {
+              "name": "redundancy",
+              "status": 200,
+              "body": {
+                "minShards": 10,
+                "totalShards": 30
+              }
+            },
+            {
+              "name": "s3authentication",
+              "status": 200,
+              "body": {
+                "v4Keypairs": {
+                  "4e664e664e664e664e664e664e664e664e66": "96ec96ec96ec96ec96ec96ec96ec96ec96ec"
+                }
+              }
+            },
+            {
+              "name": "uploadpacking",
+              "status": 200,
+              "body": {
+                "enabled": true,
+                "slabBufferMaxSizeSoft": 4294967296
+              }
+            }
+          ]
+        },
+        {
+          "name": "/setting/:key",
+          "method": "DELETE",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/setting/:key",
+          "description": "Deletes the settings for a given key."
+        },
+        {
+          "name": "/slabs/migration",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/slabs/migration",
+          "description": "Returns all slabs that are below the given health cutoff and need to be migrated.",
+          "requestBody": {
+            "contractSet": "autopilot",
+            "healthCutoff": 0.7,
+            "limit": 1
+          }
+        },
+        {
+          "name": "/slabs/partial/:key",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/slabs/partial/:key?=&offset=0&length=1",
+          "description": "Returns a partial slab for the given object key."
+        },
+        {
+          "name": "/slabs/partial",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/slabs/partial?minShards=10&totalShards=30&contractSet=autopilot",
+          "description": "This endpoint allows adding a partial slab. The response body contains a field called `SlabBufferMaxSizeSoftReached` which will be true when the size of the slab buffers on disk exceed the threshold configured in the upload packing settings under `SlabBufferMaxSizeSoft` . The default soft limit is set at 4GiB.",
+          "responses": [
+            {
+              "name": "add partial slab",
+              "status": 200,
+              "body": {
+                "slabs": [
+                  {
+                    "key": "key:8eeac530a9327db0f52def124a2d0889a83630afe47201f80c3cb341c3d5d684",
+                    "offset": 4207352,
+                    "length": 0
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/slab/:key",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/slab/:key",
+          "description": "Returns the slab for given key."
+        },
+        {
+          "name": "/slab/:key/objects",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/slab/:key/objects",
+          "description": "Returns all objects associated with the slab for given object key."
+        },
+        {
+          "name": "/slab",
+          "method": "PUT",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/slab",
+          "description": "Updates the given slab.",
+          "requestBody": {
+            "contractSet": "autopilot",
+            "slab": {
+              "Key": "key:c89032a5f3bb5229cf54043c4c2c1c7ee4424cf507755242c1d018a5ab88f936",
+              "MinShards": 2,
+              "Shards": [
+                {
+                  "Host": "ed25519:9743a98b215dc76ddfb1a1722257c339c062cbef1ce177720e43e5c00ff03834",
+                  "Root": "h:c15220fc8751fdd4d868e3df3c018ef15ba235b0cac0d514d00877661506a895"
+                },
+                {
+                  "Host": "ed25519:66bc9ab2d386a4b152781efb5302fb09a52abb979dae5d1dbab036f45a4e08a5",
+                  "Root": "h:7bd5a1ecb0beeb6d973c0909b4ab3d3624ce7f9a73b5a15da696b55979018f9f"
+                },
+                {
+                  "Host": "ed25519:b24553566b992d5e5fc0be645c55c7d3c925776f7b66a64910a5e66ac00bbec3",
+                  "Root": "h:1ecd3ad15afaaef74f1e630807e68c2135ab2347400a2500d559ffec08635cf6"
+                }
+              ]
+            },
+            "usedContracts": {
+              "ed25519:66bc9ab2d386a4b152781efb5302fb09a52abb979dae5d1dbab036f45a4e08a5": "fcid:e28a88d1c74a696f513a6292d19a9773425d960bc2e88c0ace7b372139b01b96",
+              "ed25519:9743a98b215dc76ddfb1a1722257c339c062cbef1ce177720e43e5c00ff03834": "fcid:f398e543c8071d1e1d71403f70ff755d9f8ce3ff1f20c0a4e9cea04ac3c51bd6",
+              "ed25519:b24553566b992d5e5fc0be645c55c7d3c925776f7b66a64910a5e66ac00bbec3": "fcid:ea77e9caf34f408e9cc3d842b22f744701c4ad6e4ccec6e816c3ebaa923d3784"
+            }
+          }
+        },
+        {
+          "name": "/slabs/refreshhealth",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/slab/refreshhealth",
+          "description": "Updates the given slab."
+        },
+        {
+          "name": "/state",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/state",
+          "description": "Returns some state info about the bus, such as the time it was started and build metadata.",
+          "responses": [
+            {
+              "name": "/state",
+              "status": 200,
+              "body": {
+                "startTime": "2023-09-22T19:08:16.677593561Z",
+                "network": "Mainnet",
+                "version": "7fb1758",
+                "commit": "7fb1758",
+                "OS": "linux",
+                "buildTime": "2023-09-22T13:50:06Z"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/stats/objects",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/stats/objects?bucket=default",
+          "description": "Returns information about the objects currently tracked by the bus such as:\n\n- `numObjects` - total number of objects\n- `totalObjectsSize` - actual size of objects before upload to the network\n- `totalSectorsSize` - ideal size of objects on the network after adding padding and redundancy\n- `totalUploadedSize` - actual amount of data on the network which can diverge from `totalSectorsSize` in case parts of the object were migrated or objects were deleted\n    \n- `numUnfinishedObjects` - same as `numObjects` but for unfinished multipart uploads\n- `totalUnfinishedObjectsSize` - same as `totalObjectsSize` but for unfinished multipart upload parts\n    \n\nIf `bucket` is specified, the returned values will relate to the objects within a single bucket. The only exception is `totalUploadedSize`which will always contain the size of all uploaded data on the network.",
+          "responses": [
+            {
+              "name": "/stats/objects",
+              "status": 200,
+              "body": {
+                "numObjects": 36885,
+                "numUnfinishedObjects": 0,
+                "minHealth": 0.5,
+                "totalObjectsSize": 57884656923643,
+                "totalUnfinishedObjectsSize": 0,
+                "totalSectorsSize": 81936882073600,
+                "totalUploadedSize": 81936890462208
+              }
+            }
+          ]
+        },
+        {
+          "name": "/syncer/address",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/syncer/address",
+          "description": "Returns the address the bus is listening on for incoming p2p connections.",
+          "responses": [
+            {
+              "name": "/syncer/address",
+              "status": 200,
+              "body": "210.42.111.5:9981"
+            }
+          ]
+        },
+        {
+          "name": "/syncer/connect",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/syncer/connect",
+          "description": "",
+          "requestBody": "78.197.237.216:9981"
+        },
+        {
+          "name": "/syncer/peers",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/syncer/peers",
+          "description": "Returns the peers of the p2p network that the bus is currently connected to.",
+          "responses": [
+            {
+              "name": "/syncer/peers",
+              "status": 200,
+              "body": [
+                "72.211.254.250:9981"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/txpool/broadcast",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/txpool/broadcast",
+          "description": "Broadcasts a transaction to the p2p network in case it's valid according to the bus. If it contains enough miner fees it will eventually be mined into a block.",
+          "requestBody": [
+            {
+              "siacoininputs": [
+                {
+                  "parentid": "750d7ab31623702d359595c491b359ab05ec49217b660fb93b69b74518db46b1",
+                  "unlockconditions": {
+                    "timelock": 0,
+                    "publickeys": [
+                      {
+                        "algorithm": "ed25519",
+                        "key": "zUkSvh+y+gfXVV5Rmn9Yo/tVoySaK3ukPZC7PuwUTRE="
+                      }
+                    ],
+                    "signaturesrequired": 1
+                  }
+                }
+              ],
+              "siacoinoutputs": [
+                {
+                  "value": "110000000000000000000000000",
+                  "unlockhash": "cb9f646a8ba80aa8a8c931c739f3a0d61d22c13b70f4536cafaae2722f81ca95727009664a08"
+                },
+                {
+                  "value": "110000000000000000000000000",
+                  "unlockhash": "cb9f646a8ba80aa8a8c931c739f3a0d61d22c13b70f4536cafaae2722f81ca95727009664a08"
+                },
+                {
+                  "value": "11666013529973035363645398724",
+                  "unlockhash": "cb9f646a8ba80aa8a8c931c739f3a0d61d22c13b70f4536cafaae2722f81ca95727009664a08"
+                }
+              ],
+              "filecontracts": null,
+              "filecontractrevisions": null,
+              "storageproofs": null,
+              "siafundinputs": null,
+              "siafundoutputs": null,
+              "minerfees": [
+                "10530000000000000000000"
+              ],
+              "arbitrarydata": null,
+              "transactionsignatures": [
+                {
+                  "parentid": "750d7ab31623702d359595c491b359ab05ec49217b660fb93b69b74518db46b1",
+                  "publickeyindex": 0,
+                  "timelock": 0,
+                  "coveredfields": {
+                    "wholetransaction": true,
+                    "siacoininputs": null,
+                    "siacoinoutputs": null,
+                    "filecontracts": null,
+                    "filecontractrevisions": null,
+                    "storageproofs": null,
+                    "siafundinputs": null,
+                    "siafundoutputs": null,
+                    "minerfees": null,
+                    "arbitrarydata": null,
+                    "transactionsignatures": null
+                  },
+                  "signature": "ekCQ8v0NclbxRXH8IyQzE9xLYzI+xvuGSyTPZTXFIYxaWYj9BiPwbNtQaceJPIjtJwSI5HQHa++NRhN1DUn8Aw=="
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/txpool/recommendedfee",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/txpool/recommendedfee",
+          "description": "Returns the recommended fee per byte to include in a transaction.",
+          "responses": [
+            {
+              "name": "/txpool/recommendedfee",
+              "status": 200,
+              "body": "30000000000000000000"
+            }
+          ]
+        },
+        {
+          "name": "/txpool/transactions",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/txpool/transactions",
+          "description": "Returns all unconfirmed transaction that are currently in the transaction pool.",
+          "responses": [
+            {
+              "name": "/txpool/transactions",
+              "status": 200,
+              "body": [
+                {
+                  "SiacoinInputs": [
+                    {
+                      "ParentID": "scoid:d9c97096a6b1b083815b4ecfc0cc0acc6a3ffd83f6e9ef94a3222c08c98ef40c",
+                      "UnlockConditions": {
+                        "Timelock": 0,
+                        "PublicKeys": [
+                          {
+                            "Algorithm": "ed25519",
+                            "Key": "aozqmpVF//hjK+nk0uEMJsMhh+JTP+jQ5SoOvBQqNCY="
+                          }
+                        ],
+                        "SignaturesRequired": 1
+                      }
+                    }
+                  ],
+                  "SiacoinOutputs": [],
+                  "FileContracts": [],
+                  "FileContractRevisions": [
+                    {
+                      "ParentID": "fcid:3e9eea9edbf31e1445e85d0fa2007107c895cbfd2c7daae706249b79e0998e2d",
+                      "UnlockConditions": {
+                        "Timelock": 0,
+                        "PublicKeys": [
+                          {
+                            "Algorithm": "ed25519",
+                            "Key": "jINptKMgvp1VUM2q6Ir3QOIsi1fOAsl3/pWPZBgKTKM="
+                          }
+                        ],
+                        "SignaturesRequired": 2
+                      },
+                      "Filesize": 255852544,
+                      "FileMerkleRoot": "h:c43f3f628b30435ce53799db259852c0ca120317ee0e1ef99ea709d54d5380da",
+                      "WindowStart": 411225,
+                      "WindowEnd": 411369,
+                      "Payout": "340282366920938463463374607431768211455",
+                      "ValidProofOutputs": [
+                        {
+                          "Value": "376067377806916995322407",
+                          "Address": "addr:5e529918e00ce232c837ec553c11252f2b4b678a4b6f520d40a8ef5f1705f936fb541fafbf04"
+                        }
+                      ],
+                      "MissedProofOutputs": [
+                        {
+                          "Value": "269881012495714751851143",
+                          "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                        }
+                      ],
+                      "UnlockHash": "h:f69916b04ec13f400cce199f3b08cc6563348ae8c553466e56023dd8697760cf",
+                      "RevisionNumber": 123
+                    }
+                  ],
+                  "StorageProofs": [],
+                  "SiafundInputs": [],
+                  "SiafundOutputs": [],
+                  "MinerFees": [
+                    "40080000000000000000000"
+                  ],
+                  "ArbitraryData": [],
+                  "Signatures": [
+                    {
+                      "ParentID": "h:d9c97096a6b1b083815b4ecfc0cc0acc6a3ffd83f6e9ef94a3222c08c98ef40c",
+                      "PublicKeyIndex": 0,
+                      "Timelock": 0,
+                      "CoveredFields": {
+                        "WholeTransaction": true,
+                        "SiacoinInputs": [],
+                        "SiacoinOutputs": [],
+                        "FileContracts": [],
+                        "FileContractRevisions": [],
+                        "StorageProofs": [],
+                        "SiafundInputs": [],
+                        "SiafundOutputs": [],
+                        "MinerFees": [],
+                        "ArbitraryData": [],
+                        "Signatures": [
+                          1
+                        ]
+                      },
+                      "Signature": "0zpNa96DE4rsZy5QH7IhQRXfvR14X4bILf++RiP9LeDLHfRNDj/8NUVYKwaZ8Nxu3P3xmP6zGcdfJn0ovtF0CA=="
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/upload/:id",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/upload/:id",
+          "description": "Registers an ongoing upload with the bus."
+        },
+        {
+          "name": "/upload/:id",
+          "method": "DELETE",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/upload/:id",
+          "description": "Unregisters an ongoing upload with the bus."
+        },
+        {
+          "name": "/upload/:id/sector",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/upload/:id/sector",
+          "description": "Associates a sector with an ongoing upload.",
+          "requestBody": {
+            "contractID": "fcid:9573152b5a294ef910f08a3f18af8bf7b51a4c6ae108c0bd7c3d973db7d6c89e",
+            "root": "h:910c1669ef60f4f2ae6d47f736bb5b4268a6326adae0cba2cffaee62d9c27443"
+          }
+        },
+        {
+          "name": "/wallet",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet",
+          "description": "Returns collected information about the wallet. Such as the blockchain scan height, its address and balances.",
+          "responses": [
+            {
+              "name": "/wallet",
+              "status": 200,
+              "body": {
+                "scanHeight": 436326,
+                "address": "addr:9e5c7ee27eae74e278e7470d44163b08db21d8137ed04e476b742cd76f0b6deb1c7f6f10dcfe",
+                "spendable": "78424071338002381489614636705",
+                "confirmed": "78424071338002381489614636705",
+                "unconfirmed": "0"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/wallet/address",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet/address",
+          "description": "Returns an address that can be used to fund the wallet.",
+          "responses": [
+            {
+              "name": "/wallet/address",
+              "status": 200,
+              "body": "addr:9e5c7ee27eae74e278e7470d44163b08db21d8137ed04e476b742cd76f0b6deb1c7f6f10dcfe"
+            }
+          ]
+        },
+        {
+          "name": "/wallet/balance",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet/balance",
+          "description": "Returns the current balance of the wallet according to its unspent transaction outputs.",
+          "responses": [
+            {
+              "name": "/wallet/balance",
+              "status": 200,
+              "body": "7407386249202165846055626793"
+            }
+          ]
+        },
+        {
+          "name": "/wallet/discard",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet/discard",
+          "description": "Discards a transaction. That means the wallet will know that it is safe to reuse all of the inputs of the transaction for future transactions.",
+          "requestBody": {
+            "siacoininputs": [
+              {
+                "parentid": "b4f8d441a82fc11f32568f1c74725e9560907901c6a6715d2f1b15235a0a6316",
+                "unlockconditions": {
+                  "timelock": 0,
+                  "publickeys": [
+                    {
+                      "algorithm": "ed25519",
+                      "key": "zUkSvh+y+gfXVV5Rmn9Yo/tVoySaK3ukPZC7PuwUTRE="
+                    }
+                  ],
+                  "signaturesrequired": 1
+                }
+              }
+            ],
+            "siacoinoutputs": [
+              {
+                "value": "14137927280229237597800256000",
+                "unlockhash": "cb9f646a8ba80aa8a8c931c739f3a0d61d22c13b70f4536cafaae2722f81ca95727009664a08"
+              },
+              {
+                "value": "5000000000000000000000000",
+                "unlockhash": "cb9f646a8ba80aa8a8c931c739f3a0d61d22c13b70f4536cafaae2722f81ca95727009664a08"
+              }
+            ],
+            "filecontracts": null,
+            "filecontractrevisions": null,
+            "storageproofs": null,
+            "siafundinputs": null,
+            "siafundoutputs": null,
+            "minerfees": [
+              "22500000000000000000000"
+            ],
+            "arbitrarydata": null,
+            "transactionsignatures": [
+              {
+                "parentid": "b4f8d441a82fc11f32568f1c74725e9560907901c6a6715d2f1b15235a0a6316",
+                "publickeyindex": 0,
+                "timelock": 0,
+                "coveredfields": {
+                  "wholetransaction": false,
+                  "siacoininputs": null,
+                  "siacoinoutputs": null,
+                  "filecontracts": null,
+                  "filecontractrevisions": null,
+                  "storageproofs": null,
+                  "siafundinputs": null,
+                  "siafundoutputs": null,
+                  "minerfees": [
+                    0
+                  ],
+                  "arbitrarydata": null,
+                  "transactionsignatures": null
+                },
+                "signature": "3M2hWLHyrIoRg8wWJdq4kUgWV2vA/LjjGKlgLE7KAVydU19bIeW4PN37U6blhonl1pX/SehECR5ascE8yfjNDg=="
+              }
+            ]
+          }
+        },
+        {
+          "name": "/wallet/fund",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet/fund",
+          "description": "Funds the provided transaction with a given amount of funds. Returns the funded transactions, the list of inputs to the transaction that require signing as well as any unconfirmed parents required for the transaction to appear as valid.\n\nIf the transaction is not broadcasted, it needs to be discarded using the `/wallet/discard` endpoint.",
+          "requestBody": {
+            "transaction": {
+              "filecontracts": [
+                {
+                  "filesize": 0,
+                  "filemerkleroot": "0000000000000000000000000000000000000000000000000000000000000000",
+                  "windowstart": 399261,
+                  "windowend": 399405,
+                  "payout": "141812049115488970349210000",
+                  "validproofoutputs": [
+                    {
+                      "value": "135962858057138543001600000",
+                      "unlockhash": "cb9f646a8ba80aa8a8c931c739f3a0d61d22c13b70f4536cafaae2722f81ca95727009664a08"
+                    },
+                    {
+                      "value": "318521142846357504000000",
+                      "unlockhash": "e46bd90a234ecbd1783537763da3c3154dcde61aeccb0838fc2b32137e34e8b9d8095ed3f77f"
+                    }
+                  ],
+                  "missedproofoutputs": [
+                    {
+                      "value": "135962858057138543001600000",
+                      "unlockhash": "cb9f646a8ba80aa8a8c931c739f3a0d61d22c13b70f4536cafaae2722f81ca95727009664a08"
+                    },
+                    {
+                      "value": "318521142846357504000000",
+                      "unlockhash": "e46bd90a234ecbd1783537763da3c3154dcde61aeccb0838fc2b32137e34e8b9d8095ed3f77f"
+                    },
+                    {
+                      "value": "0",
+                      "unlockhash": "000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                    }
+                  ],
+                  "unlockhash": "5b79c25cf6940705000a7c51b0271308cb02ebefdd80bfe5040914baa880cfc3d69770a87dd5",
+                  "revisionnumber": 0
+                }
+              ]
+            },
+            "amount": "269772251232144184390000"
+          }
+        },
+        {
+          "name": "/wallet/outputs",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet/outputs",
+          "description": "Returns all confirmed UTXOs relevant to the wallet",
+          "responses": [
+            {
+              "name": "/wallet/outputs",
+              "status": 200,
+              "body": [
+                {
+                  "Value": "437078594556495665233100000",
+                  "Address": "addr:9e5c7ee27eae74e278e7470d44163b08db21d8137ed04e476b742cd76f0b6deb1c7f6f10dcfe",
+                  "ID": "h:d1e61b964297ab9e45c4829d42de0712b96d67d265024141851f4c7b94f3d6ee",
+                  "MaturityHeight": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/wallet/pending",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet/pending",
+          "description": "Similar to `/txpool/transactions` but returns only unconfirmed transactions that belong to the wallet. That means either outgoing or incoming transactions."
+        },
+        {
+          "name": "/wallet/prepare/form",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet/prepare/form",
+          "description": "Prepares a new, unsigned contract with a host. Usually called by the worker when forming a new contract with a host.",
+          "requestBody": {
+            "endHeight": 126,
+            "hostCollateral": "191285052982572071957200",
+            "hostKey": "ed25519:8397a68cc151feee06f40560ae05010a3bc44e742435285ba09b20762c0bcbee",
+            "hostSettings": {
+              "acceptingcontracts": true,
+              "baserpcprice": "100",
+              "collateral": "46296296296",
+              "contractprice": "250000000000000000000000",
+              "downloadbandwidthprice": "100000000000000",
+              "ephemeralaccountexpiry": 0,
+              "maxcollateral": "5000000000000000000000000000",
+              "maxdownloadbatchsize": 20971520,
+              "maxduration": 12960,
+              "maxephemeralaccountbalance": "0",
+              "maxrevisebatchsize": 20971520,
+              "netaddress": "127.0.0.1:63843",
+              "remainingstorage": 41943040,
+              "revisionnumber": 0,
+              "sectoraccessprice": "100",
+              "sectorsize": 4194304,
+              "siamuxport": "63844",
+              "storageprice": "23148148148",
+              "totalstorage": 41943040,
+              "unlockhash": "e8e4c05379028b84391521d94b1a07035c073a707af987522898c644abccdc8d03a4e9d54253",
+              "uploadbandwidthprice": "100000000000000",
+              "version": "2.0.0",
+              "windowsize": 5
+            },
+            "renterAddress": "addr:2c82211107b6b13c23161611f048eedef60488f0d1e46e46877dad21c1bb4b187d57af567852",
+            "renterFunds": "16666666666666666666666666",
+            "renterKey": "zsEWA5GFQFWYagfqO0W1F+lOYNBnZ/cPk4uf4Gv1xK8a+dY0u1ZfhouNBMPR0lW9rxTop6vDuf1LGU63kPL/bA=="
+          },
+          "responses": [
+            {
+              "name": "/wallet/prepare/form",
+              "status": 200,
+              "body": [
+                {
+                  "SiacoinInputs": [
+                    {
+                      "ParentID": "scoid:1b587eb0e0a89a07dbc88166bd32a6cfd16298b376c547b0d32e0996507fc16f",
+                      "UnlockConditions": {
+                        "Timelock": 0,
+                        "PublicKeys": [
+                          {
+                            "Algorithm": "ed25519",
+                            "Key": "2X3K2++Ul//uY8WSnrqhyhfusMwGWGIhcnUiN+8ZJKg="
+                          }
+                        ],
+                        "SignaturesRequired": 1
+                      }
+                    }
+                  ],
+                  "SiacoinOutputs": [
+                    {
+                      "Value": "299972375606010683676402213334",
+                      "Address": "addr:2c82211107b6b13c23161611f048eedef60488f0d1e46e46877dad21c1bb4b187d57af567852"
+                    }
+                  ],
+                  "FileContracts": [
+                    {
+                      "Filesize": 0,
+                      "FileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                      "WindowStart": 126,
+                      "WindowEnd": 131,
+                      "Payout": "17802239042298895669743866",
+                      "ValidProofOutputs": [
+                        {
+                          "Value": "441285052982572071957200",
+                          "Address": "addr:e8e4c05379028b84391521d94b1a07035c073a707af987522898c644abccdc8d03a4e9d54253"
+                        }
+                      ],
+                      "MissedProofOutputs": [
+                        {
+                          "Value": "0",
+                          "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                        }
+                      ],
+                      "UnlockHash": "h:fcc17c0ecb6ac3d41886ccd091db3234516a9faf9c7d2810e4aa14ebc1520340",
+                      "RevisionNumber": 0
+                    }
+                  ],
+                  "FileContractRevisions": null,
+                  "StorageProofs": null,
+                  "SiafundInputs": null,
+                  "SiafundOutputs": null,
+                  "MinerFees": [
+                    "13440000000000000000000"
+                  ],
+                  "ArbitraryData": null,
+                  "Signatures": [
+                    {
+                      "ParentID": "h:1b587eb0e0a89a07dbc88166bd32a6cfd16298b376c547b0d32e0996507fc16f",
+                      "PublicKeyIndex": 0,
+                      "Timelock": 0,
+                      "CoveredFields": {
+                        "WholeTransaction": false,
+                        "SiacoinInputs": [
+                          0
+                        ],
+                        "SiacoinOutputs": [
+                          0
+                        ],
+                        "FileContracts": [
+                          0
+                        ],
+                        "FileContractRevisions": null,
+                        "StorageProofs": null,
+                        "SiafundInputs": null,
+                        "SiafundOutputs": null,
+                        "MinerFees": [
+                          0
+                        ],
+                        "ArbitraryData": null,
+                        "Signatures": null
+                      },
+                      "Signature": "UdO2ssHtQBl/yGaeOugKujs8A3DS03cuazV65bNsTCfp21zclzj/mYz3Wn7l9WEhsHpOFdPLU8iLVD7JGK3jAg=="
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/wallet/prepare/renew",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet/prepare/renew",
+          "description": "Prepares a new, unsigned contract with a host. Usually called by the worker when renewing a new contract with a host.",
+          "requestBody": {
+            "contract": {
+              "ParentID": "fcid:49690e36d9955c6b4fe3d6b0612b77f26787305f61e68dfa50848a9d9a5e0075",
+              "UnlockConditions": {
+                "Timelock": 0,
+                "PublicKeys": [
+                  {
+                    "Algorithm": "ed25519",
+                    "Key": "GvnWNLtWX4aLjQTD0dJVva8U6Kerw7n9SxlOt5Dy/2w="
+                  },
+                  {
+                    "Algorithm": "ed25519",
+                    "Key": "g5emjMFR/u4G9AVgrgUBCjvETnQkNShboJsgdiwLy+4="
+                  }
+                ],
+                "SignaturesRequired": 2
+              },
+              "Filesize": 0,
+              "FileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+              "WindowStart": 126,
+              "WindowEnd": 131,
+              "Payout": "340282366920938463463374607431768211455",
+              "ValidProofOutputs": [
+                {
+                  "Value": "15666666461866666666666564",
+                  "Address": "addr:2c82211107b6b13c23161611f048eedef60488f0d1e46e46877dad21c1bb4b187d57af567852"
+                },
+                {
+                  "Value": "1441285257782572071957302",
+                  "Address": "addr:e8e4c05379028b84391521d94b1a07035c073a707af987522898c644abccdc8d03a4e9d54253"
+                }
+              ],
+              "MissedProofOutputs": [
+                {
+                  "Value": "15666666461866666666666564",
+                  "Address": "addr:2c82211107b6b13c23161611f048eedef60488f0d1e46e46877dad21c1bb4b187d57af567852"
+                },
+                {
+                  "Value": "1441285257782572071957302",
+                  "Address": "addr:e8e4c05379028b84391521d94b1a07035c073a707af987522898c644abccdc8d03a4e9d54253"
+                },
+                {
+                  "Value": "0",
+                  "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                }
+              ],
+              "UnlockHash": "h:fcc17c0ecb6ac3d41886ccd091db3234516a9faf9c7d2810e4aa14ebc1520340",
+              "RevisionNumber": 4
+            },
+            "endHeight": 176,
+            "hostSettings": {
+              "acceptingcontracts": true,
+              "baserpcprice": "100",
+              "collateral": "46296296296",
+              "contractprice": "250000000000000000000000",
+              "downloadbandwidthprice": "100000000000000",
+              "ephemeralaccountexpiry": 0,
+              "maxcollateral": "5000000000000000000000000000",
+              "maxdownloadbatchsize": 20971520,
+              "maxduration": 12960,
+              "maxephemeralaccountbalance": "0",
+              "maxrevisebatchsize": 20971520,
+              "netaddress": "127.0.0.1:63843",
+              "remainingstorage": 41943040,
+              "revisionnumber": 0,
+              "sectoraccessprice": "100",
+              "sectorsize": 4194304,
+              "siamuxport": "63844",
+              "storageprice": "23148148148",
+              "totalstorage": 41943040,
+              "unlockhash": "e8e4c05379028b84391521d94b1a07035c073a707af987522898c644abccdc8d03a4e9d54253",
+              "uploadbandwidthprice": "100000000000000",
+              "version": "2.0.0",
+              "windowsize": 5
+            },
+            "newCollateral": "283069390249021689235728",
+            "renterAddress": "addr:2c82211107b6b13c23161611f048eedef60488f0d1e46e46877dad21c1bb4b187d57af567852",
+            "renterFunds": "16666666666666666666666666",
+            "renterKey": "zsEWA5GFQFWYagfqO0W1F+lOYNBnZ/cPk4uf4Gv1xK8a+dY0u1ZfhouNBMPR0lW9rxTop6vDuf1LGU63kPL/bA=="
+          },
+          "responses": [
+            {
+              "name": "/wallet/prepare/renew",
+              "status": 200,
+              "body": {
+                "transactionSet": [
+                  {
+                    "SiacoinInputs": [
+                      {
+                        "ParentID": "scoid:a177e1bcc4fb21bb477e56700a198b4e98700b14e4ecf273c89739f9862b737a",
+                        "UnlockConditions": {
+                          "Timelock": 0,
+                          "PublicKeys": [
+                            {
+                              "Algorithm": "ed25519",
+                              "Key": "2X3K2++Ul//uY8WSnrqhyhfusMwGWGIhcnUiN+8ZJKg="
+                            }
+                          ],
+                          "SignaturesRequired": 1
+                        }
+                      }
+                    ],
+                    "SiacoinOutputs": [
+                      {
+                        "Value": "299972371881152043310600893334",
+                        "Address": "addr:2c82211107b6b13c23161611f048eedef60488f0d1e46e46877dad21c1bb4b187d57af567852"
+                      }
+                    ],
+                    "FileContracts": [
+                      {
+                        "Filesize": 0,
+                        "FileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                        "WindowStart": 176,
+                        "WindowEnd": 181,
+                        "Payout": "17897748238205711088342394",
+                        "ValidProofOutputs": [
+                          {
+                            "Value": "533069390249021689235728",
+                            "Address": "addr:e8e4c05379028b84391521d94b1a07035c073a707af987522898c644abccdc8d03a4e9d54253"
+                          }
+                        ],
+                        "MissedProofOutputs": [
+                          {
+                            "Value": "0",
+                            "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                          }
+                        ],
+                        "UnlockHash": "h:fcc17c0ecb6ac3d41886ccd091db3234516a9faf9c7d2810e4aa14ebc1520340",
+                        "RevisionNumber": 0
+                      }
+                    ],
+                    "FileContractRevisions": null,
+                    "StorageProofs": null,
+                    "SiafundInputs": null,
+                    "SiafundOutputs": null,
+                    "MinerFees": [
+                      "13440000000000000000000"
+                    ],
+                    "ArbitraryData": null,
+                    "Signatures": [
+                      {
+                        "ParentID": "h:a177e1bcc4fb21bb477e56700a198b4e98700b14e4ecf273c89739f9862b737a",
+                        "PublicKeyIndex": 0,
+                        "Timelock": 0,
+                        "CoveredFields": {
+                          "WholeTransaction": false,
+                          "SiacoinInputs": [
+                            0
+                          ],
+                          "SiacoinOutputs": [
+                            0
+                          ],
+                          "FileContracts": [
+                            0
+                          ],
+                          "FileContractRevisions": null,
+                          "StorageProofs": null,
+                          "SiafundInputs": null,
+                          "SiafundOutputs": null,
+                          "MinerFees": [
+                            0
+                          ],
+                          "ArbitraryData": null,
+                          "Signatures": null
+                        },
+                        "Signature": "nGKb3cBQUhsqx3eoa0WDJEnG3op6A6CF4DekYnqBoqWocGKxC8HgnkC2vGC546kupoJdMoQT5Y+yp9rVUxOOBQ=="
+                      }
+                    ]
+                  }
+                ],
+                "finalPayment": "100"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/wallet/redistribute",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet/redistribute",
+          "description": "Redistributes a specific amount of funds over a given minimum number of outputs. Used to ensure that the wallet always has a good amount of unspent outputs to use.",
+          "requestBody": {
+            "amount": "1000000",
+            "outputs": 10
+          },
+          "responses": [
+            {
+              "name": "/wallet/redistribute",
+              "status": 200,
+              "body": [
+                "txid:0a789c5cf1b1c33a988d5be245b5730f916eb0701ca7045c40d8eb2c44a54da4"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/wallet/sign",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet/sign",
+          "description": "Signs the provided transaction and returns the signed transaction.",
+          "requestBody": {
+            "transaction": {
+              "siacoininputs": [
+                {
+                  "parentid": "490228c343560c8136a72fa6bc58568a9e1532c4e33af0a2589bf97fae264e8a",
+                  "unlockconditions": {
+                    "timelock": 0,
+                    "publickeys": [
+                      {
+                        "algorithm": "ed25519",
+                        "key": "zUkSvh+y+gfXVV5Rmn9Yo/tVoySaK3ukPZC7PuwUTRE="
+                      }
+                    ],
+                    "signaturesrequired": 1
+                  }
+                }
+              ],
+              "siacoinoutputs": [
+                {
+                  "value": "60000000000000000000000000",
+                  "unlockhash": "cb9f646a8ba80aa8a8c931c739f3a0d61d22c13b70f4536cafaae2722f81ca95727009664a08"
+                },
+                {
+                  "value": "60000000000000000000000000",
+                  "unlockhash": "cb9f646a8ba80aa8a8c931c739f3a0d61d22c13b70f4536cafaae2722f81ca95727009664a08"
+                },
+                {
+                  "value": "14515683222618202165130217990",
+                  "unlockhash": "cb9f646a8ba80aa8a8c931c739f3a0d61d22c13b70f4536cafaae2722f81ca95727009664a08"
+                }
+              ],
+              "filecontracts": null,
+              "filecontractrevisions": null,
+              "storageproofs": null,
+              "siafundinputs": null,
+              "siafundoutputs": null,
+              "minerfees": [
+                "10530000000000000000000"
+              ],
+              "arbitrarydata": null,
+              "transactionsignatures": null
+            },
+            "toSign": [
+              "490228c343560c8136a72fa6bc58568a9e1532c4e33af0a2589bf97fae264e8a"
+            ],
+            "coveredFields": {
+              "wholetransaction": false,
+              "siacoininputs": [
+                0
+              ],
+              "siacoinoutputs": [
+                0,
+                1,
+                2
+              ],
+              "filecontracts": null,
+              "filecontractrevisions": null,
+              "storageproofs": null,
+              "siafundinputs": null,
+              "siafundoutputs": null,
+              "minerfees": [
+                0
+              ],
+              "arbitrarydata": null,
+              "transactionsignatures": null
+            }
+          }
+        },
+        {
+          "name": "/wallet/transactions",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/wallet/transactions",
+          "description": "Returns all confirmed transactions of the wallet.",
+          "responses": [
+            {
+              "name": "/wallet/transactions",
+              "status": 200,
+              "body": [
+                {
+                  "Raw": {
+                    "SiacoinInputs": [
+                      {
+                        "ParentID": "scoid:9d95062072a420748e7279c1465ec4fe669e48562539edd5db2ea544faba3e69",
+                        "UnlockConditions": {
+                          "Timelock": 0,
+                          "PublicKeys": [
+                            {
+                              "Algorithm": "ed25519",
+                              "Key": "No9TO46jVvaS3Qeu1O572vMAOdiAV5yqoPNiQ8Doy2w="
+                            }
+                          ],
+                          "SignaturesRequired": 1
+                        }
+                      }
+                    ],
+                    "SiacoinOutputs": [
+                      {
+                        "Value": "437078594556495665233100000",
+                        "Address": "addr:9e5c7ee27eae74e278e7470d44163b08db21d8137ed04e476b742cd76f0b6deb1c7f6f10dcfe"
+                      }
+                    ],
+                    "FileContracts": [
+                      {
+                        "Filesize": 71554826240,
+                        "FileMerkleRoot": "h:49347bc6c67661a3822a041d827be2a1eaad286f82f7193a77ae79a924b7195e",
+                        "WindowStart": 415187,
+                        "WindowEnd": 415331,
+                        "Payout": "116693906669424551240285214",
+                        "ValidProofOutputs": [
+                          {
+                            "Value": "32142844309316993741915214",
+                            "Address": "addr:9b07844984a0c93d459a7a9edbc6476c0fe8ecb833283a881d5cb9e4da5a4413efd2b09070b8"
+                          }
+                        ],
+                        "MissedProofOutputs": [
+                          {
+                            "Value": "0",
+                            "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                          }
+                        ],
+                        "UnlockHash": "h:d6ceaea0c630ea162320a191367c4229b7d3892e4670bb08541d2f64702ddcdf",
+                        "RevisionNumber": 0
+                      }
+                    ],
+                    "FileContractRevisions": [],
+                    "StorageProofs": [],
+                    "SiafundInputs": [],
+                    "SiafundOutputs": [],
+                    "MinerFees": [
+                      "13440000000000000000000"
+                    ],
+                    "ArbitraryData": [],
+                    "Signatures": [
+                      {
+                        "ParentID": "h:9d95062072a420748e7279c1465ec4fe669e48562539edd5db2ea544faba3e69",
+                        "PublicKeyIndex": 0,
+                        "Timelock": 0,
+                        "CoveredFields": {
+                          "WholeTransaction": true,
+                          "SiacoinInputs": [],
+                          "SiacoinOutputs": [],
+                          "FileContracts": [],
+                          "FileContractRevisions": [],
+                          "StorageProofs": [],
+                          "SiafundInputs": [],
+                          "SiafundOutputs": [],
+                          "MinerFees": [],
+                          "ArbitraryData": [],
+                          "Signatures": [
+                            0
+                          ]
+                        },
+                        "Signature": "Y5RkjD6+GKlviS+5Bw0nnnekeMs9Vs6z5meE1OcwTuHU+BnR7rKkwnUFIJLw9G5e/jpUoGejAmNIoBXeKm2hDQ=="
+                      }
+                    ]
+                  },
+                  "Index": "410959::0000000000000000aef9a01103863d162bd499a53c4c9fc4aff4716c1ff162fd",
+                  "ID": "txid:1ea697625d6523fda2ac3e5ff3b6d60701baafff2b2994ae4494d78f9a950c24",
+                  "Inflow": "437078594556495665233100000",
+                  "Outflow": "521793096916603222731470000",
+                  "Timestamp": "2023-03-30T15:11:08+02:00"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/webhooks",
+          "method": "GET",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/webhooks",
+          "description": "Returns all registered webhooks as well as information about corresponding queues. The size of a queue is usually 0 unless something prevents the queue from being emptied. e.g. the receiver being offline.",
+          "responses": [
+            {
+              "name": "/webhooks",
+              "status": 200,
+              "body": {
+                "webhooks": [
+                  {
+                    "module": "alerts",
+                    "event": "",
+                    "url": "http://192.168.1.174:8080/hooks"
+                  }
+                ],
+                "queues": [
+                  {
+                    "url": "http://192.168.1.174:8080/hooks",
+                    "size": 2563
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/webhooks",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/webhooks",
+          "description": "Registers a new webhook for the given module and event. The `url` will be hit with a `ping` event to verify that something is listening for events. Upon receiving a status 200 the webhook is considered valid and will be registered. Not specifying an `event` will subscribe to all events of a module.\n\n##### Available Modules/Events\n\n| Module | Events |\n| --- | --- |\n| `alerts` | `register` - triggered when registering alert  <br>`dismiss` - triggered when alerts get dismissed |",
+          "requestBody": {
+            "module": "alerts",
+            "event": "",
+            "url": "http://192.168.1.174:8080/hooks"
+          }
+        },
+        {
+          "name": "/webhooks/action",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/webhooks/action",
+          "description": "Broadcasts the given event. Triggers all webhooks that are interested in the event.",
+          "requestBody": {
+            "module": "alerts",
+            "event": "dismiss",
+            "payload": [
+              "<alertid>",
+              "<alertid>"
+            ]
+          }
+        },
+        {
+          "name": "/webhook/delete",
+          "method": "POST",
+          "url": "{{BUS_URI}}{{BUS_API_PREFIX}}/webhook/delete",
+          "description": "Deletes the given webhook.",
+          "requestBody": {
+            "module": "alerts",
+            "event": "",
+            "url": "http://192.168.1.174:8080/hooks"
+          },
+          "responses": [
+            {
+              "name": "delete webhook",
+              "status": 404,
+              "body": "webhook for URL http://192.168.1.174:8080/hooks and event alerts. not found\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "autopilot",
+      "item": [
+        {
+          "name": "/config",
+          "method": "GET",
+          "url": "{{AUTOPILOT_URI}}{{AUTOPILOT_API_PREFIX}}/config",
+          "description": "Returns the current config of the autopilot.",
+          "responses": [
+            {
+              "name": "/config",
+              "status": 200,
+              "body": {
+                "wallet": {
+                  "defragThreshold": 1000
+                },
+                "hosts": {
+                  "ignoreRedundantIPs": false,
+                  "maxDowntimeHours": 0,
+                  "scoreOverrides": {}
+                },
+                "contracts": {
+                  "set": "autopilot",
+                  "amount": 100,
+                  "allowance": "10000000000000000000000000000",
+                  "period": 6048,
+                  "renewWindow": 2016,
+                  "download": 1099511627776,
+                  "upload": 1099511627776,
+                  "storage": 1099511627776
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "/config",
+          "method": "PUT",
+          "url": "{{AUTOPILOT_URI}}{{AUTOPILOT_API_PREFIX}}/config",
+          "description": "Updates the config of the autopilot.\n\nNOTE: The existing and provided configuration parameters are not merged. All fields must be provided when calling this endpoint.",
+          "requestBody": {
+            "wallet": {
+              "defragThreshold": 1000
+            },
+            "hosts": {
+              "ignoreRedundantIPs": false,
+              "maxDowntimeHours": 0,
+              "scoreOverrides": {}
+            },
+            "contracts": {
+              "set": "autopilot",
+              "amount": 100,
+              "allowance": "10000000000000000000000000000",
+              "period": 6048,
+              "renewWindow": 2016,
+              "download": 1099511627776,
+              "upload": 1099511627776,
+              "storage": 1099511627776
+            }
+          }
+        },
+        {
+          "name": "/trigger",
+          "method": "POST",
+          "url": "{{AUTOPILOT_URI}}{{AUTOPILOT_API_PREFIX}}/trigger",
+          "description": "Can be used to manually trigger a maintenance iteration in the autopilot. Should only be used for debugging since the autopilot will periodically do maintenance anyway.",
+          "responses": [
+            {
+              "name": "/trigger",
+              "status": 200,
+              "body": "triggered: false"
+            }
+          ]
+        },
+        {
+          "name": "/host/:pubkey",
+          "method": "GET",
+          "url": "{{AUTOPILOT_URI}}{{AUTOPILOT_API_PREFIX}}/host/:pubkey",
+          "description": "Same as the `/host/:pubkey` endpoint on the bus but with some added, autopilot specific information. e.g. the host's score as perceived by the autopilot.",
+          "responses": [
+            {
+              "name": "/host/:pubkey",
+              "status": 200,
+              "body": {
+                "scoreBreakdown": {
+                  "age": 0.3333333333333333,
+                  "collateral": 1,
+                  "interactions": 0.9070463302111617,
+                  "storageRemaining": 0.00011889015796542582,
+                  "uptime": 1,
+                  "version": 0.88209,
+                  "prices": 0.5571673339283775
+                },
+                "score": 1.766658734306872e-05,
+                "usable": true,
+                "unusableReasons": null,
+                "host": {
+                  "knownSince": "2023-02-20T19:05:14.419+01:00",
+                  "public_key": "ed25519:b050c0c63f9f3b4d5a89acadf628e8d8c6f8768e38fbe731e429334e0fd2cece",
+                  "netAddress": "78.197.237.216:9982",
+                  "priceTable": {
+                    "uid": "224738b6f0b77080c186cf47a12c4645",
+                    "validity": 600000000000,
+                    "hostblockheight": 410801,
+                    "updatepricetablecost": "1",
+                    "accountbalancecost": "1",
+                    "fundaccountcost": "1",
+                    "latestrevisioncost": "407200000000000000",
+                    "subscriptionmemorycost": "1",
+                    "subscriptionnotificationcost": "0",
+                    "initbasecost": "0",
+                    "memorytimecost": "1",
+                    "downloadbandwidthcost": "150000000000000",
+                    "uploadbandwidthcost": "50000000000000",
+                    "dropsectorsbasecost": "1",
+                    "dropsectorsunitcost": "1",
+                    "hassectorbasecost": "1",
+                    "readbasecost": "0",
+                    "readlengthcost": "1",
+                    "renewcontractcost": "100000000000000000",
+                    "revisionbasecost": "0",
+                    "swapsectorcost": "1",
+                    "writebasecost": "1",
+                    "writelengthcost": "1",
+                    "writestorecost": "81018518518",
+                    "txnfeeminrecommended": "10000000000000000000",
+                    "txnfeemaxrecommended": "30000000000000000000",
+                    "contractprice": "150000000000000000000000",
+                    "collateralcost": "81018518518",
+                    "maxcollateral": "5000000000000000000000000000",
+                    "maxduration": 25920,
+                    "windowsize": 144,
+                    "registryentriesleft": 0,
+                    "registryentriestotal": 0
+                  },
+                  "settings": {
+                    "acceptingcontracts": true,
+                    "baserpcprice": "0",
+                    "collateral": "81018518518",
+                    "contractprice": "150000000000000000000000",
+                    "downloadbandwidthprice": "150000000000000",
+                    "ephemeralaccountexpiry": 604800000000000,
+                    "maxcollateral": "5000000000000000000000000000",
+                    "maxdownloadbatchsize": 17825792,
+                    "maxduration": 25920,
+                    "maxephemeralaccountbalance": "1000000000000000000000000",
+                    "maxrevisebatchsize": 17825792,
+                    "netaddress": "78.197.237.216:9982",
+                    "remainingstorage": 2877292544,
+                    "revisionnumber": 44846666,
+                    "sectoraccessprice": "0",
+                    "sectorsize": 4194304,
+                    "siamuxport": "9983",
+                    "storageprice": "81018518518",
+                    "totalstorage": 3999956729856,
+                    "unlockhash": "50344392179ea814d5b98f281dd459894171ca5e9064ab04596363031cddd886f16409aceed1",
+                    "uploadbandwidthprice": "50000000000000",
+                    "version": "1.5.4",
+                    "windowsize": 144
+                  },
+                  "interactions": {
+                    "TotalScans": 36,
+                    "LastScan": "2023-03-29T15:42:34.501324171+02:00",
+                    "LastScanSuccess": true,
+                    "SecondToLastScanSuccess": true,
+                    "Uptime": 3163048968672609,
+                    "Downtime": 0,
+                    "SuccessfulInteractions": 72,
+                    "FailedInteractions": 0
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "/hosts",
+          "method": "POST",
+          "url": "{{AUTOPILOT_URI}}{{AUTOPILOT_API_PREFIX}}/hosts",
+          "description": "Similar to `/host/:pubkey` but returns multiple hosts. You can provide \ufeff`offset` and `limit` for pagination, ``filterMode (`all|allowed|blocked`)``to filter by blocked/unblocked, and `usabilityMode` (`all|usable|unusable`) to filter for usable/unusable hosts. `addressContains` and `keyIn` can be used to further narrow down results to hosts with a specific address or pubkey.",
+          "requestBody": {
+            "offset": 0,
+            "limit": -1,
+            "filterMode": "all",
+            "usabilityMode": "all",
+            "addressContains": "",
+            "keyIn": []
+          },
+          "responses": [
+            {
+              "name": "/hosts",
+              "status": 200,
+              "body": [
+                {
+                  "scoreBreakdown": {
+                    "age": 0.3333333333333333,
+                    "collateral": 1,
+                    "interactions": 0.9070463302111617,
+                    "storageRemaining": 0.00011889015796542582,
+                    "uptime": 1,
+                    "version": 0.88209,
+                    "prices": 0.5571673339283775
+                  },
+                  "score": 1.766658734306872e-05,
+                  "usable": true,
+                  "unusableReasons": null,
+                  "host": {
+                    "knownSince": "2023-02-20T19:05:14.419+01:00",
+                    "public_key": "ed25519:b050c0c63f9f3b4d5a89acadf628e8d8c6f8768e38fbe731e429334e0fd2cece",
+                    "netAddress": "78.197.237.216:9982",
+                    "priceTable": {
+                      "uid": "224738b6f0b77080c186cf47a12c4645",
+                      "validity": 600000000000,
+                      "hostblockheight": 410801,
+                      "updatepricetablecost": "1",
+                      "accountbalancecost": "1",
+                      "fundaccountcost": "1",
+                      "latestrevisioncost": "407200000000000000",
+                      "subscriptionmemorycost": "1",
+                      "subscriptionnotificationcost": "0",
+                      "initbasecost": "0",
+                      "memorytimecost": "1",
+                      "downloadbandwidthcost": "150000000000000",
+                      "uploadbandwidthcost": "50000000000000",
+                      "dropsectorsbasecost": "1",
+                      "dropsectorsunitcost": "1",
+                      "hassectorbasecost": "1",
+                      "readbasecost": "0",
+                      "readlengthcost": "1",
+                      "renewcontractcost": "100000000000000000",
+                      "revisionbasecost": "0",
+                      "swapsectorcost": "1",
+                      "writebasecost": "1",
+                      "writelengthcost": "1",
+                      "writestorecost": "81018518518",
+                      "txnfeeminrecommended": "10000000000000000000",
+                      "txnfeemaxrecommended": "30000000000000000000",
+                      "contractprice": "150000000000000000000000",
+                      "collateralcost": "81018518518",
+                      "maxcollateral": "5000000000000000000000000000",
+                      "maxduration": 25920,
+                      "windowsize": 144,
+                      "registryentriesleft": 0,
+                      "registryentriestotal": 0
+                    },
+                    "settings": {
+                      "acceptingcontracts": true,
+                      "baserpcprice": "0",
+                      "collateral": "81018518518",
+                      "contractprice": "150000000000000000000000",
+                      "downloadbandwidthprice": "150000000000000",
+                      "ephemeralaccountexpiry": 604800000000000,
+                      "maxcollateral": "5000000000000000000000000000",
+                      "maxdownloadbatchsize": 17825792,
+                      "maxduration": 25920,
+                      "maxephemeralaccountbalance": "1000000000000000000000000",
+                      "maxrevisebatchsize": 17825792,
+                      "netaddress": "78.197.237.216:9982",
+                      "remainingstorage": 2877292544,
+                      "revisionnumber": 44846666,
+                      "sectoraccessprice": "0",
+                      "sectorsize": 4194304,
+                      "siamuxport": "9983",
+                      "storageprice": "81018518518",
+                      "totalstorage": 3999956729856,
+                      "unlockhash": "50344392179ea814d5b98f281dd459894171ca5e9064ab04596363031cddd886f16409aceed1",
+                      "uploadbandwidthprice": "50000000000000",
+                      "version": "1.5.4",
+                      "windowsize": 144
+                    },
+                    "interactions": {
+                      "TotalScans": 36,
+                      "LastScan": "2023-03-29T15:42:34.501324171+02:00",
+                      "LastScanSuccess": true,
+                      "SecondToLastScanSuccess": true,
+                      "Uptime": 3163048968672609,
+                      "Downtime": 0,
+                      "SuccessfulInteractions": 72,
+                      "FailedInteractions": 0
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/state",
+          "method": "GET",
+          "url": "{{AUTOPILOT_URI}}{{AUTOPILOT_API_PREFIX}}/state",
+          "description": "Returns some state info about the autopilot, like the time it was started and build metadata.",
+          "responses": [
+            {
+              "name": "/state",
+              "status": 200,
+              "body": {
+                "configured": true,
+                "migrating": true,
+                "migratingLastStart": "2023-09-21T08:31:01Z",
+                "scanning": false,
+                "scanningLastStart": "2023-09-21T12:09:58Z",
+                "uptimeMS": 17297166,
+                "startTime": "2023-09-21T08:25:18.542303234Z",
+                "network": "Mainnet",
+                "version": "v0.5.0-166-gaaf22529",
+                "commit": "aaf22529",
+                "OS": "linux",
+                "buildTime": "2023-09-20T14:03:05Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "worker",
+      "item": [
+        {
+          "name": "/account/:hostkey",
+          "method": "GET",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/account/:hostkey",
+          "description": "Derives a unique ephemeral account ID to use on the host",
+          "responses": [
+            {
+              "name": "/account/:hostkey",
+              "status": 200,
+              "body": "ed25519:a03c8de73fc8fda4cad4b30539a44229b1c66013f2508d8e5b82ed2e635807cb"
+            }
+          ]
+        },
+        {
+          "name": "/id",
+          "method": "GET",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/id",
+          "description": "Returns the worker's unique identifier as set by the user.",
+          "responses": [
+            {
+              "name": "/id",
+              "status": 200,
+              "body": "worker"
+            }
+          ]
+        },
+        {
+          "name": "/memory",
+          "method": "GET",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/memory",
+          "description": "Returns the worker's current memory limits and usage",
+          "responses": [
+            {
+              "name": "/memory",
+              "status": 200,
+              "body": {
+                "upload": {
+                  "available": 2000000000,
+                  "total": 2000000000
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "/multipart/*path",
+          "method": "PUT",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/multipart/:key?contractset=mycontractset&bucket=mybucket&uploadid=0bdbea34e2be1b3de7c60766dc1a9f400e0cf6d2db8f5f3842720f8549559f29&partnumber=1&minshards=10&totalshards=30&offset=0",
+          "description": "Uploads a new multipart to the given path. A path can be multiple layers deep such as `foo/bar/baz.`"
+        },
+        {
+          "name": "/objects/*key",
+          "method": "PUT",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/objects/:key",
+          "description": "Uploads a new object to the given path. A path can be multiple layers deep such as `foo/bar/baz`.\n\n## Request Headers\n\n**Content-Type**: if a content type is passed through the request header, it will be associated to the object that's being uploaded and returned in the `Content-Type` response header when the object is being served. If no `Content-Type` is given, it is deduced from the potential file extension in the object's key or sniffed.",
+          "requestBody": {
+            "mode": "file",
+            "file": {
+              "src": "/Users/peterjan/test2"
+            }
+          }
+        },
+        {
+          "name": "/objects/*key",
+          "method": "GET",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/objects/:key",
+          "description": "Downloads the object at the given path or queries object metadata if the specified path ends with '/'.",
+          "responses": [
+            {
+              "name": "Query with prefix",
+              "status": 200,
+              "body": [
+                {
+                  "name": "/Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film.mp4",
+                  "size": 1567419129,
+                  "health": 0.05
+                }
+              ]
+            },
+            {
+              "name": "Download object",
+              "status": 200,
+              "body": "Hello from Sia!\n"
+            }
+          ]
+        },
+        {
+          "name": "/objects/*key",
+          "method": "DELETE",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/objects/:key",
+          "description": "Deletes the object at the given path."
+        },
+        {
+          "name": "/rhp/contracts",
+          "method": "GET",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/rhp/contracts",
+          "description": "Returns all active contracts. Similar to the equivalent endpoint on the bus but also fetching the latest revision from the hosts and returns it alongside the contract info.",
+          "requestBody": {
+            "hostIP": "[blacklace.ddns.net]:9982",
+            "hostKey": "ed25519:378f4722515e01862c1396a6545c9c52dbaf12b2069d3b81ea5e405ef4220526"
+          },
+          "responses": [
+            {
+              "name": "/rhp/contracts",
+              "status": 200,
+              "body": {
+                "contracts": [
+                  {
+                    "id": "fcid:982a333c97c1be24756cd97060ec185867045f809f6666a70b8e7f33de290163",
+                    "hostIP": "49.12.214.34:9982",
+                    "hostKey": "ed25519:6b265afee298be4e05562b4a68da2b555d77c584d5ed47678a00fecbc25f647c",
+                    "siamuxAddr": "49.12.214.34:9983",
+                    "proofHeight": 0,
+                    "revisionHeight": 0,
+                    "revisionNumber": 0,
+                    "startHeight": 410670,
+                    "windowStart": 415187,
+                    "windowEnd": 415331,
+                    "renewedFrom": "fcid:1ce4eae3314edb3e13c7fb3a06946b0feb887bb3836400920332588aa41f8456",
+                    "spending": {
+                      "uploads": "9463178755260542466293760",
+                      "downloads": "0",
+                      "fundAccount": "0"
+                    },
+                    "totalCost": "40000000000000000000000000",
+                    "revision": {
+                      "ParentID": "fcid:982a333c97c1be24756cd97060ec185867045f809f6666a70b8e7f33de290163",
+                      "UnlockConditions": {
+                        "Timelock": 0,
+                        "PublicKeys": [
+                          {
+                            "Algorithm": "ed25519",
+                            "Key": "ayZa/uKYvk4FVitKaNorVV13xYTV7UdnigD+y8JfZHw="
+                          }
+                        ],
+                        "SignaturesRequired": 2
+                      },
+                      "Filesize": 42920312832,
+                      "FileMerkleRoot": "h:0ccab4323f6ed0ac15cdeababaee30e87d2123490666f0e092bd85bef45dd48a",
+                      "WindowStart": 415187,
+                      "WindowEnd": 415331,
+                      "Payout": "340282366920938463463374607431768211455",
+                      "ValidProofOutputs": [
+                        {
+                          "Value": "35969171652585202497113620",
+                          "Address": "addr:5161491f40fb6853fec953356c7190b410dacdf0d86244e30f0ae6e7e21bb3141b598ccbc1af"
+                        }
+                      ],
+                      "MissedProofOutputs": [
+                        {
+                          "Value": "17253414912393074266177536",
+                          "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                        }
+                      ],
+                      "UnlockHash": "h:b4100dd4b385d03d29e1587546f2a789e1cb34e6eac9244c8cf456e42c568586",
+                      "RevisionNumber": 3772
+                    }
+                  }
+                ],
+                "error": "couldn't retrieve contract(s): \n2aecef57: Reconnect: dial tcp 77.203.27.121:9982: i/o timeout\nb93a30b3: Reconnect: dial tcp 46.52.232.73:9982: i/o timeout\n9f768ceb: Reconnect: dial tcp: lookup ramposia.ddns.net: i/o timeout\n3d821c42: Reconnect: dial tcp 205.185.154.127:9982: i/o timeout\n6e4d79d9: Reconnect: dial tcp 213.92.255.118:9982: i/o timeout\n762849fa: Reconnect: dial tcp 209.195.0.162:9982: i/o timeout\nbb65d79a: Reconnect: dial tcp 217.160.155.97:20032: i/o timeout\n12be8b03: Reconnect: dial tcp 99.192.97.227:9982: i/o timeout\n844acf51: Reconnect: dial tcp 75.181.99.1:9982: i/o timeout\nc3967ba9: Reconnect: dial tcp 195.182.22.234:9982: i/o timeout\n42fc25fc: Reconnect: dial tcp 142.112.85.11:9982: i/o timeout\ncce11a3d: Reconnect: dial tcp 81.196.138.172:29189: i/o timeout\n5e08fac9: Reconnect: dial tcp 31.129.164.92:9982: i/o timeout\n44e02c30: Reconnect: dial tcp 109.221.247.201:9982: i/o timeout\nf4333b2e: Reconnect: dial tcp: lookup platillos.ddns.net: i/o timeout\n4b804458: Reconnect: dial tcp 31.129.166.25:9982: i/o timeout\n090911c5: Reconnect: dial tcp: lookup hostorian.ddns.net: i/o timeout\nc8dc6403: Reconnect: dial tcp: lookup epyc01.wickedmine.com: i/o timeout\n5ce30c1e: Reconnect: dial tcp: lookup ringosiaservice.ddns.net: i/o timeout\ne534d338: Reconnect: dial tcp 90.119.239.48:9982: i/o timeout\n6f7ac638: Reconnect: dial tcp: lookup 09116.hopto.org: i/o timeout\ne1488842: Reconnect: dial tcp: lookup shawnhomesc.no-ip.org: i/o timeout\nf34f85f2: Reconnect: dial tcp: lookup goldi.dynv6.net: i/o timeout\nd73660c3: Reconnect: dial tcp: lookup sia.bustedware.com: i/o timeout\n2287ab2f: Reconnect: dial tcp 116.255.1.175:9982: i/o timeout\n383e0614: Reconnect: dial tcp 203.147.103.179:9982: i/o timeout\n74e99212: Reconnect: dial tcp 95.216.78.164:9982: i/o timeout\naaf5aa89: Reconnect: dial tcp: lookup deni64k.ddns.net: i/o timeout\n5c6b990a: Reconnect: dial tcp 88.134.50.11:9982: i/o timeout\n90011069: Reconnect: dial tcp 41.157.65.55:9982: i/o timeout\nc753acb8: Reconnect: dial tcp 90.188.6.85:9982: i/o timeout\nab49fe30: Reconnect: dial tcp: lookup olmedia.ddns.net: i/o timeout\n9f768ceb: Reconnect: dial tcp: lookup ramposia.ddns.net: i/o timeout\n7189b446: Reconnect: dial tcp 176.104.8.173:9982: i/o timeout\n762849fa: Reconnect: dial tcp 209.195.0.162:9982: i/o timeout\nc782d057: Reconnect: dial tcp 109.73.35.195:9982: i/o timeout\n54950996: Reconnect: dial tcp: lookup siaworker.ddns.net: i/o timeout\n1e5ca61a: Reconnect: dial tcp 81.19.42.51:9982: i/o timeout\n890bdbc9: Reconnect: dial tcp 78.123.143.48:9983: i/o timeout\n81a09fe8: Reconnect: dial tcp: lookup hostographer.ddns.net: i/o timeout\ne8437eb4: Reconnect: dial tcp: lookup vince85.hopto.org: i/o timeout\n4b6bf45a: Reconnect: dial tcp 50.37.179.73:9982: i/o timeout\n25407e43: Reconnect: dial tcp 185.25.108.177:9982: i/o timeout\n07565533: Reconnect: dial tcp: lookup siayura2.ddns.net: i/o timeout\nd04b926c: Reconnect: dial tcp 87.99.166.34:9982: i/o timeout\n3de2398c: Reconnect: dial tcp 91.214.242.11:9982: i/o timeout\n6e1fa259: Reconnect: dial tcp: lookup nudrasia.ddns.net: i/o timeout\n3d821c42: Reconnect: dial tcp 205.185.154.127:9982: i/o timeout\nf0a9ea16: Reconnect: dial tcp: lookup corenexus.synology.me: i/o timeout\nadf4ddb7: Reconnect: dial tcp 89.181.192.219:9982: i/o timeout\nd441be7b: Reconnect: dial tcp 50.47.203.91:9982: i/o timeout\n8ed341e2: Reconnect: dial tcp 109.125.103.190:9982: i/o timeout\nf6ee7ce8: Reconnect: dial tcp 65.109.6.121:9982: i/o timeout\n713b2046: Reconnect: dial tcp 24.253.116.61:9982: i/o timeout\n5094313f: Reconnect: dial tcp 5.255.97.170:9982: i/o timeout\n27fdc31e: Reconnect: dial tcp: lookup mirig.ddns.net: i/o timeout\n5094313f: Reconnect: dial tcp 5.255.97.170:9982: i/o timeout\n573096e2: Reconnect: dial tcp 217.69.27.20:9982: i/o timeout\n5c6b990a: Reconnect: dial tcp: lookup sinansia.ddns.net: i/o timeout\n832add0c: Reconnect: dial tcp: lookup okcomputer83.ddns.net: i/o timeout\n2175a13a: Reconnect: dial tcp: lookup fotofreak.duckdns.org: i/o timeout\n8ed341e2: Reconnect: dial tcp 109.125.103.190:9982: i/o timeout\n8cca9e36: Reconnect: dial tcp: lookup sia.trueseeing.com: i/o timeout\n70b75b1a: Reconnect: dial tcp 117.53.137.127:9982: i/o timeout\n190a8da9: Reconnect: dial tcp 67.213.141.220:9982: i/o timeout\nd9f266bc: Reconnect: dial tcp 172.94.8.121:9982: i/o timeout\n74b0e4c9: Reconnect: dial tcp: lookup siatomoon.ddns.net: i/o timeout\n54d0ccce: Reconnect: dial tcp: lookup emoukltjbae0vceh.myfritz.net: i/o timeout\n2d393cf3: Reconnect: dial tcp 213.234.252.119:9982: i/o timeout\nfcf63e97: Reconnect: dial tcp: lookup troosa.ddns.net: i/o timeout\n6f9704e1: Reconnect: dial tcp: lookup cgwhs.de: i/o timeout\nc0e92398: Reconnect: dial tcp 91.89.250.195:9982: i/o timeout\n652653b7: Reconnect: dial tcp: lookup siahost.lvr26.eu: i/o timeout\n21883a40: Reconnect: dial tcp 82.65.64.111:9982: i/o timeout\nde9e1fd0: Reconnect: dial tcp 87.255.6.177:9982: i/o timeout\nd304d705: Reconnect: dial tcp 108.227.62.195:9982: i/o timeout\nf34f65ae: Reconnect: dial tcp 135.181.142.113:9982: i/o timeout\n0e282373: Reconnect: dial tcp 88.132.91.178:9982: i/o timeout\ndf1c4dc8: Reconnect: dial tcp: lookup sia.galaksio.eu: i/o timeout\n607c893e: Reconnect: dial tcp 90.188.9.144:8982: i/o timeout\nf93161b3: Reconnect: dial tcp 5.141.81.96:9982: i/o timeout\na8eae894: Reconnect: dial tcp: lookup storage113.ddns.net: i/o timeout\n743c5a5c: Reconnect: dial tcp: lookup home.cgwhs.de: i/o timeout\ndf160ce2: Reconnect: dial tcp: lookup oy3.ddns.net: i/o timeout\n3fb2427e: Reconnect: dial tcp 71.190.74.186:9982: i/o timeout\n2175a13a: Reconnect: dial tcp 143.178.97.0:9982: i/o timeout\ne9c983b2: Reconnect: dial tcp: lookup storage.hotdog.run: i/o timeout\n8039d9bb: Reconnect: dial tcp 82.65.120.60:9982: i/o timeout\ncb807bf0: Reconnect: dial tcp: lookup home.stareradia.pl: i/o timeout\n832add0c: Reconnect: dial tcp 86.241.147.249:9982: i/o timeout\n54475b83: Reconnect: dial tcp 79.135.213.220:9982: i/o timeout\n3f05408f: Reconnect: dial tcp: lookup sia.chevronseven.io: i/o timeout\n2f213227: Reconnect: dial tcp 31.148.20.13:9982: i/o timeout\n1f027427: Reconnect: dial tcp: lookup lloret.hopto.org: i/o timeout\ndbdad320: Reconnect: dial tcp: lookup storage108.ddns.net: i/o timeout\n14f173a5: Reconnect: dial tcp: lookup chopchopsia.hopto.org: i/o timeout\n48c2de6d: Reconnect: dial tcp: lookup busy.serveriukai.lt: i/o timeout\n283da4d4: Reconnect: dial tcp 45.83.241.30:9982: i/o timeout\n2ab722b3: Reconnect: dial tcp: lookup sia.meeresfrische.selfhost.bz: i/o timeout\n4074d176: Reconnect: dial tcp 88.208.237.16:9982: i/o timeout\n1fb61da5: Reconnect: dial tcp 100.34.167.140:9982: i/o timeout\ne209c594: Reconnect: dial tcp 168.119.135.199:9982: i/o timeout\n51d027f2: Reconnect: dial tcp: lookup chkdt.pprinz.net: i/o timeout\nb3cf1aee: Reconnect: dial tcp: lookup siastore1070.servep2p.com: i/o timeout\n27fdc31e: Reconnect: dial tcp: lookup mirig.ddns.net: i/o timeout\n2edd8575: Reconnect: dial tcp: lookup ilergeta.duckdns.org: i/o timeout\nc650f5ce: Reconnect: dial tcp 141.134.200.102:9982: i/o timeout\nfe9cee67: Reconnect: dial tcp: lookup triisa.ddns.net: i/o timeout\n00ce82a4: Reconnect: dial tcp 31.167.152.122:9982: i/o timeout\n0e3839ac: Reconnect: dial tcp 167.235.234.84:9982: i/o timeout\n7e04870d: Reconnect: dial tcp: lookup jonas.reptiles.se: i/o timeout\nde9e1fd0: Reconnect: dial tcp 87.255.6.177:9982: i/o timeout\n885c2d2d: Reconnect: dial tcp 72.194.241.148:9982: i/o timeout\n928cac5d: Reconnect: dial tcp: lookup storage105.ddns.net: i/o timeout\n734e2dad: Reconnect: dial tcp 31.211.96.178:9982: i/o timeout\n26905cdb: Reconnect: dial tcp: lookup kablek.hopto.org: i/o timeout\n3d147a14: Reconnect: dial tcp: lookup sia.deepacs.fr: i/o timeout\n09d4ebb1: Reconnect: dial tcp 195.209.127.157:9982: i/o timeout\nf6ee7ce8: Reconnect: dial tcp 65.109.6.121:9982: i/o timeout"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/rhp/:id/broadcast",
+          "method": "POST",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/rhp/contract/:id/broadcast",
+          "description": "Broadcasts the latest known revision of the specified contract on the Sia network. This will create an on-chain transaction containing the revision which prevents hosts from broadcasting an older revision.\n\nThe autopilot will perform a broadcast of all contracts periodically (every 24 hours by default) if it is enabled."
+        },
+        {
+          "name": "/rhp/:id/prune",
+          "method": "POST",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/rhp/contract/:id/prune",
+          "description": "Prunes unused data from a contract. A single call might not prune all data from a contract if the contract is very large. The values in the response indicate how many 4MiB sectors were pruned and how many are left to prune.",
+          "requestBody": {
+            "timeout": 30000000000
+          },
+          "responses": [
+            {
+              "name": "/rhp/:id/prune",
+              "status": 200,
+              "body": {
+                "pruned": 5,
+                "remaining": 0
+              }
+            }
+          ]
+        },
+        {
+          "name": "/rhp/:id/roots",
+          "method": "POST",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/rhp/contract/:id/roots",
+          "description": "Prunes unused data from a contract. A single call might not prune all data from a contract if the contract is very large. The values in the response indicate how many 4MiB sectors were pruned and how many are left to prune.",
+          "responses": [
+            {
+              "name": "/rhp/:id/roots",
+              "status": 200,
+              "body": [
+                "h:8f5c33577eaf9da6339ec910787348102d7608467892512354edb399345a71cd"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "/rhp/form",
+          "method": "POST",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/rhp/form",
+          "description": "Forms a new contract with a host.",
+          "requestBody": {
+            "endHeight": 126,
+            "hostCollateral": "191285052982572071957200",
+            "hostKey": "ed25519:878d7d27e75691aa8f554ecb4c3e0c371a2a2a3d0901fe77727b6df6c6a11a6a",
+            "hostIP": "127.0.0.1:59868",
+            "renterFunds": "16666666666666666666666666",
+            "renterAddress": "addr:861c1574947689c04df41a987b3a6a0a44eef27bb4511f3d64d1531913ca26288a12efc3f227"
+          },
+          "responses": [
+            {
+              "name": "/rhp/form",
+              "status": 200,
+              "body": {
+                "contractID": "fcid:4a1a94c868940c19753098c8e409fc370c1df720fa37187b506a8ff7785eae8e",
+                "contract": {
+                  "Revision": {
+                    "ParentID": "fcid:4a1a94c868940c19753098c8e409fc370c1df720fa37187b506a8ff7785eae8e",
+                    "UnlockConditions": {
+                      "Timelock": 0,
+                      "PublicKeys": [
+                        {
+                          "Algorithm": "ed25519",
+                          "Key": "h419J+dWkaqPVU7LTD4MNxoqKj0JAf53cntt9sahGmo="
+                        }
+                      ],
+                      "SignaturesRequired": 2
+                    },
+                    "Filesize": 0,
+                    "FileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                    "WindowStart": 126,
+                    "WindowEnd": 131,
+                    "Payout": "0",
+                    "ValidProofOutputs": [
+                      {
+                        "Value": "441285052982572071957200",
+                        "Address": "addr:423baeab3ec970bd8f75d47c2c1e0eee0381e5f77c039ecf1ff370b32912c15884320a868b04"
+                      }
+                    ],
+                    "MissedProofOutputs": [
+                      {
+                        "Value": "0",
+                        "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                      }
+                    ],
+                    "UnlockHash": "h:9e9d2161a49cd0a3e040151b568db7990983edf17337a86d09ed33e128b01f03",
+                    "RevisionNumber": 1
+                  },
+                  "Signatures": [
+                    {
+                      "ParentID": "h:4a1a94c868940c19753098c8e409fc370c1df720fa37187b506a8ff7785eae8e",
+                      "PublicKeyIndex": 0,
+                      "Timelock": 0,
+                      "CoveredFields": {
+                        "WholeTransaction": false,
+                        "SiacoinInputs": [],
+                        "SiacoinOutputs": [],
+                        "FileContracts": [],
+                        "FileContractRevisions": [
+                          0
+                        ],
+                        "StorageProofs": [],
+                        "SiafundInputs": [],
+                        "SiafundOutputs": [],
+                        "MinerFees": [],
+                        "ArbitraryData": [],
+                        "Signatures": []
+                      },
+                      "Signature": "0NLlNKrNdz1zVHfvKVQJbwrzV/UyIUaLFolj5IILNtXKCggVO7sU/blleXWadm2fR0TT55Nw53uR4LwHQ1DrDw=="
+                    }
+                  ]
+                },
+                "transactionSet": [
+                  {
+                    "SiacoinInputs": [
+                      {
+                        "ParentID": "scoid:4a9295f627e55ba53d47748b72ba2fabf6f55beee85c8ce919fd19da3fc5aa92",
+                        "UnlockConditions": {
+                          "Timelock": 0,
+                          "PublicKeys": [
+                            {
+                              "Algorithm": "ed25519",
+                              "Key": "h419J+dWkaqPVU7LTD4MNxoqKj0JAf53cntt9sahGmo="
+                            }
+                          ],
+                          "SignaturesRequired": 1
+                        }
+                      }
+                    ],
+                    "SiacoinOutputs": [
+                      {
+                        "Value": "704978558714947017427928042800",
+                        "Address": "addr:423baeab3ec970bd8f75d47c2c1e0eee0381e5f77c039ecf1ff370b32912c15884320a868b04"
+                      }
+                    ],
+                    "FileContracts": [
+                      {
+                        "Filesize": 0,
+                        "FileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                        "WindowStart": 126,
+                        "WindowEnd": 131,
+                        "Payout": "17802239042298895669743866",
+                        "ValidProofOutputs": [
+                          {
+                            "Value": "441285052982572071957200",
+                            "Address": "addr:423baeab3ec970bd8f75d47c2c1e0eee0381e5f77c039ecf1ff370b32912c15884320a868b04"
+                          }
+                        ],
+                        "MissedProofOutputs": [
+                          {
+                            "Value": "0",
+                            "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                          }
+                        ],
+                        "UnlockHash": "h:9e9d2161a49cd0a3e040151b568db7990983edf17337a86d09ed33e128b01f03",
+                        "RevisionNumber": 0
+                      }
+                    ],
+                    "FileContractRevisions": null,
+                    "StorageProofs": null,
+                    "SiafundInputs": null,
+                    "SiafundOutputs": null,
+                    "MinerFees": [
+                      "13440000000000000000000"
+                    ],
+                    "ArbitraryData": null,
+                    "Signatures": [
+                      {
+                        "ParentID": "h:4a9295f627e55ba53d47748b72ba2fabf6f55beee85c8ce919fd19da3fc5aa92",
+                        "PublicKeyIndex": 0,
+                        "Timelock": 0,
+                        "CoveredFields": {
+                          "WholeTransaction": true,
+                          "SiacoinInputs": [],
+                          "SiacoinOutputs": [],
+                          "FileContracts": [],
+                          "FileContractRevisions": [],
+                          "StorageProofs": [],
+                          "SiafundInputs": [],
+                          "SiafundOutputs": [],
+                          "MinerFees": [],
+                          "ArbitraryData": [],
+                          "Signatures": []
+                        },
+                        "Signature": "wxETclhhRZUlu7Bo2VY3t4ScY+zbFWsnsfJU+BZJDrrmYquZIHcjZ8v0TaNvZExWTigEINDRYKXHs9rimrk4DA=="
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/rhp/fund",
+          "method": "POST",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/rhp/fund",
+          "description": "Fund an ephemeral account with a host.",
+          "requestBody": {
+            "contractID": "fcid:ce6639d456195048b2fbd0796a9b99b34ab7809ffed04de10cf8cfd631b574cb",
+            "hostKey": "ed25519:2f58b62c3f11d89148b352d8824f72013fac64beb7d1c853d46a4e68116f8fb8",
+            "siamuxAddr": "127.0.0.1:59999",
+            "balance": "1000000000000000000000000"
+          }
+        },
+        {
+          "name": "/rhp/renew",
+          "method": "POST",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/rhp/renew",
+          "description": "Renew a contract with a host.",
+          "requestBody": {
+            "contractID": "fcid:4a1a94c868940c19753098c8e409fc370c1df720fa37187b506a8ff7785eae8e",
+            "endHeight": 176,
+            "hostKey": "ed25519:878d7d27e75691aa8f554ecb4c3e0c371a2a2a3d0901fe77727b6df6c6a11a6a",
+            "hostIP": "127.0.0.1:59868",
+            "newCollateral": "283069390249021689235728",
+            "renterAddress": "addr:861c1574947689c04df41a987b3a6a0a44eef27bb4511f3d64d1531913ca26288a12efc3f227",
+            "renterFunds": "16666666666666666666666666"
+          },
+          "responses": [
+            {
+              "name": "/rhp/renew",
+              "status": 200,
+              "body": {
+                "error": "",
+                "contractID": "fcid:198c54121cd0e9de49d36eab3fe4b7f4ffdb2db0ec53a516700d5847e964a26c",
+                "contract": {
+                  "Revision": {
+                    "ParentID": "fcid:198c54121cd0e9de49d36eab3fe4b7f4ffdb2db0ec53a516700d5847e964a26c",
+                    "UnlockConditions": {
+                      "Timelock": 0,
+                      "PublicKeys": [
+                        {
+                          "Algorithm": "ed25519",
+                          "Key": "h419J+dWkaqPVU7LTD4MNxoqKj0JAf53cntt9sahGmo="
+                        }
+                      ],
+                      "SignaturesRequired": 2
+                    },
+                    "Filesize": 0,
+                    "FileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                    "WindowStart": 176,
+                    "WindowEnd": 181,
+                    "Payout": "0",
+                    "ValidProofOutputs": [
+                      {
+                        "Value": "533069390249021689235728",
+                        "Address": "addr:423baeab3ec970bd8f75d47c2c1e0eee0381e5f77c039ecf1ff370b32912c15884320a868b04"
+                      }
+                    ],
+                    "MissedProofOutputs": [
+                      {
+                        "Value": "0",
+                        "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                      }
+                    ],
+                    "UnlockHash": "h:9e9d2161a49cd0a3e040151b568db7990983edf17337a86d09ed33e128b01f03",
+                    "RevisionNumber": 1
+                  },
+                  "Signatures": [
+                    {
+                      "ParentID": "h:198c54121cd0e9de49d36eab3fe4b7f4ffdb2db0ec53a516700d5847e964a26c",
+                      "PublicKeyIndex": 0,
+                      "Timelock": 0,
+                      "CoveredFields": {
+                        "WholeTransaction": false,
+                        "SiacoinInputs": [],
+                        "SiacoinOutputs": [],
+                        "FileContracts": [],
+                        "FileContractRevisions": [
+                          0
+                        ],
+                        "StorageProofs": [],
+                        "SiafundInputs": [],
+                        "SiafundOutputs": [],
+                        "MinerFees": [],
+                        "ArbitraryData": [],
+                        "Signatures": []
+                      },
+                      "Signature": "mYsfxXAgwIly4vpTUcX3EqvxFXsWTR6jHCKyZxHSmFLLnr9vX3K9ammZAO8UaCk+NIXsDhOnAUmQqE3ALsfnBg=="
+                    }
+                  ]
+                },
+                "transactionSet": [
+                  {
+                    "SiacoinInputs": [
+                      {
+                        "ParentID": "scoid:32d0585916747385832beae2328088ebc30948d692d0d474e3d7a9bd4e4589e3",
+                        "UnlockConditions": {
+                          "Timelock": 0,
+                          "PublicKeys": [
+                            {
+                              "Algorithm": "ed25519",
+                              "Key": "h419J+dWkaqPVU7LTD4MNxoqKj0JAf53cntt9sahGmo="
+                            }
+                          ],
+                          "SignaturesRequired": 1
+                        }
+                      }
+                    ],
+                    "SiacoinOutputs": [
+                      {
+                        "Value": "704978466930609750978310764272",
+                        "Address": "addr:423baeab3ec970bd8f75d47c2c1e0eee0381e5f77c039ecf1ff370b32912c15884320a868b04"
+                      }
+                    ],
+                    "FileContracts": [
+                      {
+                        "Filesize": 0,
+                        "FileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                        "WindowStart": 176,
+                        "WindowEnd": 181,
+                        "Payout": "17897748238205711088342394",
+                        "ValidProofOutputs": [
+                          {
+                            "Value": "533069390249021689235728",
+                            "Address": "addr:423baeab3ec970bd8f75d47c2c1e0eee0381e5f77c039ecf1ff370b32912c15884320a868b04"
+                          }
+                        ],
+                        "MissedProofOutputs": [
+                          {
+                            "Value": "0",
+                            "Address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                          }
+                        ],
+                        "UnlockHash": "h:9e9d2161a49cd0a3e040151b568db7990983edf17337a86d09ed33e128b01f03",
+                        "RevisionNumber": 0
+                      }
+                    ],
+                    "FileContractRevisions": null,
+                    "StorageProofs": null,
+                    "SiafundInputs": null,
+                    "SiafundOutputs": null,
+                    "MinerFees": [
+                      "13440000000000000000000"
+                    ],
+                    "ArbitraryData": null,
+                    "Signatures": [
+                      {
+                        "ParentID": "h:32d0585916747385832beae2328088ebc30948d692d0d474e3d7a9bd4e4589e3",
+                        "PublicKeyIndex": 0,
+                        "Timelock": 0,
+                        "CoveredFields": {
+                          "WholeTransaction": true,
+                          "SiacoinInputs": [],
+                          "SiacoinOutputs": [],
+                          "FileContracts": [],
+                          "FileContractRevisions": [],
+                          "StorageProofs": [],
+                          "SiafundInputs": [],
+                          "SiafundOutputs": [],
+                          "MinerFees": [],
+                          "ArbitraryData": [],
+                          "Signatures": []
+                        },
+                        "Signature": "yX0p9MU/pSj0ZqmWTDeO7xHPCXGUuiqUonslhJ0XJmf7uAlXjiec6mnA8imBw6zGQd7LR9PIUJP0kLXet4I6Bg=="
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/rhp/scan",
+          "method": "POST",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/rhp/scan",
+          "description": "Scans a host.",
+          "requestBody": {
+            "hostIP": "[blacklace.ddns.net]:9982",
+            "hostKey": "ed25519:378f4722515e01862c1396a6545c9c52dbaf12b2069d3b81ea5e405ef4220526",
+            "timeout": 30000
+          },
+          "responses": [
+            {
+              "name": "/rhp/scan",
+              "status": 200,
+              "body": {
+                "ping": "64",
+                "settings": {
+                  "acceptingcontracts": true,
+                  "baserpcprice": "100000000000000000",
+                  "collateral": "16203703703",
+                  "contractprice": "150000000000000000000000",
+                  "downloadbandwidthprice": "90000000000000",
+                  "ephemeralaccountexpiry": 604800000000000,
+                  "maxcollateral": "5000000000000000000000000000",
+                  "maxdownloadbatchsize": 17825792,
+                  "maxduration": 25200,
+                  "maxephemeralaccountbalance": "1000000000000000000000000",
+                  "maxrevisebatchsize": 17825792,
+                  "netaddress": "[blacklace.ddns.net]:9982",
+                  "remainingstorage": 2370599649280,
+                  "revisionnumber": 13453497,
+                  "sectoraccessprice": "2000000000000000000",
+                  "sectorsize": 4194304,
+                  "siamuxport": "9983",
+                  "storageprice": "7407407407",
+                  "totalstorage": 10952703475712,
+                  "unlockhash": "628722b5245346ec7ab986fcad0a22797932476f379e70444bc2b896a2bc4f5cb7c9e9518e35",
+                  "uploadbandwidthprice": "0",
+                  "version": "1.5.9",
+                  "windowsize": 144
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "/rhp/sync",
+          "method": "POST",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/rhp/sync",
+          "description": "Syncs the ephemeral account balance of a host with the expected balance of the renter.",
+          "requestBody": {
+            "contractID": "fcid:ce6639d456195048b2fbd0796a9b99b34ab7809ffed04de10cf8cfd631b574cb",
+            "hostKey": "ed25519:2f58b62c3f11d89148b352d8824f72013fac64beb7d1c853d46a4e68116f8fb8",
+            "siamuxAddr": "127.0.0.1:59999"
+          }
+        },
+        {
+          "name": "/slab/migrate",
+          "method": "POST",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/slab/migrate?contractset=mycontractset",
+          "description": "Migrates the given slab from the hosts that it is stored on to hosts specified by the `contractset`.",
+          "requestBody": {
+            "health": 0,
+            "key": "key:444f8c667397ba6bf7143dcec2cf3b6db4613d6e6598019c81d8918038a18053",
+            "minShards": 2,
+            "shards": [
+              {
+                "host": "ed25519:c60e2cefbe035cafe6d9dae2a1d29838f4e73911ee80cced7cd90d6fdc7255b8",
+                "root": "h:5d807aa237a50bc2bc437be77eeb319fc8cb82ac4956730c5f0e7b23be8f66a3"
+              },
+              {
+                "host": "ed25519:d60e0ea4963be529961899358d65d9fbd7e4dd242905d9f9a500f410d8ede65e",
+                "root": "h:3751240edfe4ea4e96063e494c7aca079e35bfc3bf842c1a3e929e800fcea19a"
+              },
+              {
+                "host": "ed25519:36688db48649d90d2966c0dd3bc3e9d885e80fb3936097cf883becb716ac8de8",
+                "root": "h:a3dcc2596268c21a0d9b77d846a48e67a912cb9cdb581db37e87eb20052e8782"
+              }
+            ]
+          }
+        },
+        {
+          "name": "/state",
+          "method": "GET",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/state",
+          "description": "Returns state about the worker, such as the time it started and build metadata.",
+          "responses": [
+            {
+              "name": "/state",
+              "status": 200,
+              "body": {
+                "id": "worker",
+                "startTime": "2023-09-21T08:25:18.542067612Z",
+                "network": "Mainnet",
+                "version": "v0.5.0-166-gaaf22529",
+                "commit": "aaf22529",
+                "OS": "linux",
+                "buildTime": "2023-09-20T14:03:05Z"
+              }
+            }
+          ]
+        },
+        {
+          "name": "/stats/downloads",
+          "method": "GET",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/stats/downloads",
+          "description": "Returns download related stats.",
+          "responses": [
+            {
+              "name": "/stats/downloads",
+              "status": 200,
+              "body": {
+                "avgDownloadSpeedMBPS": 277.89,
+                "avgOverdrivePct": 2,
+                "healthyDownloaders": 5,
+                "numDownloaders": 5,
+                "downloadersStats": [
+                  {
+                    "avgSectorDownloadSpeedMBPS": 46.088,
+                    "hostKey": "ed25519:075f76fc20d9f6136b068463986ea63e36f069c83d9d8213c216cbf4a23ce761",
+                    "numDownloads": 1
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/stats/uploads",
+          "method": "GET",
+          "url": "{{WORKER_URI}}{{WORKER_API_PREFIX}}/stats/uploads",
+          "description": "Returns upload related stats.",
+          "responses": [
+            {
+              "name": "/stats/uploads",
+              "status": 200,
+              "body": {
+                "avgSlabUploadSpeedMBPS": 15.05,
+                "avgOverdrivePct": 47.09,
+                "healthyUploaders": 5,
+                "numUploaders": 5,
+                "uploadersStats": [
+                  {
+                    "hostKey": "ed25519:a90d3c26a22d66903c06a1bf869e14e829e95cfa25b6bf08189c98713fc92449",
+                    "avgSectorUploadSpeedMBPS": 17.4656
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

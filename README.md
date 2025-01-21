@@ -24,12 +24,14 @@ SiaQL provides a unified GraphQL layer on top of Sia's core REST APIs, making it
 ### Setup
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/justmert/siaql.git
 cd siaql
 ```
 
 2. Install dependencies:
+
 ```bash
 poetry install
 ```
@@ -41,22 +43,26 @@ poetry install
 Start the GraphQL server using one of these methods:
 
 1. With password prompt (recommended):
+
 ```bash
 poetry run siaql
 ```
 
 2. With password as command line argument:
+
 ```bash
 poetry run siaql --walletd-password your_password
 ```
 
 3. With password as environment variable:
+
 ```bash
 export SIAQL_WALLETD_PASSWORD=your_password
 poetry run siaql
 ```
 
 Additional configuration options:
+
 ```bash
 poetry run siaql --help
 ```
@@ -89,3 +95,4 @@ Once the server is running, open GraphiQL at `http://localhost:8000/graphql`. He
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+

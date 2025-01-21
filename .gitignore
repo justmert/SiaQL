@@ -37,6 +37,7 @@ myenv/
 *.swp
 *.swo
 .DS_Store
+_docs/
 
 # Project specific
 *.log
