@@ -9,13 +9,16 @@ from enum import Enum
 
 from dataclasses import dataclass
 from typing import Type, TypeVar, get_type_hints, Optional, get_origin, get_args
+
 # from strawberry.field import StrawberryField
 from functools import wraps
 from dataclasses import dataclass, fields
-T = TypeVar('T')
+
+T = TypeVar("T")
 
 # Cache for input types
 _input_type_cache: Dict[str, Any] = {}
+
 
 def _process_field_type(field_type):
     """Process field type to handle Optional and List types"""
@@ -27,28 +30,25 @@ def _process_field_type(field_type):
         args = get_args(field_type)
         base_type = _process_field_type(args[0])
         return list[base_type]
-    
+
     # If it's a SiaType, get its input version
     if isinstance(field_type, type) and issubclass(field_type, SiaType):
         return field_type.Input
-    
+
     return field_type
+
 
 def is_valid_input_type(field_type):
     """Check if a type can be used as input"""
     basic_types = (str, int, float, bool, datetime.datetime, datetime.date)
-    
+
     # Handle Optional and List
     if get_origin(field_type) in (Optional, list):
         field_type = get_args(field_type)[0]
-    
+
     # Check if it's a basic type or SiaType
-    return (
-        isinstance(field_type, type) and (
-            issubclass(field_type, basic_types) or
-            issubclass(field_type, SiaType)
-        )
-    )
+    return isinstance(field_type, type) and (issubclass(field_type, basic_types) or issubclass(field_type, SiaType))
+
 
 def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
     """Create an input version of a type"""
@@ -68,10 +68,9 @@ def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
             field_type = _process_field_type(field.type)
             annotations[field.name] = field_type
 
-            if hasattr(field, 'metadata'):
-                metadata = field.metadata.get('strawberry', {})
-                field_kwargs = {k: v for k, v in metadata.items() 
-                              if k in ('name', 'description')}
+            if hasattr(field, "metadata"):
+                metadata = field.metadata.get("strawberry", {})
+                field_kwargs = {k: v for k, v in metadata.items() if k in ("name", "description")}
                 class_dict[field.name] = strawberry.field(**field_kwargs)
         except Exception:
             continue
@@ -79,23 +78,18 @@ def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
     if not annotations:
         return None
 
-    input_cls = strawberry.input(type(
-        f"{cls.__name__}Input",
-        (),
-        {
-            '__annotations__': annotations,
-            **class_dict,
-            '__module__': cls.__module__
-        }
-    ))
-    
+    input_cls = strawberry.input(
+        type(f"{cls.__name__}Input", (), {"__annotations__": annotations, **class_dict, "__module__": cls.__module__})
+    )
+
     _input_type_cache[cache_key] = input_cls
     return input_cls
+
 
 @strawberry.type
 class SiaType:
     """Base class for all Sia types"""
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Any:
         """Convert dictionary data to this type"""
@@ -104,8 +98,8 @@ class SiaType:
         result = {}
         for field in fields(cls):
             field_name = field.name
-            json_name = field.metadata.get('strawberry', {}).get('name', field_name)
-            
+            json_name = field.metadata.get("strawberry", {}).get("name", field_name)
+
             if json_name in data:
                 result[field_name] = data[json_name]
         return result
@@ -115,281 +109,325 @@ class SiaType:
     def Input(cls) -> Type:
         """Dynamically create and cache input type when accessed"""
         cache_key = f"{cls.__module__}.{cls.__name__}"
-        
+
         if cache_key not in _input_type_cache:
             input_type = create_input_type(cls)
             if input_type is not None:
                 _input_type_cache[cache_key] = input_type
-        
+
         return _input_type_cache.get(cache_key)
 
 
 # ****************************************
 
 
-@strawberry.scalar(description="An unsigned amount of Hastings, the smallest unit of currency in Sia. 1 Siacoin (SC) equals 10^24 Hastings (H). | Pattern: ^\d+$ | Max length: 39")
+@strawberry.scalar(
+    description="An unsigned amount of Hastings, the smallest unit of currency in Sia. 1 Siacoin (SC) equals 10^24 Hastings (H). | Pattern: ^\d+$ | Max length: 39"
+)
 class Currency(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'Currency':
+    def parse_value(cls, value: str) -> "Currency":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'Currency') -> str:
+    def serialize(cls, value: "Currency") -> str:
         return str(value)
 
 
 @strawberry.scalar(description="A unique identifier for a file contract | Pattern: ^fcid:[0-9a-fA-F]{64}$")
 class FileContractID(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'FileContractID':
+    def parse_value(cls, value: str) -> "FileContractID":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'FileContractID') -> str:
+    def serialize(cls, value: "FileContractID") -> str:
         return str(value)
 
 
 @strawberry.scalar(description="A 256-bit blake2b hash | Pattern: ^[0-9a-fA-F]{64}$")
 class Hash256(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'Hash256':
+    def parse_value(cls, value: str) -> "Hash256":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'Hash256') -> str:
+    def serialize(cls, value: "Hash256") -> str:
         return str(value)
 
 
-@strawberry.scalar(description="A ed25519 public key | Pattern: ^ed25519:[0-9a-fA-F]{64}$") 
+@strawberry.scalar(description="A ed25519 public key | Pattern: ^ed25519:[0-9a-fA-F]{64}$")
 class PublicKey(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'PublicKey':
+    def parse_value(cls, value: str) -> "PublicKey":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'PublicKey') -> str:
+    def serialize(cls, value: "PublicKey") -> str:
         return str(value)
 
 
-@strawberry.scalar(description="A ed25519 signature | Pattern: [0-9a-fA-F]{64} | Format: byte")
+@strawberry.scalar(description="A ed25519 signature | Pattern: [0-9a-fA-F]{64}")
 class Signature(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'Signature':
+    def parse_value(cls, value: str) -> "Signature":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'Signature') -> str:
+    def serialize(cls, value: "Signature") -> str:
         return str(value)
 
 
-@strawberry.scalar(description="A signed amount of Hastings, the smallest unit of currency in Sia. 1 Siacoin (SC) equals 10^24 Hastings (H). | Pattern: ^-?\d+$ | Max length: 39")
+@strawberry.scalar(
+    description="A signed amount of Hastings, the smallest unit of currency in Sia. 1 Siacoin (SC) equals 10^24 Hastings (H). | Pattern: ^-?\d+$ | Max length: 39"
+)
 class SignedCurrency(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'SignedCurrency':
+    def parse_value(cls, value: str) -> "SignedCurrency":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'SignedCurrency') -> str:
+    def serialize(cls, value: "SignedCurrency") -> str:
         return str(value)
 
 
-@strawberry.scalar(description="The height of a block | Format: uint64 | Example: 92813")
+@strawberry.scalar(description="The height of a block")
 class BlockHeight(int):
     @classmethod
-    def parse_value(cls, value: int) -> 'BlockHeight':
+    def parse_value(cls, value: int) -> "BlockHeight":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'BlockHeight') -> int:
+    def serialize(cls, value: "BlockHeight") -> int:
         return int(value)
 
 
-@strawberry.scalar(description="The name of the bucket. | Pattern: (?!(^xn--|.+-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$ | Example: default")
+@strawberry.scalar(description="The name of the bucket")
 class BucketName(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'BucketName':
+    def parse_value(cls, value: str) -> "BucketName":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'BucketName') -> str:
+    def serialize(cls, value: "BucketName") -> str:
         return str(value)
 
 
-@strawberry.scalar(description="A duration in milliseconds | Format: int64 | Example: 30000")
+@strawberry.scalar(description="time.Duration")
+class Duration(int):
+    @classmethod
+    def parse_value(cls, value: int) -> "DurationMS":
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: "DurationMS") -> int:
+        return int(value)
+
+
+@strawberry.scalar(description="A duration in millisecond")
 class DurationMS(int):
     @classmethod
-    def parse_value(cls, value: int) -> 'DurationMS':
+    def parse_value(cls, value: int) -> "DurationMS":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'DurationMS') -> int:
+    def serialize(cls, value: "DurationMS") -> int:
         return int(value)
 
 
-@strawberry.scalar(description="A duration in hours | Format: int64 | Example: 3")
+@strawberry.scalar(description="A duration in hours  ")
 class DurationH(int):
     @classmethod
-    def parse_value(cls, value: int) -> 'DurationH':
+    def parse_value(cls, value: int) -> "DurationH":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'DurationH') -> int:
+    def serialize(cls, value: "DurationH") -> int:
         return int(value)
 
 
-@strawberry.scalar(description="A key used to encrypt and decrypt data. The key is either a regular key (key) or a salted key (skey). The latter requires a seed to be used for encryption and decryption. | Pattern: ^(key|skey):[0-9a-fA-F]{64}$")
+@strawberry.scalar(
+    description="A key used to encrypt and decrypt data. The key is either a regular key (key) or a salted key (skey). The latter requires a seed to be used for encryption and decryption. | Pattern: ^(key|skey):[0-9a-fA-F]{64}$"
+)
 class EncryptionKey(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'EncryptionKey':
+    def parse_value(cls, value: str) -> "EncryptionKey":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'EncryptionKey') -> str:
+    def serialize(cls, value: "EncryptionKey") -> str:
         return str(value)
 
 
-@strawberry.scalar(description="An ETag representing a resource | Pattern: ^(W/)?""$ | Example: W")
+@strawberry.scalar(description="An ETag representing a resource | Pattern: ^(W/)?" "$ ")
 class ETag(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'ETag':
+    def parse_value(cls, value: str) -> "ETag":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'ETag') -> str:
+    def serialize(cls, value: "ETag") -> str:
         return str(value)
 
 
 @strawberry.scalar(description="A unique identifier for a multipart upload | Pattern: ^[0-9a-fA-F]{64}$")
 class MultipartUploadID(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'MultipartUploadID':
+    def parse_value(cls, value: str) -> "MultipartUploadID":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'MultipartUploadID') -> str:
+    def serialize(cls, value: "MultipartUploadID") -> str:
         return str(value)
 
 
-@strawberry.scalar(description="The revision number of the contract | Format: uint64 | Example: 246")
+@strawberry.scalar(description="The revision number of the contract")
 class RevisionNumber(int):
     @classmethod
-    def parse_value(cls, value: int) -> 'RevisionNumber':
+    def parse_value(cls, value: int) -> "RevisionNumber":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'RevisionNumber') -> int:
+    def serialize(cls, value: "RevisionNumber") -> int:
         return int(value)
 
 
-
-@strawberry.scalar(description="Represents a semantic version as an array of three unsigned 8-bit integers: [major, minor, patch] | Example: [1, 2, 3]")
+@strawberry.scalar(
+    description="Represents a semantic version as an array of three unsigned 8-bit integers: [major, minor, patch]"
+)
 class SemVer(List[int]):
     @classmethod
-    def parse_value(cls, value: List[int]) -> 'SemVer':
+    def parse_value(cls, value: List[int]) -> "SemVer":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'SemVer') -> List[int]:
+    def serialize(cls, value: "SemVer") -> List[int]:
         return value
 
 
-@strawberry.scalar(description="A 16-byte unique identifier represented as a hex string. | Format: byte | Example: 4d3b2a1c9f8e7d6c5b4a3f2e1d0c9b8a")
+@strawberry.scalar(description="A 16-byte unique identifier represented as a hex string.")
 class SettingsID(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'SettingsID':
+    def parse_value(cls, value: str) -> "SettingsID":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'SettingsID') -> str:
+    def serialize(cls, value: "SettingsID") -> str:
         return str(value)
 
 
-@strawberry.scalar(description="A 32-byte unique identifier represented as a hex string. | Format: byte | Example: f1e2d3c4b5a697887776665544332211ffeeddccbbaa99887766554433221100")
+@strawberry.scalar(description="A 32-byte unique identifier represented as a hex string.")
 class UploadID(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'UploadID':
+    def parse_value(cls, value: str) -> "UploadID":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'UploadID') -> str:
+    def serialize(cls, value: "UploadID") -> str:
         return str(value)
 
 
-@strawberry.scalar(description="The address of the syncer | Example: 118.92.232.145:9981") 
+@strawberry.scalar(description="The address of the syncer ")
 class SyncerAddress(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'SyncerAddress':
+    def parse_value(cls, value: str) -> "SyncerAddress":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'SyncerAddress') -> str:
+    def serialize(cls, value: "SyncerAddress") -> str:
+        return str(value)
+
+
+@strawberry.scalar()
+class TimeRFC3339(datetime.datetime):
+    @classmethod
+    def parse_value(cls, value: str) -> "SyncerAddress":
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: "SyncerAddress") -> str:
         return str(value)
 
 
 @strawberry.scalar(description="Unique identifier for a Siacoin output.")
 class SiacoinOutputID(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'SiacoinOutputID':
+    def parse_value(cls, value: str) -> "SiacoinOutputID":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'SiacoinOutputID') -> str:
+    def serialize(cls, value: "SiacoinOutputID") -> str:
         return str(value)
 
 
 @strawberry.scalar(description="Unique identifier for a Siafund output.")
 class SiafundOutputID(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'SiafundOutputID':
+    def parse_value(cls, value: str) -> "SiafundOutputID":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'SiafundOutputID') -> str:
+    def serialize(cls, value: "SiafundOutputID") -> str:
         return str(value)
+
 
 @strawberry.scalar(description="Unique identifier for a transaction.")
 class TransactionID(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'TransactionID':
+    def parse_value(cls, value: str) -> "TransactionID":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'TransactionID') -> str:
+    def serialize(cls, value: "TransactionID") -> str:
         return str(value)
 
 
 @strawberry.scalar(description="The hash of a set of UnlockConditions | Pattern: ^[0-9a-fA-F]{64}$")
 class Address(str):
-    @classmethod 
-    def parse_value(cls, value: str) -> 'Address':
+    @classmethod
+    def parse_value(cls, value: str) -> "Address":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'Address') -> str:
+    def serialize(cls, value: "Address") -> str:
         return str(value)
 
 
 @strawberry.scalar(description="A unique identifier for a block")
 class BlockID(str):
     @classmethod
-    def parse_value(cls, value: str) -> 'BlockID':
+    def parse_value(cls, value: str) -> "BlockID":
         return cls(value)
 
     @classmethod
-    def serialize(cls, value: 'BlockID') -> str:
+    def serialize(cls, value: "BlockID") -> str:
+        return str(value)
+
+
+@strawberry.scalar(description="// A Specifier is a fixed-size, 0-padded identifier")
+class Specifier(str):
+    @classmethod
+    def parse_value(cls, value: str) -> "BlockID":
+        return cls(value)
+
+    @classmethod
+    def serialize(cls, value: "BlockID") -> str:
         return str(value)
 
 
 @strawberry.type
 class StateElement(SiaType):
-    leaf_index: Optional[int] = strawberry.field(description="The index of the element in the Merkle tree | Format: uint64", name="leafIndex")
-    merkle_proof: Optional[List[Hash256]] = strawberry.field(description="The Merkle proof demonstrating the inclusion of the leaf", name="merkleProof")
-
+    leaf_index: int = strawberry.field(description="The index of the element in the Merkle tree", name="leafIndex")
+    merkle_proof: Optional[List[Hash256]] = strawberry.field(
+        description="The Merkle proof demonstrating the inclusion of the leaf", name="merkleProof"
+    )
 
 
 @strawberry.type
 class CoveredFields(SiaType):
-    whole_transaction: Optional[bool] = strawberry.field(description="Whether the whole transaction is covered by the signature", name="wholeTransaction")
+    whole_transaction: Optional[bool] = strawberry.field(
+        description="Whether the whole transaction is covered by the signature", name="wholeTransaction"
+    )
     siacoin_inputs: Optional[List[int]] = strawberry.field(name="siacoinInputs")
     siacoin_outputs: Optional[List[int]] = strawberry.field(name="siacoinOutputs")
     file_contracts: Optional[List[int]] = strawberry.field(name="fileContracts")
@@ -404,68 +442,110 @@ class CoveredFields(SiaType):
 
 @strawberry.type
 class UnlockKey(SiaType):
-    algorithm: Optional[str] = strawberry.field(description="A fixed 16-byte array that specifies the algorithm used to generatethe key | Format: bytes | Example: ed25519", name="algorithm")
-    key: Optional[str] = strawberry.field(description="A 32-byte key represented as a hex-encoded string. Must be exactly64 characters long, containing only hexadecimal digits | Pattern: ^[a-fA-F0-9]{64}$ | Format: bytes", name="key")
+    algorithm: Optional[Specifier] = strawberry.field(
+        description="A fixed 16-byte array that specifies the algorithm used to generatethe key",
+        name="algorithm",
+    )
+    key: Optional[str] = strawberry.field(
+        description="A 32-byte key represented as a hex-encoded string. Must be exactly64 characters long, containing only hexadecimal digits | Pattern: ^[a-fA-F0-9]{64}$",
+        name="key",
+    )
 
 
 @strawberry.type
 class UnlockConditions(SiaType):
-    timelock: Optional[BlockHeight] = strawberry.field(description="The block height at which the outputs can be spent", name="timelock")
+    timelock: Optional[int] = strawberry.field(
+        description="The block height at which the outputs can be spent", name="timelock"
+    )
     public_keys: Optional[List[UnlockKey]] = strawberry.field(name="publicKeys")
-    signatures_required: Optional[int] = strawberry.field(description="The number of signatures required to spend the output | Format: uint64", name="signaturesRequired")
+    signatures_required: Optional[int] = strawberry.field(
+        description="The number of signatures required to spend the output", name="signaturesRequired"
+    )
 
 
 @strawberry.type
 class Account(SiaType):
-    id: Optional[PublicKey] = strawberry.field(description="The account's ID", name="id")
-    clean_shutdown: Optional[bool] = strawberry.field(description="Whether the account has been cleanly shutdown. If not, the account will require a sync with the host.", name="cleanShutdown")
+    id: Optional[PublicKey] = strawberry.field(description="The account's ID", name="id")  # rhpv3.Account
+    clean_shutdown: Optional[bool] = strawberry.field(
+        description="Whether the account has been cleanly shutdown. If not, the account will require a sync with the host.",
+        name="cleanShutdown",
+    )
     host_key: Optional[PublicKey] = strawberry.field(description="The host's public key", name="hostKey")
-    balance: Optional[Currency] = strawberry.field(description="The account's balance as expected by the worker", name="balance")
-    drift: Optional[SignedCurrency] = strawberry.field(description="The accumulated drift between the worker's expected balance and the host's actual balance. Used to track if a host is trying to cheat the renter over time.", name="drift")
-    owner: Optional[str] = strawberry.field(description="The owner of the account that manages it. This is the id of the worker that maintains the account. | Min length: 1", name="owner")
-    requires_sync: Optional[bool] = strawberry.field(description="Whether the account requires a sync with the host. This is usually the case when the host reports insufficient balance for an account that the worker still believes to be funded.", name="requiresSync")
-
-
-
-# @strawberry.type
-# class Alert(SiaType):
-#     id: Optional[Hash256] = strawberry.field(description="The alert's ID", name="id")
-#     severity: Optional[str] = strawberry.field(description="The severity of the alert | Allowed values: info, warning, error, critical", name="severity")
-#     message: Optional[str] = strawberry.field(description="The alert's message", name="message")
-#     date: Optional[JSON] = strawberry.field(description="Arbitrary data providing additional context for the alert", name="date")
-#     timestamp: Optional[datetime.datetime] = strawberry.field(description="The time the alert was created | Format: date-time", name="timestamp")
+    balance: Optional[int] = strawberry.field(
+        description="The account's balance as expected by the worker", name="balance"
+    )
+    drift: Optional[int] = strawberry.field(
+        description="The accumulated drift between the worker's expected balance and the host's actual balance. Used to track if a host is trying to cheat the renter over time.",
+        name="drift",
+    )
+    owner: Optional[str] = strawberry.field(
+        description="The owner of the account that manages it. This is the id of the worker that maintains the account. | Min length: 1",
+        name="owner",
+    )
+    requires_sync: Optional[bool] = strawberry.field(
+        description="Whether the account requires a sync with the host. This is usually the case when the host reports insufficient balance for an account that the worker still believes to be funded.",
+        name="requiresSync",
+    )
 
 
 @strawberry.type
 class Attestation(SiaType):
     public_key: Optional[PublicKey] = strawberry.field(name="publicKey")
     key: Optional[str] = strawberry.field(name="key")
-    value: Optional[str] = strawberry.field(description="Format: byte", name="value")
+    value: Optional[str] = strawberry.field(name="value")
     signature: Optional[Signature] = strawberry.field(name="signature")
 
 
 @strawberry.type
 class ContractsConfig(SiaType):
-    amount: Optional[int] = strawberry.field(description="The minimum number of contracts to form | Format: uint64", default=0, name="amount")
-    period: Optional[int] = strawberry.field(description="The length of a contract's period in blocks (1 block being 10 minutes on average) | Format: uint64", default=0, name="period")
-    renew_window: Optional[int] = strawberry.field(description="The number of blocks before the end of a contract that a contract should be renewed | Format: uint64", default=0, name="renewWindow")
-    download: Optional[int] = strawberry.field(description="Expected download bandwidth used per period in bytes | Format: uint64", default=0, name="download")
-    upload: Optional[int] = strawberry.field(description="Expected upload bandwidth used per period in bytes | Format: uint64", default=0, name="upload")
-    storage: Optional[int] = strawberry.field(description="Expected amount of data stored in bytes | Format: uint64", default=0, name="storage")
-    prune: Optional[bool] = strawberry.field(description="Whether to automatically prune deleted data from contracts", default=False, name="prune")
+    set: Optional[str] = strawberry.field(name="set")
+    amount: Optional[int] = strawberry.field(description="The minimum number of contracts to form", name="amount")
+    allowance: Optional[Currency] = strawberry.field(name="allowance")
+    period: Optional[int] = strawberry.field(
+        description="The length of a contract's period in blocks (1 block being 10 minutes on average)",
+        name="period",
+    )
+    renew_window: Optional[int] = strawberry.field(
+        description="The number of blocks before the end of a contract that a contract should be renewed",
+        name="renewWindow",
+    )
+    download: Optional[int] = strawberry.field(
+        description="Expected download bandwidth used per period in bytes", name="download"
+    )
+    upload: Optional[int] = strawberry.field(
+        description="Expected upload bandwidth used per period in bytes", name="upload"
+    )
+    storage: Optional[int] = strawberry.field(description="Expected amount of data stored in bytes", name="storage")
+    prune: Optional[bool] = strawberry.field(
+        description="Whether to automatically prune deleted data from contracts", name="prune"
+    )
 
 
 @strawberry.type
 class HostsConfig(SiaType):
-    max_consecutive_scan_failures: Optional[int] = strawberry.field(description="The maximum number of consecutive scan failures before a host is removed from the database | Format: uint64", default=0, name="maxConsecutiveScanFailures")
-    max_downtime_hours: Optional[int] = strawberry.field(description="The maximum number of hours a host can be offline before it is removed from the database | Format: uint64", default=0, name="maxDowntimeHours")
-    min_protocol_version: Optional[str] = strawberry.field(description="The minimum supported protocol version of a host to be considered good", name="minProtocolVersion")
-
+    allow_redundant_ips: Optional[bool] = strawberry.field(
+        description="Whether to allow hosts with redundant IPs", name="allowRedundantIPs"
+    )
+    max_downtime_hours: Optional[int] = strawberry.field(
+        description="The maximum number of hours a host can be offline before it is removed from the database",
+        name="maxDowntimeHours",
+    )
+    min_protocol_version: Optional[str] = strawberry.field(
+        description="The minimum supported protocol version of a host to be considered good", name="minProtocolVersion"
+    )
+    max_consecutive_scan_failures: Optional[int] = strawberry.field(
+        description="The maximum number of consecutive scan failures before a host is removed from the database",
+        name="maxConsecutiveScanFailures",
+    )
+    score_overrides: Optional[Dict[PublicKey, float]] = strawberry.field(
+        description="Map of host public keys to score override values", name="scoreOverrides"
+    )  # map[types.PublicKey]float64
 
 
 @strawberry.type
 class AutopilotConfig(SiaType):
-    enabled: Optional[bool] = strawberry.field(description="Whether the autopilot is enabled", name="enabled")
+    """Contains all autopilot configuration."""
+
     contracts: Optional[ContractsConfig] = strawberry.field(name="contracts")
     hosts: Optional[HostsConfig] = strawberry.field(name="hosts")
 
@@ -479,91 +559,137 @@ class SiacoinOutput(SiaType):
 # @strawberry.type(description="A storage agreement between a renter and a host.")
 @strawberry.type
 class FileContract(SiaType):
-    filesize: Optional[int] = strawberry.field(description="The size of the contract in bytes. | Format: uint64", name="filesize")
-    file_merkle_root: Optional[Hash256] = strawberry.field(description="The Merkle root of the contract's data.", name="fileMerkleRoot")
-    window_start: Optional[BlockHeight] = strawberry.field(description="The block height when the contract's proof window starts.", name="windowStart")
-    window_end: Optional[BlockHeight] = strawberry.field(description="The block height when the contract's proof window ends.", name="windowEnd")
+    filesize: Optional[int] = strawberry.field(description="The size of the contract in bytes.", name="filesize")
+    file_merkle_root: Optional[Hash256] = strawberry.field(
+        description="The Merkle root of the contract's data.", name="fileMerkleRoot"
+    )
+    window_start: Optional[int] = strawberry.field(
+        description="The block height when the contract's proof window starts.", name="windowStart"
+    )
+    window_end: Optional[int] = strawberry.field(
+        description="The block height when the contract's proof window ends.", name="windowEnd"
+    )
     payout: Optional[Currency] = strawberry.field(description="The total payout for the contract.", name="payout")
-    valid_proof_outputs: Optional[List[SiacoinOutput]] = strawberry.field(description="List of outputs created if the contract is successfully fulfilled.", name="validProofOutputs")
-    missed_proof_outputs: Optional[List[SiacoinOutput]] = strawberry.field(description="List of outputs created if the contract is not fulfilled.", name="missedProofOutputs")
+    valid_proof_outputs: Optional[List[SiacoinOutput]] = strawberry.field(
+        description="List of outputs created if the contract is successfully fulfilled.", name="validProofOutputs"
+    )
+    missed_proof_outputs: Optional[List[SiacoinOutput]] = strawberry.field(
+        description="List of outputs created if the contract is not fulfilled.", name="missedProofOutputs"
+    )
     unlock_hash: Optional[Address] = strawberry.field(name="unlockHash")
     revision_number: Optional[RevisionNumber] = strawberry.field(name="revisionNumber")
 
 
-# @strawberry.type(description="Represents a revision to an existing file contract.")
 @strawberry.type
 class FileContractRevision(SiaType):
-    parent_id: Optional[FileContractID] = strawberry.field(description="The ID of the parent file contract being revised.", name="parentID")
-    unlock_conditions: Optional[UnlockConditions] = strawberry.field(description="The conditions required to unlock the contract for revision.", name="unlockConditions")
-    filesize: Optional[int] = strawberry.field(description="The size of the file in bytes after the revision. | Format: uint64", name="filesize")
-    file_merkle_root: Optional[Hash256] = strawberry.field(description="The updated Merkle root of the file's data.", name="fileMerkleRoot")
-    window_start: Optional[BlockHeight] = strawberry.field(description="The block height when the revised proof window starts.", name="windowStart")
-    window_end: Optional[BlockHeight] = strawberry.field(description="The block height when the revised proof window ends.", name="windowEnd")
-    valid_proof_outputs: Optional[List[SiacoinOutput]] = strawberry.field(description="Updated outputs if the revised contract is successfully fulfilled.", name="validProofOutputs")
-    missed_proof_outputs: Optional[List[SiacoinOutput]] = strawberry.field(description="Updated outputs if the revised contract is not fulfilled.", name="missedProofOutputs")
-    unlock_hash: Optional[Address] = strawberry.field(description="The updated hash of the conditions required to unlock the contract funds.", name="unlockHash")
-    revision_number: Optional[RevisionNumber] = strawberry.field(name="revisionNumber")
+    parent_id: Optional[FileContractID] = strawberry.field(name="parentID")
+    unlock_conditions: Optional[UnlockConditions] = strawberry.field(name="unlockConditions")
 
 
 @strawberry.type
 class SiacoinInput(SiaType):
-    parent_id: Optional[SiacoinOutputID] = strawberry.field(description="The ID of the output being spent", name="parentID")
-    unlock_conditions: Optional[UnlockConditions] = strawberry.field(description="The unlock conditions required to spend the output", name="unlockConditions")
+    parent_id: Optional[SiacoinOutputID] = strawberry.field(
+        description="The ID of the output being spent", name="parentID"
+    )
+    unlock_conditions: Optional[UnlockConditions] = strawberry.field(
+        description="The unlock conditions required to spend the output", name="unlockConditions"
+    )
 
 
 # @strawberry.type(description="Represents an input used to spend an unspent Siafund output.")
 @strawberry.type
 class SiafundInput(SiaType):
-    parent_id: Optional[SiafundOutputID] = strawberry.field(description="The ID of the parent Siafund output being spent.", name="parentID")
-    unlock_conditions: Optional[UnlockConditions] = strawberry.field(description="The conditions required to unlock the parent Siafund output.", name="unlockConditions")
-    claim_address: Optional[Address] = strawberry.field(description="The address receiving the Siacoin claim generated by the Siafund output.", name="claimAddress")
+    parent_id: Optional[SiafundOutputID] = strawberry.field(
+        description="The ID of the parent Siafund output being spent.", name="parentID"
+    )
+    unlock_conditions: Optional[UnlockConditions] = strawberry.field(
+        description="The conditions required to unlock the parent Siafund output.", name="unlockConditions"
+    )
+    claim_address: Optional[Address] = strawberry.field(
+        description="The address receiving the Siacoin claim generated by the Siafund output.", name="claimAddress"
+    )
 
 
 # @strawberry.type(description="Represents an output created to distribute Siafund.")
 @strawberry.type
 class SiafundOutput(SiaType):
-    value: Optional[int] = strawberry.field(description="The amount of Siafund in the output. | Format: uint64", name="value")
+    value: Optional[int] = strawberry.field(description="The amount of Siafund in the output.", name="value")
     address: Optional[Address] = strawberry.field(description="The address receiving the Siafund.", name="address")
 
 
 # @strawberry.type(description="Represents a proof of storage for a file contract.")
 @strawberry.type
 class StorageProof(SiaType):
-    parent_id: Optional[FileContractID] = strawberry.field(description="The ID of the file contract being proven.", name="parentID")
-    leaf: Optional[str] = strawberry.field(description="The selected leaf from the Merkle tree of the file's data. | Format: byte", name="leaf")
-    proof: Optional[List[Hash256]] = strawberry.field(description="The Merkle proof demonstrating the inclusion of the leaf.", name="proof")
+    parent_id: Optional[FileContractID] = strawberry.field(
+        description="The ID of the file contract being proven.", name="parentID"
+    )
+    leaf: Optional[str] = strawberry.field(
+        description="The selected leaf from the Merkle tree of the file's data.", name="leaf"
+    )
+    proof: Optional[List[Hash256]] = strawberry.field(
+        description="The Merkle proof demonstrating the inclusion of the leaf.", name="proof"
+    )
 
 
 @strawberry.type
 class TransactionSignature(SiaType):
-    parent_id: Optional[Hash256] = strawberry.field(description="The ID of the transaction being signed", name="parentID")
-    public_key_index: Optional[int] = strawberry.field(description="The index of the public key used to sign the transaction | Format: uint64", name="publicKeyIndex")
-    timelock: Optional[BlockHeight] = strawberry.field(description="The block height at which the outputs in the transaction can be spent", name="timelock")
-    covered_fields: Optional[CoveredFields] = strawberry.field(description="Indicates which fields of the transaction are covered by the signature", name="coveredFields")
+    parent_id: Optional[Hash256] = strawberry.field(
+        description="The ID of the transaction being signed", name="parentID"
+    )
+    public_key_index: Optional[int] = strawberry.field(
+        description="The index of the public key used to sign the transaction", name="publicKeyIndex"
+    )
+    timelock: Optional[int] = strawberry.field(
+        description="The block height at which the outputs in the transaction can be spent", name="timelock"
+    )
+    covered_fields: Optional[CoveredFields] = strawberry.field(
+        description="Indicates which fields of the transaction are covered by the signature", name="coveredFields"
+    )
     signature: Optional[Signature] = strawberry.field(description="The signature of the transaction", name="signature")
 
 
 @strawberry.type
 class Transaction(SiaType):
-    siacoin_inputs: Optional[List[SiacoinInput]] = strawberry.field(description="List of Siacoin inputs used in the transaction.", name="siacoinInputs")
-    siacoin_outputs: Optional[List[SiacoinOutput]] = strawberry.field(description="List of Siacoin outputs created by the transaction.", name="siacoinOutputs")
-    file_contracts: Optional[List[FileContract]] = strawberry.field(description="List of file contracts created by the transaction.", name="fileContracts")
-    file_contract_revisions: Optional[List[FileContractRevision]] = strawberry.field(description="List of revisions to existing file contracts included in the transaction.", name="fileContractRevisions")
-    storage_proofs: Optional[List[StorageProof]] = strawberry.field(description="List of storage proofs asserting the storage of data for file contracts.", name="storageProofs")
-    siafund_inputs: Optional[List[SiafundInput]] = strawberry.field(description="List of Siafund inputs spent in the transaction.", name="siafundInputs")
-    siafund_outputs: Optional[List[SiafundOutput]] = strawberry.field(description="List of Siafund outputs created by the transaction.", name="siafundOutputs")
-    miner_fees: Optional[List[Currency]] = strawberry.field(description="List of miner fees included in the transaction.", name="minerFees")
-    arbitrary_data: Optional[List[str]] = strawberry.field(description="Arbitrary binary data included in the transaction.", name="arbitraryData")
-    signatures: Optional[List[TransactionSignature]] = strawberry.field(description="List of cryptographic signatures verifying the transaction.", name="signatures")
+    siacoin_inputs: Optional[List[SiacoinInput]] = strawberry.field(
+        description="List of Siacoin inputs used in the transaction.", name="siacoinInputs"
+    )
+    siacoin_outputs: Optional[List[SiacoinOutput]] = strawberry.field(
+        description="List of Siacoin outputs created by the transaction.", name="siacoinOutputs"
+    )
+    file_contracts: Optional[List[FileContract]] = strawberry.field(
+        description="List of file contracts created by the transaction.", name="fileContracts"
+    )
+    file_contract_revisions: Optional[List[FileContractRevision]] = strawberry.field(
+        description="List of revisions to existing file contracts included in the transaction.",
+        name="fileContractRevisions",
+    )
+    storage_proofs: Optional[List[StorageProof]] = strawberry.field(
+        description="List of storage proofs asserting the storage of data for file contracts.", name="storageProofs"
+    )
+    siafund_inputs: Optional[List[SiafundInput]] = strawberry.field(
+        description="List of Siafund inputs spent in the transaction.", name="siafundInputs"
+    )
+    siafund_outputs: Optional[List[SiafundOutput]] = strawberry.field(
+        description="List of Siafund outputs created by the transaction.", name="siafundOutputs"
+    )
+    miner_fees: Optional[List[Currency]] = strawberry.field(
+        description="List of miner fees included in the transaction.", name="minerFees"
+    )
+    arbitrary_data: Optional[List[str]] = strawberry.field(
+        description="Arbitrary binary data included in the transaction.", name="arbitraryData"
+    )
+    signatures: Optional[List[TransactionSignature]] = strawberry.field(
+        description="List of cryptographic signatures verifying the transaction.", name="signatures"
+    )
 
 
 @strawberry.type
 class V2FileContract(SiaType):
-    capacity: Optional[int] = strawberry.field(description="Format: uint64", name="capacity")
-    filesize: Optional[int] = strawberry.field(description="Format: uint64", name="filesize")
+    capacity: Optional[int] = strawberry.field(name="capacity")
+    filesize: Optional[int] = strawberry.field(name="filesize")
     file_merkle_root: Optional[Hash256] = strawberry.field(name="fileMerkleRoot")
-    proof_height: Optional[int] = strawberry.field(description="Format: uint64", name="proofHeight")
-    expiration_height: Optional[int] = strawberry.field(description="Format: uint64", name="expirationHeight")
+    proof_height: Optional[int] = strawberry.field(name="proofHeight")
+    expiration_height: Optional[int] = strawberry.field(name="expirationHeight")
     renter_output: Optional[SiacoinOutput] = strawberry.field(name="renterOutput")
     host_output: Optional[SiacoinOutput] = strawberry.field(name="hostOutput")
     missed_host_value: Optional[Currency] = strawberry.field(name="missedHostValue")
@@ -578,14 +704,18 @@ class V2FileContract(SiaType):
 @strawberry.type
 class V2FileContractElement(SiaType):
     id: Optional[FileContractID] = strawberry.field(description="The ID of the element", name="id")
-    state_element: Optional[StateElement] = strawberry.field(description="The state of the element", name="stateElement")
+    state_element: Optional[StateElement] = strawberry.field(
+        description="The state of the element", name="stateElement"
+    )
     v2_file_contract: Optional[V2FileContract] = strawberry.field(name="v2FileContract")
 
 
 @strawberry.type
 class V2FileContractResolution(SiaType):
     parent: Optional[V2FileContractElement] = strawberry.field(name="parent")
-    resolution: Optional[JSON] = strawberry.field(name="resolution")
+    resolution: Optional[JSON] = strawberry.field(
+        name="resolution"
+    )  # type V2FileContractResolutionType interface {isV2FileContractResolution()
 
 
 @strawberry.type
@@ -596,17 +726,17 @@ class V2FileContractRevision(SiaType):
 
 @strawberry.type
 class SatisfiedPolicy(SiaType):
-    policy: Optional[JSON] = strawberry.field(name="policy")
+    policy: Optional[JSON] = strawberry.field(name="policy")  # SpendPolicy
     signature: Optional[List[Signature]] = strawberry.field(name="signature")
     preimages: Optional[List[str]] = strawberry.field(name="preimages")
 
 
 @strawberry.type
-class SiacoinElement(SiaType):
+class SiacoinElement(SiacoinOutput):
     id: Optional[SiacoinOutputID] = strawberry.field(description="The ID of the element", name="id")
-    state_element: Optional[StateElement] = strawberry.field(description="The state of the element", name="stateElement")
-    siafund_output: Optional[SiacoinOutput] = strawberry.field(description="The output of the element", name="siafundOutput")
-    maturity_height: Optional[BlockHeight] = strawberry.field(description="The block height when the output matures", name="maturityHeight")
+    maturity_height: Optional[int] = strawberry.field(
+        description="The block height when the output matures", name="maturityHeight"
+    )
 
 
 @strawberry.type
@@ -618,9 +748,15 @@ class V2SiacoinInput(SiaType):
 @strawberry.type
 class SiafundElement(SiaType):
     id: Optional[SiafundOutputID] = strawberry.field(description="The ID of the element", name="id")
-    state_element: Optional[StateElement] = strawberry.field(description="The state of the element", name="stateElement")
-    siafund_output: Optional[SiafundOutput] = strawberry.field(description="The output of the element", name="siafundOutput")
-    claim_start: Optional[Currency] = strawberry.field(description="value of SiafundTaxRevenue when element was created", name="claimStart")
+    state_element: Optional[StateElement] = strawberry.field(
+        description="The state of the element", name="stateElement"
+    )
+    siafund_output: Optional[SiafundOutput] = strawberry.field(
+        description="The output of the element", name="siafundOutput"
+    )
+    claim_start: Optional[Currency] = strawberry.field(
+        description="value of SiafundTaxRevenue when element was created", name="claimStart"
+    )
 
 
 @strawberry.type
@@ -638,7 +774,9 @@ class V2Transaction(SiaType):
     siafund_outputs: Optional[List[SiafundOutput]] = strawberry.field(name="siafundOutputs")
     file_contracts: Optional[List[V2FileContract]] = strawberry.field(name="fileContracts")
     file_contract_revisions: Optional[List[V2FileContractRevision]] = strawberry.field(name="fileContractRevisions")
-    file_contract_resolutions: Optional[List[V2FileContractResolution]] = strawberry.field(name="fileContractResolutions")
+    file_contract_resolutions: Optional[List[V2FileContractResolution]] = strawberry.field(
+        name="fileContractResolutions"
+    )
     attestations: Optional[List[Attestation]] = strawberry.field(name="attestations")
     arbitrary_data: Optional[List[str]] = strawberry.field(name="arbitraryData")
     new_foundation_address: Optional[Address] = strawberry.field(name="newFoundationAddress")
@@ -647,28 +785,18 @@ class V2Transaction(SiaType):
 
 @strawberry.type
 class V2BlockData(SiaType):
-    height: Optional[BlockHeight] = strawberry.field(description="The height of the block", name="height")
+    height: Optional[int] = strawberry.field(description="The height of the block", name="height")
     commitment: Optional[Hash256] = strawberry.field(name="commitment")
     transactions: Optional[List[V2Transaction]] = strawberry.field(name="transactions")
-
-# @strawberry.type
-# class X(SiaType):
-#     name: Optional[str] = strawberry.field(name="name")
-
-
-# @strawberry.type
-# class Block(SiaType):
-#     nonce: Optional[int] = strawberry.field(description="The nonce used to mine the block | Format: uint64", name="nonce")
-#     name: X = strawberry.field(name="name")
-#     parent_id: Optional[BlockID] = strawberry.field(description="The ID of the parent block", name="parentID")
-#     miner_payouts: Optional[List[SiacoinOutput]] = strawberry.field(name="minerPayouts")
 
 
 @strawberry.type
 class Block(SiaType):
     parent_id: Optional[BlockID] = strawberry.field(description="The ID of the parent block", name="parentID")
-    nonce: Optional[int] = strawberry.field(description="The nonce used to mine the block | Format: uint64", name="nonce")
-    timestamp: Optional[datetime.datetime] = strawberry.field(description="The time the block was mined | Format: date-time", name="timestamp")
+    nonce: Optional[int] = strawberry.field(description="The nonce used to mine the block", name="nonce")
+    timestamp: Optional[datetime.datetime] = strawberry.field(
+        description="The time the block was mined", name="timestamp"
+    )
     miner_payouts: Optional[List[SiacoinOutput]] = strawberry.field(name="minerPayouts")
     transactions: Optional[List[Transaction]] = strawberry.field(name="transactions")
     v2: Optional[V2BlockData] = strawberry.field(name="v2")
@@ -676,40 +804,70 @@ class Block(SiaType):
 
 @strawberry.type
 class BucketPolicy(SiaType):
-    public_read_access: Optional[bool] = strawberry.field(description="Indicates if the bucket is publicly readable", name="publicReadAccess")
+    public_read_access: Optional[bool] = strawberry.field(
+        description="Indicates if the bucket is publicly readable", name="publicReadAccess"
+    )
+
 
 @strawberry.type
 class Bucket(SiaType):
-    name: Optional[BucketName] = strawberry.field(name="name")
-    policy: Optional[BucketPolicy] = strawberry.field(name="policy") # change to JSON if it creates problem
-    created_at: Optional[datetime.datetime] = strawberry.field(description="The time the bucket was created | Format: date-time", name="createdAt")
+    created_at: Optional[TimeRFC3339] = strawberry.field(
+        description="The time the bucket was created", name="createdAt"
+    )  # TimeRFC3339
+    name: Optional[str] = strawberry.field(name="name")
+    policy: Optional[BucketPolicy] = strawberry.field(name="policy")  # change to JSON if it creates problem
 
 
 @strawberry.type
 class BuildState(SiaType):
-    build_time: Optional[datetime.datetime] = strawberry.field(description="The build time of the build | Format: date-time", name="buildTime")
-    commit: Optional[str] = strawberry.field(description="The commit hash of the build", name="commit")
     version: Optional[str] = strawberry.field(description="The version of the build", name="version")
+    commit: Optional[str] = strawberry.field(description="The commit hash of the build", name="commit")
     os: Optional[str] = strawberry.field(description="The operating system of the build", name="os")
+    build_time: Optional[TimeRFC3339] = strawberry.field(description="The build time of the build", name="buildTime")
 
 
 @strawberry.type
 class ChainIndex(SiaType):
-    height: Optional[BlockHeight] = strawberry.field(description="The height of the block in the blockchain", name="height")
+    height: Optional[int] = strawberry.field(description="The height of the block in the blockchain", name="height")
     id: Optional[BlockID] = strawberry.field(description="The ID of the block", name="id")
 
 
 @strawberry.type
 class GougingSettings(SiaType):
-    max_rpc_price: Optional[Currency] = strawberry.field(description="The maximum base price a host can charge per RPC", name="maxRPCPrice")
-    max_contract_price: Optional[Currency] = strawberry.field(description="The maximum price a host can charge for a contract formation", name="maxContractPrice")
-    max_download_price: Optional[Currency] = strawberry.field(description="The maximum price a host can charge for downloading in hastings / byte", name="maxDownloadPrice")
-    max_upload_price: Optional[Currency] = strawberry.field(description="The maximum price a host can charge for uploading in hastings / byte", name="maxUploadPrice")
-    max_storage_price: Optional[Currency] = strawberry.field(description="The maximum price a host can charge for storage in hastings / byte / block", name="maxStoragePrice")
-    host_block_height_leeway: Optional[int] = strawberry.field(description="The number of blocks a host's chain's height can diverge from our own before we stop using it | Format: uint32", name="hostBlockHeightLeeway")
-    min_price_table_validity: Optional[int] = strawberry.field(description="The time a host's price table should be valid after acquiring it in milliseconds | Format: uint64", name="minPriceTableValidity")
-    min_account_expiry: Optional[int] = strawberry.field(description="The minimum amount of time an account on a host can be idle for before expiring | Format: uint64", name="minAccountExpiry")
-    min_max_ephemeral_account_balance: Optional[Currency] = strawberry.field(description="The minimum max balance a host should allow us to fund an account with", name="minMaxEphemeralAccountBalance")
+    max_rpc_price: Optional[Currency] = strawberry.field(
+        description="The maximum base price a host can charge per RPC", name="maxRPCPrice"
+    )
+    max_contract_price: Optional[Currency] = strawberry.field(
+        description="The maximum price a host can charge for a contract formation", name="maxContractPrice"
+    )
+    max_download_price: Optional[Currency] = strawberry.field(
+        description="The maximum price a host can charge for downloading in hastings / byte", name="maxDownloadPrice"
+    )
+    max_upload_price: Optional[Currency] = strawberry.field(
+        description="The maximum price a host can charge for uploading in hastings / byte", name="maxUploadPrice"
+    )
+    max_storage_price: Optional[Currency] = strawberry.field(
+        description="The maximum price a host can charge for storage in hastings / byte / block", name="maxStoragePrice"
+    )
+    host_block_height_leeway: Optional[int] = strawberry.field(
+        description="The number of blocks a host's chain's height can diverge from our own before we stop using it",
+        name="hostBlockHeightLeeway",
+    )
+    min_price_table_validity: Optional[Duration] = strawberry.field(
+        description="The time a host's price table should be valid after acquiring it in milliseconds",
+        name="minPriceTableValidity",
+    )
+    min_account_expiry: Optional[Duration] = strawberry.field(
+        description="The minimum amount of time an account on a host can be idle for before expiring",
+        name="minAccountExpiry",
+    )
+    min_max_ephemeral_account_balance: Optional[Currency] = strawberry.field(
+        description="The minimum max balance a host should allow us to fund an account with",
+        name="minMaxEphemeralAccountBalance",
+    )
+    migration_surcharge_multiplier: Optional[int] = strawberry.field(
+        description="The multiplier for the migration surcharge", name="migrationSurchargeMultiplier"
+    )
 
 
 @strawberry.type
@@ -719,110 +877,131 @@ class ConfigRecommendation(SiaType):
 
 @strawberry.type
 class ConsensusState(SiaType):
-    block_height: Optional[BlockHeight] = strawberry.field(description="The current block height", name="blockHeight")
-    last_block_time: Optional[datetime.datetime] = strawberry.field(description="The time of the last block | Format: date-time", name="lastBlockTime")
+    block_height: Optional[int] = strawberry.field(description="The current block height", name="blockHeight")
+    last_block_time: Optional[TimeRFC3339] = strawberry.field(
+        description="The time of the last block", name="lastBlockTime"
+    )
     synced: Optional[bool] = strawberry.field(description="Whether the node is synced with the network", name="synced")
 
 
 @strawberry.type
-class ContractLockID(SiaType):
-    lock_id: Optional[int] = strawberry.field(description="The ID of the lock | Format: uint64 | Example: 12", name="lockID")
-
-
 @strawberry.type
 class ContractSpending(SiaType):
-    deletions: Optional[Currency] = strawberry.field(description="Total amount spent on sector deletions", name="deletions")
-    fund_account: Optional[Currency] = strawberry.field(description="Total amount spent on funding ephemeral accounts", name="fundAccount")
-    sector_roots: Optional[Currency] = strawberry.field(description="Total amount spent on listing sector roots", name="sectorRoots")
-    uploads: Optional[Currency] = strawberry.field(description="Total amount spent on storing sectors", name="uploads")
-
-
+    uploads: Optional[Currency] = strawberry.field(name="uploads")
+    downloads: Optional[Currency] = strawberry.field(name="downloads")
+    fund_account: Optional[Currency] = strawberry.field(name="fundAccount")
+    deletions: Optional[Currency] = strawberry.field(name="deletions")
+    sector_roots: Optional[Currency] = strawberry.field(name="sectorRoots")
 
 
 @strawberry.type
 class ContractMetadata(SiaType):
-    id: Optional[FileContractID] = strawberry.field(description="The unique identifier for the file contract.", name="id")
+    id: Optional[FileContractID] = strawberry.field(
+        description="The unique identifier for the file contract.", name="id"
+    )
+    host_ip: Optional[str] = strawberry.field(name="hostIP")
     host_key: Optional[PublicKey] = strawberry.field(description="The public key of the host.", name="hostKey")
-    v2: Optional[bool] = strawberry.field(description="Indicates if the contract is a V2 contract.", name="v2")
-    proof_height: Optional[BlockHeight] = strawberry.field(description="The height at which the storage proof needs to be submitted", name="proofHeight")
-    renewed_from: Optional[FileContractID] = strawberry.field(description="The ID of the contract this one was renewed from", name="renewedFrom")
-    revision_height: Optional[BlockHeight] = strawberry.field(description="The block height of the latest revision", name="revisionHeight")
-    revision_number: Optional[RevisionNumber] = strawberry.field(description="The current revision number of the contract", name="revisionNumber")
-    size: Optional[int] = strawberry.field(description="The size of the contract in bytes | Format: uint64", name="size")
-    start_height: Optional[BlockHeight] = strawberry.field(description="The block height at which the contract created", name="startHeight")
-    state: Optional[str] = strawberry.field(description="The state of the contract | Allowed values: pending, active, complete, failed", name="state")
-    usability: Optional[str] = strawberry.field(description="The usability status of the contract | Allowed values: good, bad", name="usability")
-    window_start: Optional[BlockHeight] = strawberry.field(description="The block height when the contract's proof window starts.", name="windowStart")
-    window_end: Optional[BlockHeight] = strawberry.field(description="The block height when the contract's proof window ends.", name="windowEnd")
-    contract_price: Optional[Currency] = strawberry.field(description="The price of forming the contract.", name="contractPrice")
-    initial_renter_funds: Optional[Currency] = strawberry.field(description="The initial funds provided by the renter.", name="initialRenterFunds")
-    spending: Optional[ContractSpending] = strawberry.field(description="Costs and spending details of the contract.", name="spending")
-    archival_reason: Optional[str] = strawberry.field(description="The reason for archiving the contract, if applicable. | Allowed values: renewed, removed, hostpruned", name="archivalReason")
-    renewed_to: Optional[FileContractID] = strawberry.field(description="The ID of the contract this one was renewed to, if applicable.", name="renewedTo")
+    siamux_addr: Optional[str] = strawberry.field(name="siamuxAddr")
 
+    proof_height: Optional[int] = strawberry.field(
+        description="The height at which the storage proof needs to be submitted", name="proofHeight"
+    )
+    revision_height: Optional[int] = strawberry.field(
+        description="The block height of the latest revision", name="revisionHeight"
+    )
+    revision_number: Optional[RevisionNumber] = strawberry.field(
+        description="The current revision number of the contract", name="revisionNumber"
+    )
+    size: Optional[int] = strawberry.field(description="The size of the contract in bytes", name="size")
+    start_height: Optional[int] = strawberry.field(
+        description="The block height at which the contract created", name="startHeight"
+    )
+    state: Optional[str] = strawberry.field(
+        description="The state of the contract | Allowed values: pending, active, complete, failed", name="state"
+    )
+    window_start: Optional[int] = strawberry.field(
+        description="The block height when the contract's proof window starts.", name="windowStart"
+    )
+    window_end: Optional[int] = strawberry.field(
+        description="The block height when the contract's proof window ends.", name="windowEnd"
+    )
 
-@strawberry.type
-class Revision(SiaType):
-    contract_id: Optional[FileContractID] = strawberry.field(name="contractID")
-    missed_host_value: Optional[Currency] = strawberry.field(name="missedHostValue")
-    renter_funds: Optional[Currency] = strawberry.field(name="renterFunds")
-    revision_number: Optional[RevisionNumber] = strawberry.field(name="revisionNumber")
-    size: Optional[int] = strawberry.field(description="The size of the contract in bytes | Format: uint64", name="size")
+    contract_price: Optional[Currency] = strawberry.field(
+        description="The price of forming the contract.", name="contractPrice"
+    )
+    renewed_from: Optional[FileContractID] = strawberry.field(
+        description="The ID of the contract this one was renewed from", name="renewedFrom"
+    )
+    spending: Optional[ContractSpending] = strawberry.field(
+        description="Costs and spending details of the contract.", name="spending"
+    )
+    total_cost: Optional[Currency] = strawberry.field(name="totalCost")
+
+    contract_sets: Optional[List[str]] = strawberry.field(name="contractSets")
 
 
 @strawberry.type
 class Contract(ContractMetadata):
-    revision: Optional[Revision] = strawberry.field(name="revision")
+    revision: Optional[FileContractRevision] = strawberry.field(name="revision")
+
 
 @strawberry.type
 class ContractMetric(SiaType):
-    timestamp: Optional[datetime.datetime] = strawberry.field(description="Format: date-time", name="timestamp")
+    timestamp: Optional[TimeRFC3339] = strawberry.field(name="timestamp")
+
     contract_id: Optional[FileContractID] = strawberry.field(name="contractID")
     host_key: Optional[PublicKey] = strawberry.field(name="hostKey")
+
     remaining_collateral: Optional[Currency] = strawberry.field(name="remainingCollateral")
     remaining_funds: Optional[Currency] = strawberry.field(name="remainingFunds")
-    revision_number: Optional[RevisionNumber] = strawberry.field(name="revisionNumber")
-    delete_spending: Optional[Currency] = strawberry.field(name="deleteSpending")
-    fund_account_spending: Optional[Currency] = strawberry.field(name="fundAccountSpending")
-    sector_roots_spending: Optional[Currency] = strawberry.field(name="sectorRootsSpending")
+    revision_number: Optional[int] = strawberry.field(name="revisionNumber")
+
     upload_spending: Optional[Currency] = strawberry.field(name="uploadSpending")
+    download_spending: Optional[Currency] = strawberry.field(name="downloadSpending")
+    fund_account_spending: Optional[Currency] = strawberry.field(name="fundAccountSpending")
+    delete_spending: Optional[Currency] = strawberry.field(name="deleteSpending")
+    list_spending: Optional[Currency] = strawberry.field(name="listSpending")
 
 
 @strawberry.type
 class ContractPruneMetric(SiaType):
-    timestamp: Optional[datetime.datetime] = strawberry.field(description="Format: date-time", name="timestamp")
+    timestamp: Optional[TimeRFC3339.datetime] = strawberry.field(name="timestamp")
     contract_id: Optional[FileContractID] = strawberry.field(name="contractID")
     host_key: Optional[PublicKey] = strawberry.field(name="hostKey")
     host_version: Optional[str] = strawberry.field(name="hostVersion")
-    pruned: Optional[int] = strawberry.field(description="Format: uint64", name="pruned")
-    remaining: Optional[int] = strawberry.field(description="Format: uint64", name="remaining")
-    duration: Optional[int] = strawberry.field(description="Duration in nanoseconds | Format: int64", name="duration")
+    pruned: Optional[int] = strawberry.field(name="pruned")
+    remaining: Optional[int] = strawberry.field(name="remaining")
+    duration: Optional[Duration] = strawberry.field(description="Duration in nanoseconds", name="duration")
 
 
 @strawberry.type
 class ContractSize(SiaType):
-    prunable: Optional[int] = strawberry.field(description="The amount of data that can be pruned from a contract | Format: uint64", name="prunable")
-    size: Optional[int] = strawberry.field(description="The total size of a contract | Format: uint64", name="size")
-
+    prunable: Optional[int] = strawberry.field(
+        description="The amount of data that can be pruned from a contract", name="prunable"
+    )
+    size: Optional[int] = strawberry.field(description="The total size of a contract", name="size")
 
 
 # @strawberry.type(description="A transaction or other event that affects the wallet including miner payouts, siafund claims, and file contract payouts.")
 @strawberry.type
 class Event(SiaType):
-    id: Optional[Hash256] = strawberry.field(description="The event's ID", name="id")
-    index: Optional[ChainIndex] = strawberry.field(description="Information about the block that triggered the creation of this event", name="index")
-    confirmations: Optional[int] = strawberry.field(description="The number of blocks on top of the block that triggered the creation of this event | Format: uint64", name="confirmations")
-    type: Optional[str] = strawberry.field(description="The type of the event | Allowed values: miner, foundation, siafundClaim, v1Transaction, v1ContractResolution, v2Transaction, v2ContractResolution", name="type")
-    data: Optional[JSON] = strawberry.field(name="data")
-    maturity_height: Optional[BlockHeight] = strawberry.field(description="The block height at which the payout matures.", name="maturityHeight")
-    timestamp: Optional[datetime.datetime] = strawberry.field(description="The time the event was created | Format: date-time", name="timestamp")
-    relevant: Optional[List[Address]] = strawberry.field(name="relevant")
+    module: Optional[str] = strawberry.field(description="The module that produced the event", name="module")
+    event: Optional[str] = strawberry.field(description="The type/name of the event", name="event")
+    payload: Optional[JSON] = strawberry.field(description="Optional event-specific payload data", name="payload")
 
 
 @strawberry.type
 class RedundancySettings(SiaType):
-    min_shards: Optional[int] = strawberry.field(description="The number of data shards a piece of an object gets erasure-coded into | Minimum: 1 | Format: int32", default=10, name="minShards")
-    total_shards: Optional[int] = strawberry.field(description="The number of total data shards a piece of an object gets erasure-coded into | Minimum: 2 | Format: int32", default=30, name="totalShards")
+    min_shards: Optional[int] = strawberry.field(
+        description="The number of data shards a piece of an object gets erasure-coded into | Minimum: 1",
+        default=10,
+        name="minShards",
+    )
+    total_shards: Optional[int] = strawberry.field(
+        description="The number of total data shards a piece of an object gets erasure-coded into | Minimum: 2",
+        default=30,
+        name="totalShards",
+    )
 
 
 @strawberry.type
@@ -830,12 +1009,16 @@ class GougingParams(SiaType):
     consensus_state: Optional[ConsensusState] = strawberry.field(name="consensusState")
     gouging_settings: Optional[GougingSettings] = strawberry.field(name="gougingSettings")
     redundancy_settings: Optional[RedundancySettings] = strawberry.field(name="redundancySettings")
+    transaction_fee: Optional[Currency] = strawberry.field(name="transactionFee")
 
 
 @strawberry.type
 class Pin(SiaType):
     pinned: Optional[bool] = strawberry.field(description="Whether pin is enabled", name="pinned")
-    value: Optional[float] = strawberry.field(description="The value of the underlying currency to which the setting is pinned | Format: float64", name="value")
+    value: Optional[float] = strawberry.field(
+        description="The value of the underlying currency to which the setting is pinned",
+        name="value",
+    )
 
 
 @strawberry.type
@@ -847,114 +1030,234 @@ class GougingSettingsPins(SiaType):
 
 @strawberry.type
 class HostGougingBreakdown(SiaType):
-    download_err: Optional[str] = strawberry.field(description="Error message related to download gouging checks.", name="downloadErr")
-    gouging_err: Optional[str] = strawberry.field(description="Error message related to general gouging checks.", name="gougingErr")
+    contract_err: Optional[str] = strawberry.field(
+        description="Error message related to contract gouging checks.", name="contractErr"
+    )
+    download_err: Optional[str] = strawberry.field(
+        description="Error message related to download gouging checks.", name="downloadErr"
+    )
+    gouging_err: Optional[str] = strawberry.field(
+        description="Error message related to general gouging checks.", name="gougingErr"
+    )
     prune_err: Optional[str] = strawberry.field(description="Error message related to pruning checks.", name="pruneErr")
-    upload_err: Optional[str] = strawberry.field(description="Error message related to upload gouging checks.", name="uploadErr")
+    upload_err: Optional[str] = strawberry.field(
+        description="Error message related to upload gouging checks.", name="uploadErr"
+    )
 
 
 @strawberry.type
 class HostScoreBreakdown(SiaType):
-    age: Optional[float] = strawberry.field(description="Score contribution based on the host's age. | Format: float", name="age")
-    collateral: Optional[float] = strawberry.field(description="Score contribution based on the host's collateral amount. | Format: float", name="collateral")
-    interactions: Optional[float] = strawberry.field(description="Score contribution based on successful interactions. | Format: float", name="interactions")
-    storage_remaining: Optional[float] = strawberry.field(description="Score contribution based on remaining storage capacity. | Format: float", name="storageRemaining")
-    uptime: Optional[float] = strawberry.field(description="Score contribution based on host uptime. | Format: float", name="uptime")
-    version: Optional[float] = strawberry.field(description="Score contribution based on the host's software version. | Format: float", name="version")
-    prices: Optional[float] = strawberry.field(description="Score contribution based on pricing metrics. | Format: float", name="prices")
+    age: Optional[float] = strawberry.field(description="Score contribution based on the host's age.", name="age")
+    collateral: Optional[float] = strawberry.field(
+        description="Score contribution based on the host's collateral amount.", name="collateral"
+    )
+    interactions: Optional[float] = strawberry.field(
+        description="Score contribution based on successful interactions.", name="interactions"
+    )
+    storage_remaining: Optional[float] = strawberry.field(
+        description="Score contribution based on remaining storage capacity.", name="storageRemaining"
+    )
+    uptime: Optional[float] = strawberry.field(description="Score contribution based on host uptime.", name="uptime")
+    version: Optional[float] = strawberry.field(
+        description="Score contribution based on the host's software version.", name="version"
+    )
+    prices: Optional[float] = strawberry.field(
+        description="Score contribution based on pricing metrics.", name="prices"
+    )
 
 
 @strawberry.type
 class HostUsabilityBreakdown(SiaType):
     blocked: Optional[bool] = strawberry.field(description="Indicates if the host is blocked.", name="blocked")
     offline: Optional[bool] = strawberry.field(description="Indicates if the host is offline.", name="offline")
-    low_max_duration: Optional[bool] = strawberry.field(description="Indicates if the host has a low maximum contract duration.", name="lowMaxDuration")
     low_score: Optional[bool] = strawberry.field(description="Indicates if the host has a low score.", name="lowScore")
-    redundant_ip: Optional[bool] = strawberry.field(description="Indicates if the host's IP address is redundant.", name="redundantIP")
+    redundant_ip: Optional[bool] = strawberry.field(
+        description="Indicates if the host's IP address is redundant.", name="redundantIP"
+    )
     gouging: Optional[bool] = strawberry.field(description="Indicates if the host is gouging prices.", name="gouging")
-    not_accepting_contracts: Optional[bool] = strawberry.field(description="Indicates if the host is not accepting new contracts.", name="notAcceptingContracts")
-    not_announced: Optional[bool] = strawberry.field(description="Indicates if the host has not been announced on the network.", name="notAnnounced")
-    not_completing_scan: Optional[bool] = strawberry.field(description="Indicates if the host is failing to complete scans.", name="notCompletingScan")
+    not_accepting_contracts: Optional[bool] = strawberry.field(
+        description="Indicates if the host is not accepting new contracts.", name="notAcceptingContracts"
+    )
+    not_announced: Optional[bool] = strawberry.field(
+        description="Indicates if the host has not been announced on the network.", name="notAnnounced"
+    )
+    not_completing_scan: Optional[bool] = strawberry.field(
+        description="Indicates if the host is failing to complete scans.", name="notCompletingScan"
+    )
 
 
 @strawberry.type
 class HostInteractions(SiaType):
-    total_scans: Optional[int] = strawberry.field(description="The total number of scans performed on the host. | Format: uint64", name="totalScans")
-    last_scan: Optional[datetime.datetime] = strawberry.field(description="Timestamp of the last scan performed. | Format: date-time", name="lastScan")
-    last_scan_success: Optional[bool] = strawberry.field(description="Indicates whether the last scan was successful.", name="lastScanSuccess")
-    lost_sectors: Optional[int] = strawberry.field(description="Number of sectors lost since the last reporting period. | Format: uint64", name="lostSectors")
-    second_to_last_scan_success: Optional[bool] = strawberry.field(description="Indicates whether the second-to-last scan was successful.", name="secondToLastScanSuccess")
-    uptime: Optional[str] = strawberry.field(description="Total uptime duration of the host. | Format: duration", name="uptime")
-    downtime: Optional[str] = strawberry.field(description="Total downtime duration of the host. | Format: duration", name="downtime")
-    successful_interactions: Optional[float] = strawberry.field(description="The number of successful interactions with the host. | Format: float", name="successfulInteractions")
-    failed_interactions: Optional[float] = strawberry.field(description="The number of failed interactions with the host. | Format: float", name="failedInteractions")
+    total_scans: Optional[int] = strawberry.field(
+        description="The total number of scans performed on the host.", name="totalScans"
+    )
+    last_scan: Optional[datetime.datetime] = strawberry.field(
+        description="Timestamp of the last scan performed.", name="lastScan"
+    )
+    last_scan_success: Optional[bool] = strawberry.field(
+        description="Indicates whether the last scan was successful.", name="lastScanSuccess"
+    )
+    lost_sectors: Optional[int] = strawberry.field(
+        description="Number of sectors lost since the last reporting period.", name="lostSectors"
+    )
+    second_to_last_scan_success: Optional[bool] = strawberry.field(
+        description="Indicates whether the second-to-last scan was successful.", name="secondToLastScanSuccess"
+    )
+    uptime: Optional[Duration] = strawberry.field(description="Total uptime duration of the host.", name="uptime")
+    downtime: Optional[Duration] = strawberry.field(description="Total downtime duration of the host.", name="downtime")
+    successful_interactions: Optional[float] = strawberry.field(
+        description="The number of successful interactions with the host.",
+        name="successfulInteractions",
+    )
+    failed_interactions: Optional[float] = strawberry.field(
+        description="The number of failed interactions with the host.", name="failedInteractions"
+    )
 
 
 # @strawberry.type(description="A detailed price table containing cost and configuration values for a host.")
 @strawberry.type
+@strawberry.type
 class HostPriceTable(SiaType):
-    uid: Optional[SettingsID] = strawberry.field(description="Unique specifier that identifies this price table.", name="uid")
-    validity: Optional[int] = strawberry.field(description="Duration (in nanoseconds) for which the host guarantees these prices are valid. | Format: int64 | Example: 3600000000000", name="validity")
-    hostblockheight: Optional[BlockHeight] = strawberry.field(description="The host's current block height.", name="hostblockheight")
-    updatepricetablecost: Optional[Currency] = strawberry.field(description="The cost to fetch a new price table from the host.", name="updatepricetablecost")
-    accountbalancecost: Optional[Currency] = strawberry.field(description="The cost to fetch the balance of an ephemeral account.", name="accountbalancecost")
-    fundaccountcost: Optional[Currency] = strawberry.field(description="The cost to fund an ephemeral account on the host.", name="fundaccountcost")
-    latestrevisioncost: Optional[Currency] = strawberry.field(description="The cost to retrieve the latest revision of a contract.", name="latestrevisioncost")
-    subscriptionmemorycost: Optional[Currency] = strawberry.field(description="The cost of storing a byte of data for a subscription period.", name="subscriptionmemorycost")
-    subscriptionnotificationcost: Optional[Currency] = strawberry.field(description="The cost of a single notification on top of bandwidth charges.", name="subscriptionnotificationcost")
-    initbasecost: Optional[Currency] = strawberry.field(description="The base cost incurred when starting an MDM program.", name="initbasecost")
-    memorytimecost: Optional[Currency] = strawberry.field(description="The cost per byte per time for the memory consumed by a program.", name="memorytimecost")
-    downloadbandwidthcost: Optional[Currency] = strawberry.field(description="The cost per byte for download bandwidth.", name="downloadbandwidthcost")
-    uploadbandwidthcost: Optional[Currency] = strawberry.field(description="The cost per byte for upload bandwidth.", name="uploadbandwidthcost")
-    dropsectorsbasecost: Optional[Currency] = strawberry.field(description="The base cost of performing a DropSectors instruction.", name="dropsectorsbasecost")
-    dropsectorsunitcost: Optional[Currency] = strawberry.field(description="The unit cost per sector for performing a DropSectors instruction.", name="dropsectorsunitcost")
-    hassectorbasecost: Optional[Currency] = strawberry.field(description="The cost for executing the HasSector command.", name="hassectorbasecost")
-    readbasecost: Optional[Currency] = strawberry.field(description="The base cost of performing a Read instruction.", name="readbasecost")
-    readlengthcost: Optional[Currency] = strawberry.field(description="The cost per byte read during a Read instruction.", name="readlengthcost")
-    renewcontractcost: Optional[Currency] = strawberry.field(description="The cost for renewing a contract.", name="renewcontractcost")
-    revisionbasecost: Optional[Currency] = strawberry.field(description="The base cost for performing a Revision command.", name="revisionbasecost")
-    swapsectorcost: Optional[Currency] = strawberry.field(description="The cost of swapping two full sectors by root.", name="swapsectorcost")
-    writebasecost: Optional[Currency] = strawberry.field(description="The base cost per write operation.", name="writebasecost")
-    writelengthcost: Optional[Currency] = strawberry.field(description="The cost per byte written during a Write instruction.", name="writelengthcost")
-    writestorecost: Optional[Currency] = strawberry.field(description="The cost per byte/block of additional storage.", name="writestorecost")
-    txnfeeminrecommended: Optional[Currency] = strawberry.field(description="The minimum recommended transaction fee.", name="txnfeeminrecommended")
-    txnfeemaxrecommended: Optional[Currency] = strawberry.field(description="The maximum recommended transaction fee.", name="txnfeemaxrecommended")
-    contractprice: Optional[Currency] = strawberry.field(description="The additional fee charged by the host to form or renew a contract.", name="contractprice")
-    collateralcost: Optional[Currency] = strawberry.field(description="The cost per byte for the collateral promised by the host.", name="collateralcost")
-    maxcollateral: Optional[Currency] = strawberry.field(description="The maximum amount of collateral the host is willing to put into a contract.", name="maxcollateral")
-    maxduration: Optional[int] = strawberry.field(description="Maximum duration (in blocks) for which the host is willing to form a contract. | Format: uint64 | Example: 14400", name="maxduration")
-    windowsize: Optional[int] = strawberry.field(description="Minimum time (in blocks) requested for the renew window of a contract. | Format: uint64 | Example: 1000", name="windowsize")
-    registryentriesleft: Optional[int] = strawberry.field(description="The remaining number of registry entries available on the host. | Format: uint64 | Example: 5000", name="registryentriesleft")
-    registryentriestotal: Optional[int] = strawberry.field(description="The total number of registry entries available on the host. | Format: uint64 | Example: 10000", name="registryentriestotal")
-    expiry: Optional[datetime.datetime] = strawberry.field(name="expiry", default=None)
+    uid: Optional[SettingsID] = strawberry.field(
+        description="A unique specifier that identifies this price table", name="uid"
+    )
+    validity: Optional[Duration] = strawberry.field(
+        description="Duration that specifies how long the host guarantees these prices for", name="validity"
+    )
+    host_block_height: Optional[int] = strawberry.field(
+        description="The block height of the host, allows creating valid withdrawal messages if not synced",
+        name="hostblockheight",
+    )
+    update_price_table_cost: Optional[Currency] = strawberry.field(
+        description="Cost of fetching a new price table from the host", name="updatepricetablecost"
+    )
+    account_balance_cost: Optional[Currency] = strawberry.field(
+        description="Cost of fetching the balance of an ephemeral account", name="accountbalancecost"
+    )
+    fund_account_cost: Optional[Currency] = strawberry.field(
+        description="Cost of funding an ephemeral account on the host", name="fundaccountcost"
+    )
+    latest_revision_cost: Optional[Currency] = strawberry.field(
+        description="Cost of asking the host for the latest revision of a contract", name="latestrevisioncost"
+    )
+    subscription_memory_cost: Optional[Currency] = strawberry.field(
+        description="Cost of storing a byte of data for SubscriptionPeriod time", name="subscriptionmemorycost"
+    )
+    subscription_notification_cost: Optional[Currency] = strawberry.field(
+        description="Cost of a single notification on top of bandwidth charges", name="subscriptionnotificationcost"
+    )
+    init_base_cost: Optional[Currency] = strawberry.field(
+        description="Base cost incurred when an MDM program starts to run (excluding memory)", name="initbasecost"
+    )
+    memory_time_cost: Optional[Currency] = strawberry.field(
+        description="Cost per byte per time incurred by program memory consumption", name="memorytimecost"
+    )
+    download_bandwidth_cost: Optional[Currency] = strawberry.field(
+        description="Cost per byte for download bandwidth", name="downloadbandwidthcost"
+    )
+    upload_bandwidth_cost: Optional[Currency] = strawberry.field(
+        description="Cost per byte for upload bandwidth", name="uploadbandwidthcost"
+    )
+    drop_sectors_base_cost: Optional[Currency] = strawberry.field(
+        description="Base cost for DropSectors instruction", name="dropsectorsbasecost"
+    )
+    drop_sectors_unit_cost: Optional[Currency] = strawberry.field(
+        description="Cost per sector for DropSectors instruction", name="dropsectorsunitcost"
+    )
+    has_sector_base_cost: Optional[Currency] = strawberry.field(
+        description="Base cost for HasSector command", name="hassectorbasecost"
+    )
+    read_base_cost: Optional[Currency] = strawberry.field(
+        description="Base cost for Read instruction", name="readbasecost"
+    )
+    read_length_cost: Optional[Currency] = strawberry.field(
+        description="Cost per byte for Read instruction", name="readlengthcost"
+    )
+    renew_contract_cost: Optional[Currency] = strawberry.field(
+        description="Cost for RenewContract instruction", name="renewcontractcost"
+    )
+    revision_base_cost: Optional[Currency] = strawberry.field(
+        description="Base cost for Revision command", name="revisionbasecost"
+    )
+    swap_sector_cost: Optional[Currency] = strawberry.field(
+        description="Cost of swapping 2 full sectors by root", name="swapsectorcost"
+    )
+    write_base_cost: Optional[Currency] = strawberry.field(
+        description="Base cost per write operation", name="writebasecost"
+    )
+    write_length_cost: Optional[Currency] = strawberry.field(
+        description="Cost per byte written", name="writelengthcost"
+    )
+    write_store_cost: Optional[Currency] = strawberry.field(
+        description="Cost per byte/block of additional storage", name="writestorecost"
+    )
+    txn_fee_min_recommended: Optional[Currency] = strawberry.field(
+        description="Minimum recommended transaction fee", name="txnfeeminrecommended"
+    )
+    txn_fee_max_recommended: Optional[Currency] = strawberry.field(
+        description="Maximum recommended transaction fee", name="txnfeemaxrecommended"
+    )
+    contract_price: Optional[Currency] = strawberry.field(
+        description="Fee charged for forming/renewing contracts to cover miner fees", name="contractprice"
+    )
+    collateral_cost: Optional[Currency] = strawberry.field(
+        description="Collateral locked per byte when adding new data", name="collateralcost"
+    )
+    max_collateral: Optional[Currency] = strawberry.field(
+        description="Maximum collateral the host will put in a single contract", name="maxcollateral"
+    )
+    max_duration: Optional[int] = strawberry.field(
+        description="Maximum contract formation duration in blocks", name="maxduration"
+    )
+    window_size: Optional[int] = strawberry.field(
+        description="Minimum blocks for contract renew window", name="windowsize"
+    )
+    registry_entries_left: Optional[int] = strawberry.field(
+        description="Remaining available registry entries", name="registryentriesleft"
+    )
+    registry_entries_total: Optional[int] = strawberry.field(
+        description="Total available registry entries", name="registryentriestotal"
+    )
+    expiry: Optional[TimeRFC3339] = strawberry.field(description="Time when this price table expires", name="expiry")
 
 
 @strawberry.type
-class HostSettings(SiaType):
-    accepting_contracts: Optional[bool] = strawberry.field(description="Whether the host is accepting new contracts", name="acceptingContracts")
-    max_download_batch_size: Optional[int] = strawberry.field(description="Maximum allowed download batch size | Format: uint64", name="maxDownloadBatchSize")
-    max_duration: Optional[int] = strawberry.field(description="Maximum allowed contract duration | Format: uint64", name="maxDuration")
-    max_revise_batch_size: Optional[int] = strawberry.field(description="Maximum allowed revision batch size | Format: uint64", name="maxReviseBatchSize")
-    net_address: Optional[str] = strawberry.field(description="Network address of the host", name="netAddress")
-    remaining_storage: Optional[int] = strawberry.field(description="Amount of storage the host has remaining | Format: uint64", name="remainingStorage")
-    sector_size: Optional[int] = strawberry.field(description="Size of a storage sector | Format: uint64", name="sectorSize")
-    total_storage: Optional[int] = strawberry.field(description="Total amount of storage space | Format: uint64", name="totalStorage")
-    address: Optional[Address] = strawberry.field(name="address")
-    window_size: Optional[int] = strawberry.field(description="Size of the proof window | Format: uint64", name="windowSize")
+@strawberry.type
+class HostV4Settings(SiaType):
+    accepting_contracts: Optional[bool] = strawberry.field(
+        description="Whether the host is accepting new contracts", name="acceptingcontracts"
+    )
+    max_download_batch_size: Optional[int] = strawberry.field(
+        description="Maximum allowed download batch size", name="maxdownloadbatchsize"
+    )
+    max_duration: Optional[int] = strawberry.field(description="Maximum allowed contract duration", name="maxduration")
+    max_revise_batch_size: Optional[int] = strawberry.field(
+        description="Maximum allowed revision batch size", name="maxrevisebatchsize"
+    )
+    net_address: Optional[str] = strawberry.field(description="Network address of the host", name="netaddress")
+    remaining_storage: Optional[int] = strawberry.field(
+        description="Amount of storage the host has remaining", name="remainingstorage"
+    )
+    sector_size: Optional[int] = strawberry.field(description="Size of a storage sector", name="sectorsize")
+    total_storage: Optional[int] = strawberry.field(description="Total amount of storage space", name="totalstorage")
+    address: Optional[Address] = strawberry.field(name="unlockhash")
+    window_size: Optional[int] = strawberry.field(description="Size of the proof window", name="windowsize")
     collateral: Optional[Currency] = strawberry.field(name="collateral")
-    max_collateral: Optional[Currency] = strawberry.field(name="maxCollateral")
-    base_rpc_price: Optional[Currency] = strawberry.field(name="baseRPCPrice")
-    contract_price: Optional[Currency] = strawberry.field(name="contractPrice")
-    download_bandwidth_price: Optional[Currency] = strawberry.field(name="downloadBandwidthPrice")
-    sector_access_price: Optional[Currency] = strawberry.field(name="sectorAccessPrice")
-    storage_price: Optional[Currency] = strawberry.field(name="storagePrice")
-    upload_bandwidth_price: Optional[Currency] = strawberry.field(name="uploadBandwidthPrice")
-    ephemeral_account_expiry: Optional[int] = strawberry.field(description="Duration before an ephemeral account expires | Format: int64", name="ephemeralAccountExpiry")
-    max_ephemeral_account_balance: Optional[Currency] = strawberry.field(name="maxEphemeralAccountBalance")
-    revision_number: Optional[RevisionNumber] = strawberry.field(name="revisionNumber")
+    max_collateral: Optional[Currency] = strawberry.field(name="maxcollateral")
+    base_rpc_price: Optional[Currency] = strawberry.field(name="baserpcprice")
+    contract_price: Optional[Currency] = strawberry.field(name="contractprice")
+    download_bandwidth_price: Optional[Currency] = strawberry.field(name="downloadbandwidthprice")
+    sector_access_price: Optional[Currency] = strawberry.field(name="sectoraccessprice")
+    storage_price: Optional[Currency] = strawberry.field(name="storageprice")
+    upload_bandwidth_price: Optional[Currency] = strawberry.field(name="uploadbandwidthprice")
+    ephemeral_account_expiry: Optional[Duration] = strawberry.field(
+        description="Duration before an ephemeral account expires", name="ephemeralaccountexpiry"
+    )
+    max_ephemeral_account_balance: Optional[Currency] = strawberry.field(name="maxephemeralaccountbalance")
+    revision_number: Optional[int] = strawberry.field(name="revisionnumber")
     version: Optional[str] = strawberry.field(description="Version of the host software", name="version")
-    release: Optional[str] = strawberry.field(description="Release tag of the host software | Example: hostd 1.0.0", name="release")
-    siamux_port: Optional[str] = strawberry.field(description="Port used for siamux connections", name="siamuxPort")
+    release: Optional[str] = strawberry.field(description="Release tag of the host software", name="release")
+    siamux_port: Optional[str] = strawberry.field(description="Port used for siamux connections", name="siamuxport")
 
 
 @strawberry.type
@@ -964,59 +1267,104 @@ class HostPrices(SiaType):
     storage_price: Optional[Currency] = strawberry.field(name="storagePrice")
     ingress_price: Optional[Currency] = strawberry.field(name="ingressPrice")
     egress_price: Optional[Currency] = strawberry.field(name="egressPrice")
-    tip_height: Optional[int] = strawberry.field(description="The height at which the prices were last updated | Format: uint64", name="tipHeight")
-    valid_until: Optional[datetime.datetime] = strawberry.field(description="Format: date-time", name="validUntil")
+    free_sector_price: Optional[Currency] = strawberry.field(name="freeSectorPrice")
+    tip_height: Optional[int] = strawberry.field(
+        description="The height at which the prices were last updated", name="tipHeight"
+    )
+    valid_until: Optional[datetime.datetime] = strawberry.field(name="validUntil")
     signature: Optional[Signature] = strawberry.field(name="signature")
 
 
 @strawberry.type
 class HostV2Settings(SiaType):
-    protocol_version: Optional[SemVer] = strawberry.field(name="protocolVersion")
-    release: Optional[str] = strawberry.field(description="Release tag of the host software | Example: hostd 1.0.0", name="release")
-    wallet_address: Optional[Address] = strawberry.field(name="walletAddress")
-    accepting_contracts: Optional[bool] = strawberry.field(description="Whether the host is accepting new contracts", name="acceptingContracts")
-    max_collateral: Optional[Currency] = strawberry.field(name="maxCollateral")
-    max_contract_duration: Optional[int] = strawberry.field(description="Maximum allowed contract duration | Format: uint64", name="maxContractDuration")
-    remaining_storage: Optional[int] = strawberry.field(description="Amount of storage the host has remaining | Format: uint64", name="remainingStorage")
-    total_storage: Optional[int] = strawberry.field(description="Total amount of storage space | Format: uint64", name="totalStorage")
-    prices: Optional[HostPrices] = strawberry.field(name="prices")
+    accepting_contracts: Optional[bool] = strawberry.field(
+        description="Whether the host is accepting new contracts", name="acceptingcontracts"
+    )
+    max_download_batch_size: Optional[int] = strawberry.field(
+        description="Maximum allowed download batch size", name="maxdownloadbatchsize"
+    )
+    max_duration: Optional[int] = strawberry.field(description="Maximum allowed duration", name="maxduration")
+    max_revise_batch_size: Optional[int] = strawberry.field(
+        description="Maximum allowed revision batch size", name="maxrevisebatchsize"
+    )
+    net_address: Optional[str] = strawberry.field(description="Network address of the host", name="netaddress")
+    remaining_storage: Optional[int] = strawberry.field(
+        description="Amount of storage the host has remaining", name="remainingstorage"
+    )
+    sector_size: Optional[int] = strawberry.field(description="Size of a storage sector", name="sectorsize")
+    total_storage: Optional[int] = strawberry.field(description="Total amount of storage space", name="totalstorage")
+    address: Optional[Address] = strawberry.field(name="unlockhash")
+    window_size: Optional[int] = strawberry.field(description="Size of the proof window", name="windowsize")
+    collateral: Optional[Currency] = strawberry.field(name="collateral")
+    max_collateral: Optional[Currency] = strawberry.field(name="maxcollateral")
+    base_rpc_price: Optional[Currency] = strawberry.field(name="baserpcprice")
+    contract_price: Optional[Currency] = strawberry.field(name="contractprice")
+    download_bandwidth_price: Optional[Currency] = strawberry.field(name="downloadbandwidthprice")
+    sector_access_price: Optional[Currency] = strawberry.field(name="sectoraccessprice")
+    storage_price: Optional[Currency] = strawberry.field(name="storageprice")
+    upload_bandwidth_price: Optional[Currency] = strawberry.field(name="uploadbandwidthprice")
+    ephemeral_account_expiry: Optional[Duration] = strawberry.field(
+        description="Duration before an ephemeral account expires", name="ephemeralaccountexpiry"
+    )
+    max_ephemeral_account_balance: Optional[Currency] = strawberry.field(name="maxephemeralaccountbalance")
+    revision_number: Optional[int] = strawberry.field(name="revisionnumber")
+    version: Optional[str] = strawberry.field(description="Version of the host software", name="version")
+    release: Optional[str] = strawberry.field(description="Release tag of the host software", name="release")
+    siamux_port: Optional[str] = strawberry.field(description="Port used for siamux connections", name="siamuxport")
 
 
 @strawberry.type
 class HostChecks(SiaType):
+    gouging: Optional[bool] = strawberry.field(description="Whether the host is gouging", name="gouging")
     gouging_breakdown: Optional[HostGougingBreakdown] = strawberry.field(name="gougingBreakdown")
+    score: Optional[float] = strawberry.field(description="The host's overall score", name="score")
     score_breakdown: Optional[HostScoreBreakdown] = strawberry.field(name="scoreBreakdown")
-    usability_breakdown: Optional[HostUsabilityBreakdown] = strawberry.field(name="usabilityBreakdown")
+    usable: Optional[bool] = strawberry.field(description="Whether the host is usable", name="usable")
+    unusable_reasons: Optional[List[str]] = strawberry.field(
+        description="Reasons why the host is unusable", name="unusableReasons"
+    )
+
+
+@strawberry.type
+class HostCheck(SiaType):
+    gouging: Optional[HostGougingBreakdown] = strawberry.field(name="gouging")
+    score: Optional[HostScoreBreakdown] = strawberry.field(name="score")
+    usability: Optional[HostUsabilityBreakdown] = strawberry.field(name="usability")
 
 
 @strawberry.type
 class Host(SiaType):
-    known_since: Optional[datetime.datetime] = strawberry.field(description="The time the host was first seen | Format: date-time", name="knownSince")
-    last_announcement: Optional[datetime.datetime] = strawberry.field(description="The time the host last announced itself | Format: date-time", name="lastAnnouncement")
+    known_since: Optional[datetime.datetime] = strawberry.field(
+        description="The time the host was first seen", name="knownSince"
+    )
+    last_announcement: Optional[datetime.datetime] = strawberry.field(
+        description="The time the host last announced itself", name="lastAnnouncement"
+    )
     public_key: Optional[PublicKey] = strawberry.field(name="publicKey")
-    net_address: Optional[str] = strawberry.field(description="The address of the host | Example: foo.bar:1234", name="netAddress")
+    net_address: Optional[str] = strawberry.field(description="The address of the host", name="netAddress")
     price_table: Optional[HostPriceTable] = strawberry.field(name="priceTable")
-    settings: Optional[HostSettings] = strawberry.field(name="settings")
-    v2_settings: Optional[HostV2Settings] = strawberry.field(name="v2Settings")
+    settings: Optional[HostV2Settings] = strawberry.field(name="settings")
     interactions: Optional[HostInteractions] = strawberry.field(name="interactions")
     scanned: Optional[bool] = strawberry.field(description="Whether the host has been scanned", name="scanned")
     blocked: Optional[bool] = strawberry.field(description="Whether the host is blocked", name="blocked")
-    checks: Optional[HostChecks] = strawberry.field(name="checks")
-    stored_data: Optional[int] = strawberry.field(description="The amount of data stored on the host in bytes | Format: uint64", name="storedData")
-    v2_siamux_addresses: Optional[List[str]] = strawberry.field(name="v2SiamuxAddresses")
-
-
-@strawberry.type
-class HostInfo(SiaType):
-    public_key: Optional[PublicKey] = strawberry.field(name="publicKey")
-    siamux_addr: Optional[str] = strawberry.field(description="The address of the host | Example: foo.bar:1234", name="siamuxAddr")
-    v2_siamux_addresses: Optional[List[str]] = strawberry.field(name="v2SiamuxAddresses")
+    checks: Optional[Dict[str, HostCheck]] = strawberry.field(name="checks")  # map[string]HostCheck
+    stored_data: Optional[int] = strawberry.field(
+        description="The amount of data stored on the host in bytes", name="storedData"
+    )
+    resolved_addresses: Optional[List[str]] = strawberry.field(name="resolvedAddresses")
+    subnets: Optional[List[str]] = strawberry.field(name="subnets")
 
 
 @strawberry.type
 class MemoryStatus(SiaType):
-    available: Optional[int] = strawberry.field(description="The amount of remaining memory currently available in bytes | Format: uint64 | Example: 83886080", name="available")
-    total: Optional[int] = strawberry.field(description="The total amount of memory available in bytes | Minimum: 1 | Format: uint64 | Example: 1073741824", name="total")
+    available: Optional[int] = strawberry.field(
+        description="The amount of remaining memory currently available in bytes",
+        name="available",
+    )
+    total: Optional[int] = strawberry.field(
+        description="The total amount of memory available in bytes | Minimum: 1",
+        name="total",
+    )
 
 
 @strawberry.type
@@ -1028,65 +1376,80 @@ class MultipartCompletedPart(SiaType):
 @strawberry.type
 class MultipartListPartItem(SiaType):
     part_number: Optional[int] = strawberry.field(description="The number of this part", name="partNumber")
-    last_modified: Optional[datetime.datetime] = strawberry.field(description="When this part was last modified | Format: date-time", name="lastModified")
+    last_modified: Optional[TimeRFC3339] = strawberry.field(
+        description="When this part was last modified", name="lastModified"
+    )
     e_tag: Optional[ETag] = strawberry.field(name="eTag")
-    size: Optional[int] = strawberry.field(description="The size of this part in bytes | Format: int64", name="size")
+    size: Optional[int] = strawberry.field(description="The size of this part in bytes", name="size")
 
 
 @strawberry.type
 class MultipartUpload(SiaType):
     bucket: Optional[str] = strawberry.field(description="The name of the bucket", name="bucket")
-    encryption_key: Optional[EncryptionKey] = strawberry.field(name="encryptionKey")
-    key: Optional[str] = strawberry.field(description="The key of the object", name="key")
-    upload_id: Optional[UploadID] = strawberry.field(description="The ID of the multipart upload", name="uploadID")
-    created_at: Optional[datetime.datetime] = strawberry.field(description="When the upload was created | Format: date-time", name="createdAt")
+    key: Optional[EncryptionKey] = strawberry.field(name="key")
+    path: Optional[str] = strawberry.field(name="path")
+    upload_id: Optional[str] = strawberry.field(name="uploadID")
+    created_at: Optional[TimeRFC3339] = strawberry.field(name="createdAt")
 
 
 @strawberry.type
 class HardforkDevAddr(SiaType):
-    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
+    height: Optional[int] = strawberry.field(name="height")
     old_address: Optional[Address] = strawberry.field(name="oldAddress")
     new_address: Optional[Address] = strawberry.field(name="newAddress")
 
+
 @strawberry.type
 class HardforkTax(SiaType):
-    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
+    height: Optional[int] = strawberry.field(name="height")
+
 
 @strawberry.type
 class HardforkStorageProof(SiaType):
-    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
+    height: Optional[int] = strawberry.field(name="height")
+
 
 @strawberry.type
 class HardforkOak(SiaType):
-    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
-    fix_height: Optional[int] = strawberry.field(description="Format: uint64", name="fixHeight")
+    height: Optional[int] = strawberry.field(name="height")
+    fix_height: Optional[int] = strawberry.field(name="fixHeight")
     genesis_timestamp: Optional[datetime.datetime] = strawberry.field(name="genesisTimestamp")
+
 
 @strawberry.type
 class HardforkASIC(SiaType):
-    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
-    oak_time: Optional[DurationMS] = strawberry.field(name="oakTime")
+    height: Optional[int] = strawberry.field(name="height")
+    oak_time: Optional[Duration] = strawberry.field(name="oakTime")
     oak_target: Optional[BlockID] = strawberry.field(name="oakTarget")
+
 
 @strawberry.type
 class HardforkFoundation(SiaType):
-    height: Optional[int] = strawberry.field(description="Format: uint64", name="height")
+    height: Optional[int] = strawberry.field(name="height")
     primary_address: Optional[Address] = strawberry.field(name="primaryAddress")
     failsafe_address: Optional[Address] = strawberry.field(name="failsafeAddress")
 
+
 @strawberry.type
 class HardforkV2(SiaType):
-    allow_height: Optional[int] = strawberry.field(description="Format: uint64", name="allowHeight")
-    require_height: Optional[int] = strawberry.field(description="Format: uint64", name="requireHeight")
+    allow_height: Optional[int] = strawberry.field(name="allowHeight")
+    require_height: Optional[int] = strawberry.field(name="requireHeight")
+
 
 @strawberry.type
 class Network(SiaType):
     name: Optional[str] = strawberry.field(description="The name of the network", name="name")
-    initial_coinbase: Optional[Currency] = strawberry.field(description="The initial coinbase reward", name="initialCoinbase")
-    minimum_coinbase: Optional[Currency] = strawberry.field(description="The minimum coinbase reward", name="minimumCoinbase")
+    initial_coinbase: Optional[Currency] = strawberry.field(
+        description="The initial coinbase reward", name="initialCoinbase"
+    )
+    minimum_coinbase: Optional[Currency] = strawberry.field(
+        description="The minimum coinbase reward", name="minimumCoinbase"
+    )
     initial_target: Optional[BlockID] = strawberry.field(description="The initial target", name="initialTarget")
-    block_interval: Optional[int] = strawberry.field(description="The block interval | Format: uint64", default=600000000000, name="blockInterval") # time.Duration
-    maturity_delay: Optional[int] = strawberry.field(description="The maturity delay | Format: uint64", default=144, name="maturityDelay")
+    block_interval: Optional[Duration] = strawberry.field(
+        description="The block interval", name="blockInterval"
+    )  # time.Duration
+    maturity_delay: Optional[int] = strawberry.field(description="The maturity delay", name="maturityDelay")
     hardfork_dev_addr: Optional[HardforkDevAddr] = strawberry.field(name="hardforkDevAddr")
     hardfork_tax: Optional[HardforkTax] = strawberry.field(name="hardforkTax")
     hardfork_storage_proof: Optional[HardforkStorageProof] = strawberry.field(name="hardforkStorageProof")
@@ -1096,134 +1459,143 @@ class Network(SiaType):
     hardfork_v2: Optional[HardforkV2] = strawberry.field(name="hardforkV2")
 
 
+class ElementAccumulator(SiaType):
+    trees: List[Hash256] = strawberry.field(name="trees")
+    num_leaves: int = strawberry.field(name="numLeaves")
+
+
+class Work(SiaType):
+    n: str = strawberry.field(name="n")
+
+
 @strawberry.type
-class State(SiaType):
+class ChainState(SiaType):
     network: Optional[Network] = strawberry.field(default=None)
     index: Optional[ChainIndex] = strawberry.field(name="index")
     prev_timestamps: Optional[List[datetime.datetime]] = strawberry.field(name="prevTimestamps")
-    depth: Optional[BlockID] = strawberry.field(name="depth") 
+    depth: Optional[BlockID] = strawberry.field(name="depth")
     child_target: Optional[BlockID] = strawberry.field(name="childTarget")
     siafund_tax_revenue: Optional[Currency] = strawberry.field(name="siafundTaxRevenue")
-    oak_time: Optional[DurationMS] = strawberry.field(name="oakTime")
+    oak_time: Optional[Duration] = strawberry.field(name="oakTime")
     oak_target: Optional[BlockID] = strawberry.field(name="oakTarget")
     foundation_subsidy_address: Optional[Address] = strawberry.field(name="foundationSubsidyAddress")
     foundation_management_address: Optional[Address] = strawberry.field(name="foundationManagementAddress")
-    total_work: Optional[str] = strawberry.field(name="totalWork") # Work type
-    difficulty: Optional[str] = strawberry.field(name="difficulty") # Work type  
-    oak_work: Optional[str] = strawberry.field(name="oakWork") # Work type
-    elements: Optional[JSON] = strawberry.field(name="elements") # ElementAccumulator
+    total_work: Optional[Work] = strawberry.field(name="totalWork")  # Work type
+    difficulty: Optional[Work] = strawberry.field(name="difficulty")  # Work type
+    oak_work: Optional[Work] = strawberry.field(name="oakWork")  # Work type
+    elements: Optional[ElementAccumulator] = strawberry.field(name="elements")  # ElementAccumulator
     attestations: Optional[int] = strawberry.field(name="attestations")
-    
+
+
 @strawberry.type
 class ObjectMetadata(SiaType):
-    bucket: Optional[BucketName] = strawberry.field(name="bucket")
-    etag: Optional[ETag] = strawberry.field(description="The ETag of the object", name="etag")
-    health: Optional[float] = strawberry.field(description="The health of the object | Format: float", name="health")
-    mod_time: Optional[datetime.datetime] = strawberry.field(description="When the object was last modified | Format: date-time", name="modTime")
-    key: Optional[str] = strawberry.field(description="The key of the object", name="key")
-    size: Optional[int] = strawberry.field(description="The size of the object in bytes | Format: int64", name="size")
+    etag: Optional[str] = strawberry.field(description="The ETag of the object", name="eTag")
+    health: Optional[float] = strawberry.field(description="The health of the object", name="health")
+    mod_time: Optional[TimeRFC3339] = strawberry.field(description="When the object was last modified", name="modTime")
+    name: Optional[str] = strawberry.field(description="The name of the object", name="name")
+    size: Optional[int] = strawberry.field(description="The size of the object in bytes", name="size")
     mime_type: Optional[str] = strawberry.field(description="The MIME type of the object", name="mimeType")
 
 
-# @strawberry.type(description="User-defined metadata about an object provided through X-Sia-Meta- headers")
 @strawberry.type
-class ObjectUserMetadata(SiaType):
-    _dummy: Optional[str] = strawberry.field(default=None)
+class Sector(SiaType):
+    contracts: Optional[Dict[PublicKey, List[FileContractID]]] = strawberry.field(name="contracts")
+    latest_host: Optional[PublicKey] = strawberry.field(name="latestHost")
+    root: Optional[Hash256] = strawberry.field(name="root")
 
 
-# @strawberry.type(description="A slab of data to migrate")
 @strawberry.type
 class Slab(SiaType):
-    health: Optional[float] = strawberry.field(description="Minimum: 0 | Maximum: 1 | Format: float", name="health")
-    encryption_key: Optional[EncryptionKey] = strawberry.field(description="The encryption key used to encrypt the slab's shards", name="encryptionKey")
-    min_shards: Optional[int] = strawberry.field(description="The number of data shards the slab is split into | Minimum: 1 | Maximum: 255 | Format: uint8", name="minShards")
+    health: Optional[float] = strawberry.field(description="Minimum: 0 | Maximum: 1", name="health")
+    key: Optional[EncryptionKey] = strawberry.field(name="key")
+    min_shards: Optional[int] = strawberry.field(
+        description="The number of data shards the slab is split into | Minimum: 1 | Maximum: 255",
+        name="minShards",
+    )
+    shards: Optional[List[Sector]] = strawberry.field(description="List of sectors", name="shards")
 
 
 # @strawberry.type(description="A contiguous region within a slab")
 @strawberry.type
-class SlabSlice(SiaType):
-    slab: Optional[Slab] = strawberry.field(name="slab")
-    offset: Optional[int] = strawberry.field(description="Format: uint32", name="offset")
-    limit: Optional[int] = strawberry.field(description="Format: uint32", name="limit")
+class SlabSlice(Slab):
+    offset: Optional[int] = strawberry.field(name="offset")
+    limit: Optional[int] = strawberry.field(name="limit")
 
 
 @strawberry.type
 class Object(SiaType):
-    metadata: Optional[ObjectUserMetadata] = strawberry.field(name="metadata")
-    encryption_key: Optional[EncryptionKey] = strawberry.field(name="encryptionKey")
+    metadata: Optional[ObjectMetadata] = strawberry.field(name="metadata")  # ObjectUserMetadata
+    key: Optional[EncryptionKey] = strawberry.field(name="key")
     slabs: Optional[List[SlabSlice]] = strawberry.field(name="slabs")
+    etag: Optional[str] = strawberry.field(name="eTag")
+    health: Optional[float] = strawberry.field(name="health")
+    mod_time: Optional[TimeRFC3339] = strawberry.field(name="modTime")
+    name: Optional[str] = strawberry.field(name="name")
+    size: Optional[int] = strawberry.field(name="size")
+    mime_type: Optional[str] = strawberry.field(name="mimeType")
 
-
-# @strawberry.type
-# class Object(SiaType):
-#     metadata: Optional[JSON] = strawberry.field(name="metadata", description="ObjectUserMetadata")
-#     object_metadata: Optional[ObjectMetadata] = strawberry.field(name="objectMetadata")
-#     # The underlying object data is not exposed directly.
-    
 
 @strawberry.type
 class PackedSlab(SiaType):
-    buffer_id: Optional[int] = strawberry.field(description="ID of the buffer containing the slab | Format: uint", name="bufferID")
-    data: Optional[str] = strawberry.field(description="The slab data | Format: binary", name="data")
-    encryption_key: Optional[EncryptionKey] = strawberry.field(name="encryptionKey")
+    buffer_id: Optional[int] = strawberry.field(description="ID of the buffer containing the slab", name="bufferID")
+    shards: Optional[List[Sector]] = strawberry.field(name="shards")
 
 
 @strawberry.type
 class PinnedSettings(SiaType):
-    currency: Optional[Currency] = strawberry.field(name="currency")
-    threshold: Optional[float] = strawberry.field(description="A percentage between 0 and 1 that determines when the pinned settings are updated based on the exchange rate at the time | Format: float64", name="threshold")
-    gouging_settings_pins: Optional[GougingSettingsPins] = strawberry.field(name="gougingSettingsPins")
+    # Currency is the external three letter currency code. If empty,
+    # pinning is disabled. If the explorer does not support the
+    # currency an error is returned.
+    currency: Optional[str] = strawberry.field(name="currency")
 
+    # Threshold is a percentage from 0 to 1 that determines when the
+    # host's settings are updated based on the current exchange rate.
+    threshold: Optional[float] = strawberry.field(name="threshold")
 
+    # Storage, Ingress, and Egress are the pinned prices in the
+    # external currency.
+    storage: Optional[Pin] = strawberry.field(name="storage")
+    ingress: Optional[Pin] = strawberry.field(name="ingress")
+    egress: Optional[Pin] = strawberry.field(name="egress")
 
-@strawberry.type
-class S3Settings(SiaType):
-    access_key_id: Optional[str] = strawberry.field(description="S3 access key ID", name="accessKeyID")
-    secret_access_key: Optional[str] = strawberry.field(description="S3 secret access key", name="secretAccessKey")
-    disable_auth: Optional[bool] = strawberry.field(description="Whether to disable S3 authentication", name="disableAuth")
-
-
-# @strawberry.type
-# class S3Settings(SiaType):
-#     authentication: Optional[S3AuthenticationSettings] = strawberry.field(name="authentication")
+    # MaxCollateral is the maximum collateral that the host will
+    # accept in the external currency.
+    max_collateral: Optional[Pin] = strawberry.field(name="maxCollateral")
 
 
 @strawberry.type
 class SlabBuffer(SiaType):
-    complete: Optional[bool] = strawberry.field(description="Whether the slab buffer is complete and ready to upload", name="complete")
+    contract_set: Optional[str] = strawberry.field(
+        description="Contract set that be buffer will be uploaded to", name="contractSet"
+    )
+    complete: Optional[bool] = strawberry.field(
+        description="Whether the slab buffer is complete and ready to upload", name="complete"
+    )
     filename: Optional[str] = strawberry.field(description="Name of the buffer on disk", name="filename")
-    size: Optional[int] = strawberry.field(description="Size of the buffer | Format: int64", name="size")
-    max_size: Optional[int] = strawberry.field(description="Maximum size of the buffer | Format: int64", name="maxSize")
-    locked: Optional[bool] = strawberry.field(description="Whether the slab buffer is locked for uploading", name="locked")
+    size: Optional[int] = strawberry.field(description="Size of the buffer", name="size")
+    max_size: Optional[int] = strawberry.field(description="Maximum size of the buffer", name="maxSize")
+    locked: Optional[bool] = strawberry.field(
+        description="Whether the slab buffer is locked for uploading", name="locked"
+    )
 
 
 @strawberry.type
 class UploadPackingSettings(SiaType):
     enabled: Optional[bool] = strawberry.field(description="Whether upload packing is enabled", name="enabled")
-    slab_buffer_max_size_soft: Optional[int] = strawberry.field(description="Maximum size for slab buffers | Format: int64", name="slabBufferMaxSizeSoft")
-
-
-@strawberry.type
-class UploadSettings(SiaType):
-    packing: Optional[UploadPackingSettings] = strawberry.field(name="packing")
-    redundancy: Optional[RedundancySettings] = strawberry.field(name="redundancy")
-
-
-@strawberry.type
-class UploadedSector(SiaType):
-    contract_id: Optional[FileContractID] = strawberry.field(name="contractID")
-    root: Optional[Hash256] = strawberry.field(name="root")
+    slab_buffer_max_size_soft: Optional[int] = strawberry.field(
+        description="Maximum size for slab buffers", name="slabBufferMaxSizeSoft"
+    )
 
 
 @strawberry.type
 class UploadedPackedSlab(SiaType):
-    buffer_id: Optional[int] = strawberry.field(description="ID of the buffer containing the slab | Format: uint", name="bufferID")
-    shards: Optional[List[UploadedSector]] = strawberry.field(name="shards")
+    buffer_id: Optional[int] = strawberry.field(description="ID of the buffer", name="bufferID")
+    shards: Optional[List[Sector]] = strawberry.field(name="shards")
 
 
 @strawberry.type
 class WalletMetric(SiaType):
-    timestamp: Optional[datetime.datetime] = strawberry.field(description="Format: date-time", name="timestamp")
+    timestamp: Optional[TimeRFC3339] = strawberry.field(name="timestamp")
     confirmed: Optional[Currency] = strawberry.field(name="confirmed")
     spendable: Optional[Currency] = strawberry.field(name="spendable")
     unconfirmed: Optional[Currency] = strawberry.field(name="unconfirmed")
@@ -1231,27 +1603,26 @@ class WalletMetric(SiaType):
 
 
 @strawberry.type
+@strawberry.type
 class Webhook(SiaType):
-    module: Optional[str] = strawberry.field(description="The module this webhook belongs to | Allowed values: alerts", name="module")
-    event: Optional[str] = strawberry.field(description="The event type this webhook listens for | Allowed values: dismiss, register", name="event")
-    url: Optional[str] = strawberry.field(description="The URL to send webhook events to | Example: https://foo.com:8000/api/events", name="url")
-    headers: Optional[JSON] = strawberry.field(description="Custom headers to include in webhook requests", name="headers")
+    module: str = strawberry.field(name="module")
+    event: str = strawberry.field(name="event")
+    url: str = strawberry.field(name="url")
+    headers: Optional[Dict[str, str]] = strawberry.field(name="headers")
 
 
 @strawberry.type
 class WebhookEvent(SiaType):
-    module: Optional[str] = strawberry.field(description="The module that triggered the event | Allowed values: alerts", name="module")
-    event: Optional[str] = strawberry.field(description="The type of event that occurred | Allowed values: dismiss, register", name="event")
+    module: Optional[str] = strawberry.field(description="The module that triggered the event", name="module")
+    event: Optional[str] = strawberry.field(description="The type of event that occurred", name="event")
     data: Optional[JSON] = strawberry.field(description="Event-specific data payload", name="data")
 
 
 @strawberry.type
 class WebhookQueueInfo(SiaType):
     url: Optional[str] = strawberry.field(description="The URL of the webhook", name="url")
-    num_pending: Optional[int] = strawberry.field(description="Number of pending events in queue", name="numPending")
-    last_success: Optional[datetime.datetime] = strawberry.field(description="Timestamp of last successful delivery | Format: date-time", name="lastSuccess")
-    last_error: Optional[datetime.datetime] = strawberry.field(description="Timestamp of last failed delivery | Format: date-time", name="lastError")
-    last_error_message: Optional[str] = strawberry.field(description="Message from last failed delivery", name="lastErrorMessage")
+    size: Optional[int] = strawberry.field(description="The number of events in the queue", name="size")
+
 
 @strawberry.enum
 class Severity(Enum):
@@ -1260,32 +1631,51 @@ class Severity(Enum):
     ERROR: int = strawberry.enum_value(3, description="Indicates that the alert is an error.")
     CRITICAL: int = strawberry.enum_value(4, description="Indicates that the alert is critical.")
 
+
 @strawberry.type
 class Alert(SiaType):
-    id: Optional[Hash256] = strawberry.field(description="A unique identifier for the alert", name="id")
-    severity: Optional[Severity] = strawberry.field(description="The severity of the alert", name="severity")
-    message: Optional[str] = strawberry.field(description="Human-readable message describing the alert", name="message")
-    data: Optional[JSON] = strawberry.field(description="Additional context or metadata for the alert", name="data")
-    timestamp: Optional[datetime.datetime] = strawberry.field(description="Format: date-time", name="timestamp")
+    # ID is a unique identifier for the alert.
+    id: Optional[Hash256] = strawberry.field(description="A unique identifier for the alert.", name="id")
+
+    # Severity is the severity of the alert.
+    severity: Optional[Severity] = strawberry.field(description="The severity of the alert.", name="severity")
+
+    # Message is a human-readable message describing the alert.
+    message: Optional[str] = strawberry.field(
+        description="A human-readable message describing the alert.", name="message"
+    )
+
+    # Data is a map of arbitrary data that can be used to provide additional context to the alert.
+    data: Optional[Dict[str, Any]] = strawberry.field(
+        description="A map of arbitrary data that can be used to provide additional context to the alert.", name="data"
+    )
+
+    # Timestamp when the alert occurred
+    timestamp: Optional[datetime.datetime] = strawberry.field(name="timestamp")
+
 
 @strawberry.type
 class AlertsOpts(SiaType):
     offset: Optional[int] = strawberry.field(description="Offset used in pagination", name="offset")
     limit: Optional[int] = strawberry.field(description="Limit used in pagination", name="limit")
-    severity: Optional[Severity] = strawberry.field(description="Severity filter (1=info,2=warning,3=error,4=critical)", name="severity")
+    severity: Optional[Severity] = strawberry.field(
+        description="Severity filter (1=info,2=warning,3=error,4=critical)", name="severity"
+    )
+
 
 @strawberry.type
 class AlertTotals(SiaType):
-    info: Optional[int] = strawberry.field(description="Number of informational alerts", name="info")
+    info: Optional[int] = strawberry.field(description="Number of info alerts", name="info")
     warning: Optional[int] = strawberry.field(description="Number of warning alerts", name="warning")
     error: Optional[int] = strawberry.field(description="Number of error alerts", name="error")
     critical: Optional[int] = strawberry.field(description="Number of critical alerts", name="critical")
 
+
 @strawberry.type
 class AlertsResponse(SiaType):
-    alerts: Optional[List[Alert]] = strawberry.field(description="List of alerts", name="alerts")
-    has_more: Optional[bool] = strawberry.field(description="Indicates if more alerts remain", name="hasMore")
-    totals: Optional[AlertTotals] = strawberry.field(description="Aggregate counts of alerts by severity", name="totals")
+    alerts: List[Alert] = strawberry.field(description="List of alerts", name="alerts")
+    has_more: bool = strawberry.field(description="Indicates if more alerts remain", name="hasMore")
+    totals: AlertTotals = strawberry.field(description="Aggregate counts of alerts by severity", name="totals")
 
 
 @strawberry.type
@@ -1293,196 +1683,233 @@ class AccountsAddBalanceRequest(SiaType):
     host_key: Optional[PublicKey] = strawberry.field(description="Public key of the host", name="hostKey")
     amount: Optional[int] = strawberry.field(description="Amount to be added to the account balance", name="amount")
 
+
 @strawberry.type
 class AccountHandlerPOST(SiaType):
-    host_key: Optional[str] = strawberry.field(description="Public key of the host", name="hostKey")
+    host_key: Optional[PublicKey] = strawberry.field(description="Public key of the host", name="hostKey")
+
 
 @strawberry.type
 class AccountsRequiresSyncRequest(SiaType):
-    host_key: Optional[str] = strawberry.field(description="Public key of the host", name="hostKey")
+    host_key: Optional[PublicKey] = strawberry.field(description="Public key of the host", name="hostKey")
+
 
 @strawberry.type
 class AccountsUpdateBalanceRequest(SiaType):
-    host_key: Optional[str] = strawberry.field(description="Public key of the host", name="hostKey")
+    host_key: Optional[PublicKey] = strawberry.field(description="Public key of the host", name="hostKey")
     amount: Optional[int] = strawberry.field(description="Updated balance amount", name="amount")
+
 
 @strawberry.type
 class AutopilotTriggerRequest(SiaType):
-    force_scan: Optional[bool] = strawberry.field(description="Whether to force an immediate host scan", name="forceScan")
+    force_scan: Optional[bool] = strawberry.field(
+        description="Whether to force an immediate host scan", name="forceScan"
+    )
+
 
 @strawberry.type
 class AutopilotTriggerResponse(SiaType):
-    triggered: Optional[bool] = strawberry.field(description="Indicates if the autopilot loop was triggered", name="triggered")
+    triggered: Optional[bool] = strawberry.field(
+        description="Indicates if the autopilot loop was triggered", name="triggered"
+    )
+
 
 @strawberry.type
-class AutopilotStateResponse(SiaType):
-    enabled: Optional[bool] = strawberry.field(description="Indicates whether the autopilot is enabled", name="enabled")
+@strawberry.type
+class AutopilotStateResponse(BuildState):
+    configured: Optional[bool] = strawberry.field(
+        description="Indicates whether the autopilot is configured", name="configured"
+    )
     migrating: Optional[bool] = strawberry.field(description="Autopilot is currently migrating", name="migrating")
-    migrating_last_start: Optional[datetime.datetime] = strawberry.field(description="Last start time for migrating", name="migratingLastStart")
+    migrating_last_start: Optional[TimeRFC3339] = strawberry.field(
+        description="Last start time for migrating", name="migratingLastStart"
+    )
     pruning: Optional[bool] = strawberry.field(description="Autopilot is currently pruning", name="pruning")
-    pruning_last_start: Optional[datetime.datetime] = strawberry.field(description="Last start time for pruning", name="pruningLastStart")
+    pruning_last_start: Optional[TimeRFC3339] = strawberry.field(
+        description="Last start time for pruning", name="pruningLastStart"
+    )
     scanning: Optional[bool] = strawberry.field(description="Autopilot is currently scanning hosts", name="scanning")
-    scanning_last_start: Optional[datetime.datetime] = strawberry.field(description="Last start time for scanning", name="scanningLastStart")
-    uptime_ms: Optional[DurationMS] = strawberry.field(description="Autopilot uptime in milliseconds", name="uptimeMs")
-    start_time: Optional[datetime.datetime] = strawberry.field(description="Timestamp of autopilot's start time", name="startTime")
-    build_state: Optional[BuildState] = strawberry.field(description="Information about the build state of the autopilot", name="buildState")
+    scanning_last_start: Optional[TimeRFC3339] = strawberry.field(
+        description="Last start time for scanning", name="scanningLastStart"
+    )
+    uptime_ms: Optional[Duration] = strawberry.field(description="Autopilot uptime in milliseconds", name="uptimeMs")
+    start_time: Optional[TimeRFC3339] = strawberry.field(
+        description="Timestamp of autopilot's start time", name="startTime"
+    )
 
 
 @strawberry.type
 class ConfigEvaluationRequest(SiaType):
-    autopilot_config: Optional[AutopilotConfig] = strawberry.field(description="Proposed autopilot config", name="autopilotConfig")
-    gouging_settings: Optional[GougingSettings] = strawberry.field(description="Proposed gouging settings", name="gougingSettings")
-    redundancy_settings: Optional[RedundancySettings] = strawberry.field(description="Proposed redundancy settings", name="redundancySettings")
+    autopilot_config: Optional[AutopilotConfig] = strawberry.field(
+        description="Proposed autopilot config", name="autopilotConfig"
+    )
+    gouging_settings: Optional[GougingSettings] = strawberry.field(
+        description="Proposed gouging settings", name="gougingSettings"
+    )
+    redundancy_settings: Optional[RedundancySettings] = strawberry.field(
+        description="Proposed redundancy settings", name="redundancySettings"
+    )
+
+    @strawberry.type
+    class ConfigRecommendation(SiaType):
+        gouging_settings: Optional[GougingSettings] = strawberry.field(
+            description="Recommended gouging settings", name="gougingSettings"
+        )
+
 
 @strawberry.type
-class ConfigEvaluationUnusableGouging(SiaType):
+class GougingUnusable(SiaType):
     contract: Optional[int] = strawberry.field(name="contract")
     download: Optional[int] = strawberry.field(name="download")
     gouging: Optional[int] = strawberry.field(name="gouging")
     pruning: Optional[int] = strawberry.field(name="pruning")
     upload: Optional[int] = strawberry.field(name="upload")
 
+
 @strawberry.type
 class ConfigEvaluationUnusable(SiaType):
     blocked: Optional[int] = strawberry.field(name="blocked")
-    gouging: Optional[ConfigEvaluationUnusableGouging] = strawberry.field(name="gouging")
-    low_max_duration: Optional[int] = strawberry.field(name="lowMaxDuration")
+    gouging: Optional[GougingUnusable] = strawberry.field(name="gouging")
     not_accepting_contracts: Optional[int] = strawberry.field(name="notAcceptingContracts")
     not_scanned: Optional[int] = strawberry.field(name="notScanned")
+
 
 @strawberry.type
 class ConfigEvaluationResponse(SiaType):
     hosts: Optional[int] = strawberry.field(description="Total hosts scanned", name="hosts")
     usable: Optional[int] = strawberry.field(description="Number of hosts determined to be usable", name="usable")
-    unusable: Optional[ConfigEvaluationUnusable] = strawberry.field(description="Breakdown of unusable hosts", name="unusable")
-    recommendation: Optional[ConfigRecommendation] = strawberry.field(description="Recommended config changes", name="recommendation")
+    unusable: Optional[ConfigEvaluationUnusable] = strawberry.field(
+        description="Breakdown of unusable hosts", name="unusable"
+    )
+    recommendation: Optional[ConfigRecommendation] = strawberry.field(
+        description="Recommended config changes", name="recommendation"
+    )
 
 
 @strawberry.type
 class CreateBucketOptions(SiaType):
     policy: Optional[BucketPolicy] = strawberry.field(description="Bucket policy options", name="policy")
 
+
 @strawberry.type
 class BucketCreateRequest(SiaType):
     name: Optional[str] = strawberry.field(description="Name of the new bucket", name="name")
     policy: Optional[BucketPolicy] = strawberry.field(description="Policy configuration for this bucket", name="policy")
 
+
 @strawberry.type
 class BucketUpdatePolicyRequest(SiaType):
-    policy: Optional[BucketPolicy] = strawberry.field(description="Updated policy configuration for this bucket", name="policy")
-
-
-# ---
+    policy: Optional[BucketPolicy] = strawberry.field(
+        description="Updated policy configuration for this bucket", name="policy"
+    )
 
 
 @strawberry.type
-class UploadParams(SiaType):
+@strawberry.type
+class UploadParams(GougingParams):
     current_height: Optional[int] = strawberry.field(description="Current block height", name="currentHeight")
-    upload_packing: Optional[bool] = strawberry.field(description="Whether upload packing is enabled", name="uploadPacking")
-    gouging_params: Optional[GougingParams] = strawberry.field(description="Parameters for gouging checks", name="gougingParams")
+    contract_set: Optional[str] = strawberry.field(description="Contract set identifier", name="contractSet")
+    upload_packing: Optional[bool] = strawberry.field(
+        description="Whether upload packing is enabled", name="uploadPacking"
+    )
+
 
 @strawberry.type
 class AccountsFundRequest(SiaType):
-    account_id: Optional[str] = strawberry.field(description="Unique account ID (rhpv3.Account)", name="accountID")
+    account_id: Optional[PublicKey] = strawberry.field(
+        description="Unique account ID (rhpv3.Account)", name="accountID"
+    )
     amount: Optional[Currency] = strawberry.field(description="Amount to fund the account with", name="amount")
-    contract_id: Optional[FileContractID] = strawberry.field(description="ID of the contract used for funding", name="contractID")
+    contract_id: Optional[FileContractID] = strawberry.field(
+        description="ID of the contract used for funding", name="contractID"
+    )
+
 
 @strawberry.type
 class AccountsFundResponse(SiaType):
     deposit: Optional[Currency] = strawberry.field(description="Amount deposited", name="deposit")
 
+
 @strawberry.type
 class AccountsSaveRequest(SiaType):
     accounts: Optional[List[Account]] = strawberry.field(description="List of accounts to save", name="accounts")
 
+
 @strawberry.type
 class BackupRequest(SiaType):
-    database: Optional[str] = strawberry.field(description="Type of database to back up", name="database")
     path: Optional[str] = strawberry.field(description="Path to save the backup", name="path")
+
 
 @strawberry.type
 class ExplorerState(SiaType):
     enabled: Optional[bool] = strawberry.field(description="Indicates whether explorer is enabled", name="enabled")
     url: Optional[str] = strawberry.field(description="Optional URL for the explorer source", name="url")
 
-@strawberry.type
-class BusStateResponse(SiaType):
-    start_time: Optional[datetime.datetime] = strawberry.field(description="Timestamp when the bus started", name="startTime")
-    network: Optional[str] = strawberry.field(description="Network identifier (e.g., 'mainnet', 'testnet')", name="network")
-    build_state: Optional[BuildState] = strawberry.field(description="Build state information", name="buildState")
-    explorer: Optional[ExplorerState] = strawberry.field(description="Information about the explorer state", name="explorer")
 
 @strawberry.type
-class HostScanRequest(SiaType):
-    timeout: Optional[DurationMS] = strawberry.field(description="Timeout duration in ms for host scan", name="timeout")
+class BusStateResponse(BuildState):
+    start_time: Optional[TimeRFC3339] = strawberry.field(description="Timestamp when the bus started", name="startTime")
+    network: Optional[str] = strawberry.field(
+        description="Network identifier (e.g., 'mainnet', 'testnet')", name="network"
+    )
+
 
 @strawberry.type
-class HostScanResponse(SiaType):
-    ping: Optional[DurationMS] = strawberry.field(description="Ping time in ms", name="ping")
-    scan_error: Optional[str] = strawberry.field(description="Error encountered during scan, if any", name="scanError")
-    settings: Optional[JSON] = strawberry.field(description="Host settings (rhpv2.HostSettings)", name="settings")
-    price_table: Optional[JSON] = strawberry.field(description="Price table (rhpv3.HostPriceTable)", name="priceTable")
-    v2_settings: Optional[JSON] = strawberry.field(description="v2 Host settings (rhp4.HostSettings)", name="v2Settings")
-
-@strawberry.type
-class UpdateAutopilotRequest(SiaType):
-    enabled: Optional[bool] = strawberry.field(description="Toggle for enabling/disabling the autopilot", name="enabled")
-    contracts: Optional[ContractsConfig] = strawberry.field(description="Updated contracts config", name="contracts")
-    hosts: Optional[HostsConfig] = strawberry.field(description="Updated hosts config", name="hosts")
-
-# ---
-
-@strawberry.type
-class ContractPrunableData(SiaType):
+class ContractPrunableData(ContractSize):
     id: Optional[FileContractID] = strawberry.field(name="id")
-    prunable: Optional[int] = strawberry.field(name="prunable")
-    size: Optional[int] = strawberry.field(name="size")
+
 
 @strawberry.type
-class ContractSpendingRecord(SiaType):
-    deletions: Optional[Currency] = strawberry.field(name="deletions")
-    fund_account: Optional[Currency] = strawberry.field(name="fundAccount")
-    sector_roots: Optional[Currency] = strawberry.field(name="sectorRoots")
-    uploads: Optional[Currency] = strawberry.field(name="uploads")
+@strawberry.type
+class ContractSpendingRecord(ContractSpending):
     contract_id: Optional[FileContractID] = strawberry.field(name="contractID")
     revision_number: Optional[int] = strawberry.field(name="revisionNumber")
     size: Optional[int] = strawberry.field(name="size")
     missed_host_payout: Optional[Currency] = strawberry.field(name="missedHostPayout")
     valid_renter_payout: Optional[Currency] = strawberry.field(name="validRenterPayout")
 
+
 @strawberry.type
 class ContractAcquireRequest(SiaType):
     duration: Optional[DurationMS] = strawberry.field(name="duration")
     priority: Optional[int] = strawberry.field(name="priority")
 
+
 @strawberry.type
 class ContractAcquireResponse(SiaType):
     lock_id: Optional[int] = strawberry.field(name="lockID")
 
+
+@strawberry.type
 @strawberry.type
 class ContractAddRequest(SiaType):
+    contract: Optional[JSON] = strawberry.field(name="contract", description="rhpv2.ContractRevision")
     contract_price: Optional[Currency] = strawberry.field(name="contractPrice")
-    initial_renter_funds: Optional[Currency] = strawberry.field(name="initialRenterFunds")
-    revision: Optional[JSON] = strawberry.field(name="revision", description="rhpv2.ContractRevision")
     start_height: Optional[int] = strawberry.field(name="startHeight")
     state: Optional[str] = strawberry.field(name="state")
+    total_cost: Optional[Currency] = strawberry.field(name="totalCost")
+
 
 @strawberry.type
 class ContractFormRequest(SiaType):
     end_height: Optional[int] = strawberry.field(name="endHeight")
     host_collateral: Optional[Currency] = strawberry.field(name="hostCollateral")
     host_key: Optional[PublicKey] = strawberry.field(name="hostKey")
+    host_ip: Optional[str] = strawberry.field(name="hostIP")
     renter_funds: Optional[Currency] = strawberry.field(name="renterFunds")
     renter_address: Optional[Address] = strawberry.field(name="renterAddress")
+
 
 @strawberry.type
 class ContractKeepaliveRequest(SiaType):
     duration: Optional[DurationMS] = strawberry.field(name="duration")
     lock_id: Optional[int] = strawberry.field(name="lockID")
 
+
 @strawberry.type
 class ContractPruneRequest(SiaType):
     timeout: Optional[DurationMS] = strawberry.field(name="timeout")
+
 
 @strawberry.type
 class ContractPruneResponse(SiaType):
@@ -1491,22 +1918,20 @@ class ContractPruneResponse(SiaType):
     remaining: Optional[int] = strawberry.field(name="remaining")
     error: Optional[str] = strawberry.field(name="error")
 
+
 @strawberry.type
 class ContractReleaseRequest(SiaType):
     lock_id: Optional[int] = strawberry.field(name="lockID")
+
 
 @strawberry.type
 class ContractRenewRequest(SiaType):
     end_height: Optional[int] = strawberry.field(name="endHeight")
     expected_new_storage: Optional[int] = strawberry.field(name="expectedNewStorage")
+    max_fund_amount: Optional[Currency] = strawberry.field(name="maxFundAmount")
     min_new_collateral: Optional[Currency] = strawberry.field(name="minNewCollateral")
     renter_funds: Optional[Currency] = strawberry.field(name="renterFunds")
 
-@strawberry.type
-class ContractsArchiveRequest(SiaType):
-    # This represents a map of [FileContractID -> reason], encoded as JSON.
-    # Example: { "fcid1": "removed", "fcid2": "hostpruned" }
-    contracts: Optional[JSON] = strawberry.field(description="Map of contract IDs to archival reasons")
 
 @strawberry.type
 class ContractsPrunableDataResponse(SiaType):
@@ -1514,37 +1939,35 @@ class ContractsPrunableDataResponse(SiaType):
     total_prunable: Optional[int] = strawberry.field(name="totalPrunable")
     total_size: Optional[int] = strawberry.field(name="totalSize")
 
+
 @strawberry.type
 class ContractsOpts(SiaType):
-    filter_mode: Optional[str] = strawberry.field(name="filterMode")
+    contract_set: Optional[str] = strawberry.field(name="contractset")
 
-
-
-#
-
-# ...existing code...
 
 @strawberry.type
 class HostsPriceTablesRequest(SiaType):
     price_table_updates: Optional[List[JSON]] = strawberry.field(
-        description="List of price table updates (host -> updated price table info)", 
-        name="priceTableUpdates"
+        description="List of price table updates (host -> updated price table info)", name="priceTableUpdates"
     )
+
 
 @strawberry.type
 class HostsRemoveRequest(SiaType):
     max_downtime_hours: Optional[DurationH] = strawberry.field(name="maxDowntimeHours")
     max_consecutive_scan_failures: Optional[int] = strawberry.field(name="maxConsecutiveScanFailures")
 
+
 @strawberry.type
-class HostsRequest(SiaType):
+class SearchHostsRequest(SiaType):
     offset: Optional[int] = strawberry.field(name="offset")
     limit: Optional[int] = strawberry.field(name="limit")
+    autopilot_id: Optional[str] = strawberry.field(name="autopilotID")
     filter_mode: Optional[str] = strawberry.field(name="filterMode")
     usability_mode: Optional[str] = strawberry.field(name="usabilityMode")
     address_contains: Optional[str] = strawberry.field(name="addressContains")
     key_in: Optional[List[PublicKey]] = strawberry.field(name="keyIn")
-    max_last_scan: Optional[datetime.datetime] = strawberry.field(name="maxLastScan")
+
 
 @strawberry.type
 class UpdateAllowlistRequest(SiaType):
@@ -1552,45 +1975,51 @@ class UpdateAllowlistRequest(SiaType):
     remove: Optional[List[PublicKey]] = strawberry.field(name="remove")
     clear: Optional[bool] = strawberry.field(name="clear")
 
+
 @strawberry.type
 class UpdateBlocklistRequest(SiaType):
     add: Optional[List[str]] = strawberry.field(name="add")
     remove: Optional[List[str]] = strawberry.field(name="remove")
     clear: Optional[bool] = strawberry.field(name="clear")
 
-@strawberry.type
-class HostOptions(SiaType):
-    address_contains: Optional[str] = strawberry.field(name="addressContains")
-    filter_mode: Optional[str] = strawberry.field(name="filterMode")
-    usability_mode: Optional[str] = strawberry.field(name="usabilityMode")
-    key_in: Optional[List[PublicKey]] = strawberry.field(name="keyIn")
-    limit: Optional[int] = strawberry.field(name="limit")
-    max_last_scan: Optional[datetime.datetime] = strawberry.field(name="maxLastScan")
-    offset: Optional[int] = strawberry.field(name="offset")
-
-
 
 @strawberry.type
 class HostInteractions(SiaType):
-    total_scans: Optional[int] = strawberry.field(name="totalScans")
-    last_scan: Optional[datetime.datetime] = strawberry.field(name="lastScan")
-    last_scan_success: Optional[bool] = strawberry.field(name="lastScanSuccess")
-    lost_sectors: Optional[int] = strawberry.field(name="lostSectors")
-    second_to_last_scan_success: Optional[bool] = strawberry.field(name="secondToLastScanSuccess")
-    uptime: Optional[DurationMS] = strawberry.field(name="uptime")
-    downtime: Optional[DurationMS] = strawberry.field(name="downtime")
-    successful_interactions: Optional[float] = strawberry.field(name="successfulInteractions")
-    failed_interactions: Optional[float] = strawberry.field(name="failedInteractions")
+    total_scans: Optional[int] = strawberry.field(
+        description="The total number of scans performed on the host", name="totalScans"
+    )
+    last_scan: Optional[datetime.datetime] = strawberry.field(
+        description="Timestamp of the last scan performed", name="lastScan"
+    )
+    last_scan_success: Optional[bool] = strawberry.field(
+        description="Indicates whether the last scan was successful", name="lastScanSuccess"
+    )
+    lost_sectors: Optional[int] = strawberry.field(
+        description="Number of sectors lost since the last reporting period", name="lostSectors"
+    )
+    second_to_last_scan_success: Optional[bool] = strawberry.field(
+        description="Indicates whether the second-to-last scan was successful", name="secondToLastScanSuccess"
+    )
+    uptime: Optional[Duration] = strawberry.field(description="Total uptime duration of the host", name="uptime")
+    downtime: Optional[Duration] = strawberry.field(description="Total downtime duration of the host", name="downtime")
+    successful_interactions: Optional[float] = strawberry.field(
+        description="The number of successful interactions with the host", name="successfulInteractions"
+    )
+    failed_interactions: Optional[float] = strawberry.field(
+        description="The number of failed interactions with the host", name="failedInteractions"
+    )
 
 
 @strawberry.type
 class HostScan(SiaType):
-    host_key: Optional[PublicKey] = strawberry.field(name="hostKey")
-    price_table: Optional[JSON] = strawberry.field(name="priceTable")
-    settings: Optional[JSON] = strawberry.field(name="settings")
-    v2_settings: Optional[JSON] = strawberry.field(name="v2Settings")
+    host_key: Optional[PublicKey] = strawberry.field(name="hostKey") 
+    price_table: Optional[HostPriceTable] = strawberry.field(name="priceTable")
+    settings: Optional[HostV2Settings] = strawberry.field(name="settings")
+    resolved_addresses: Optional[List[str]] = strawberry.field(name="resolvedAddresses")
+    subnets: Optional[List[str]] = strawberry.field(name="subnets")
     success: Optional[bool] = strawberry.field(name="success")
     timestamp: Optional[datetime.datetime] = strawberry.field(name="timestamp")
+
 
 @strawberry.type
 class HostPriceTableUpdate(SiaType):
@@ -1598,7 +2027,6 @@ class HostPriceTableUpdate(SiaType):
     success: Optional[bool] = strawberry.field(name="success")
     timestamp: Optional[datetime.datetime] = strawberry.field(name="timestamp")
     price_table: Optional[HostPriceTable] = strawberry.field(name="priceTable")
-
 
 
 @strawberry.type
@@ -1623,12 +2051,13 @@ class ContractPruneMetricsQueryOpts(SiaType):
 
 @strawberry.type
 class WalletMetricsQueryOpts(SiaType):
-    # No fields currently defined
     pass
+
 
 @strawberry.type
 class ContractPruneMetricRequestPUT(SiaType):
     metrics: Optional[List[ContractPruneMetric]] = strawberry.field(name="metrics")
+
 
 @strawberry.type
 class ContractMetricRequestPUT(SiaType):
@@ -1637,13 +2066,16 @@ class ContractMetricRequestPUT(SiaType):
 
 @strawberry.type
 class CreateMultipartOptions(SiaType):
-    disable_client_side_encryption: Optional[bool] = strawberry.field(name="disableClientSideEncryption")
-    mime_type: Optional[str] = strawberry.field(name="mimeType")
+    generate_key: Optional[bool] = strawberry.field(name="generateKey")
+    key: Optional[EncryptionKey] = strawberry.field(name="key")
+    mime_type: Optional[str] = strawberry.field(name="mimeType") 
     metadata: Optional[JSON] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+
 
 @strawberry.type
 class CompleteMultipartOptions(SiaType):
-    metadata: Optional[JSON] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+    metadata: Optional[Dict[str, str]] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+
 
 @strawberry.type
 class MultipartAbortRequest(SiaType):
@@ -1651,26 +2083,32 @@ class MultipartAbortRequest(SiaType):
     key: Optional[str] = strawberry.field(name="key")
     upload_id: Optional[str] = strawberry.field(name="uploadID")
 
+
+@strawberry.type
 @strawberry.type
 class MultipartAddPartRequest(SiaType):
     bucket: Optional[str] = strawberry.field(name="bucket")
-    e_tag: Optional[str] = strawberry.field(name="eTag")
-    key: Optional[str] = strawberry.field(name="key")
+    e_tag: Optional[str] = strawberry.field(name="eTag") 
+    path: Optional[str] = strawberry.field(name="path")
+    contract_set: Optional[str] = strawberry.field(name="contractSet")
     upload_id: Optional[str] = strawberry.field(name="uploadID")
     part_number: Optional[int] = strawberry.field(name="partNumber")
-    slices: Optional[List[JSON]] = strawberry.field(name="slices", description="List of slices (object.SlabSlice)")
+    slices: Optional[List[SlabSlice]] = strawberry.field(name="slices", description="List of slices (object.SlabSlice)")
+
 
 @strawberry.type
 class MultipartCompleteResponse(SiaType):
-    e_tag: Optional[str] = strawberry.field(name="eTag")
+    e_tag: Optional[ETag] = strawberry.field(name="eTag")
+
 
 @strawberry.type
 class MultipartCompleteRequest(SiaType):
     bucket: Optional[str] = strawberry.field(name="bucket")
-    metadata: Optional[JSON] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+    metadata: Optional[Dict[str, str]] = strawberry.field(name="metadata", description="ObjectUserMetadata")
     key: Optional[str] = strawberry.field(name="key")
     upload_id: Optional[str] = strawberry.field(name="uploadID")
     parts: Optional[List[MultipartCompletedPart]] = strawberry.field(name="parts")
+
 
 @strawberry.type
 class MultipartCreateRequest(SiaType):
@@ -1680,17 +2118,20 @@ class MultipartCreateRequest(SiaType):
     metadata: Optional[JSON] = strawberry.field(name="metadata", description="ObjectUserMetadata")
     disable_client_side_encryption: Optional[bool] = strawberry.field(name="disableClientSideEncryption")
 
+
 @strawberry.type
 class MultipartCreateResponse(SiaType):
     upload_id: Optional[str] = strawberry.field(name="uploadID")
 
+
 @strawberry.type
 class MultipartListPartsRequest(SiaType):
     bucket: Optional[str] = strawberry.field(name="bucket")
-    key: Optional[str] = strawberry.field(name="key")
+    path: Optional[str] = strawberry.field(name="path") 
     upload_id: Optional[str] = strawberry.field(name="uploadID")
     part_number_marker: Optional[int] = strawberry.field(name="partNumberMarker")
     limit: Optional[int] = strawberry.field(name="limit")
+
 
 @strawberry.type
 class MultipartListPartsResponse(SiaType):
@@ -1698,13 +2139,15 @@ class MultipartListPartsResponse(SiaType):
     next_marker: Optional[int] = strawberry.field(name="nextMarker")
     parts: Optional[List[MultipartListPartItem]] = strawberry.field(name="parts")
 
+
 @strawberry.type
 class MultipartListUploadsRequest(SiaType):
     bucket: Optional[str] = strawberry.field(name="bucket")
     prefix: Optional[str] = strawberry.field(name="prefix")
-    key_marker: Optional[str] = strawberry.field(name="keyMarker")
+    path_marker: Optional[str] = strawberry.field(name="pathMarker")
     upload_id_marker: Optional[str] = strawberry.field(name="uploadIDMarker")
     limit: Optional[int] = strawberry.field(name="limit")
+
 
 @strawberry.type
 class MultipartListUploadsResponse(SiaType):
@@ -1714,29 +2157,31 @@ class MultipartListUploadsResponse(SiaType):
     uploads: Optional[List[MultipartUpload]] = strawberry.field(name="uploads")
 
 
-# -
-
+@strawberry.type
+class ContentRange(SiaType):
+    offset: Optional[int] = strawberry.field(description="The offset of the range", name="offset")
+    length: Optional[int] = strawberry.field(description="The length of the range", name="length") 
+    size: Optional[int] = strawberry.field(description="The total size", name="size")
+@strawberry.type
+class HeadObjectResponse(SiaType):
+    content_type: Optional[str] = strawberry.field(name="contentType")
+    etag: Optional[str] = strawberry.field(name="etag") 
+    last_modified: Optional[TimeRFC3339] = strawberry.field(name="lastModified")
+    range: Optional[ContentRange] = strawberry.field(name="range", description="ContentRange")
+    size: Optional[int] = strawberry.field(name="size")
+    metadata: Optional[Dict[str,str]] = strawberry.field(name="metadata", description="ObjectUserMetadata")
 
 @strawberry.type
-class GetObjectResponse(SiaType):
+class GetObjectResponse(HeadObjectResponse):
     content: Optional[str] = strawberry.field(name="content")
-    content_type: Optional[str] = strawberry.field(name="contentType")
-    etag: Optional[str] = strawberry.field(name="etag")
-    last_modified: Optional[datetime.datetime] = strawberry.field(name="lastModified")
-    content_range: Optional[JSON] = strawberry.field(name="range", description="ContentRange") # changed from 'range'
-    size: Optional[int] = strawberry.field(name="size")
-    metadata: Optional[JSON] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+
 
 @strawberry.type
 class ObjectsResponse(SiaType):
-    has_more: Optional[bool] = strawberry.field(name="hasMore")
-    next_marker: Optional[str] = strawberry.field(name="nextMarker")
-    objects: Optional[List[ObjectMetadata]] = strawberry.field(name="objects")
+    has_more: Optional[bool] = strawberry.field(description="Whether there are more entries", name="hasMore")
+    entries: Optional[List[ObjectMetadata]] = strawberry.field(name="entries") 
+    object: Optional[Object] = strawberry.field(name="object")
 
-@strawberry.type
-class ObjectsRemoveRequest(SiaType):
-    bucket: Optional[str] = strawberry.field(name="bucket")
-    prefix: Optional[str] = strawberry.field(name="prefix")
 
 @strawberry.type
 class ObjectsRenameRequest(SiaType):
@@ -1746,9 +2191,11 @@ class ObjectsRenameRequest(SiaType):
     to: Optional[str] = strawberry.field(name="to")
     mode: Optional[str] = strawberry.field(name="mode")
 
+
 @strawberry.type
 class ObjectsStatsOpts(SiaType):
     bucket: Optional[str] = strawberry.field(name="bucket")
+
 
 @strawberry.type
 class ObjectsStatsResponse(SiaType):
@@ -1760,83 +2207,104 @@ class ObjectsStatsResponse(SiaType):
     total_sectors_size: Optional[int] = strawberry.field(name="totalSectorsSize")
     total_uploaded_size: Optional[int] = strawberry.field(name="totalUploadedSize")
 
+
 @strawberry.type
 class AddObjectOptions(SiaType):
-    e_tag: Optional[str] = strawberry.field(name="ETag")
+    e_tag: Optional[ETag] = strawberry.field(name="eTag")
     mime_type: Optional[str] = strawberry.field(name="MimeType")
-    metadata: Optional[JSON] = strawberry.field(name="Metadata", description="ObjectUserMetadata")
+    metadata: Optional[Dict[str,str]] = strawberry.field(name="Metadata", description="ObjectUserMetadata")
+
 
 @strawberry.type
 class AddObjectRequest(SiaType):
     bucket: Optional[str] = strawberry.field(name="bucket")
+    contract_set: Optional[str] = strawberry.field(name="contractSet") 
     object_data: Optional[JSON] = strawberry.field(name="object", description="object.Object")
-    e_tag: Optional[str] = strawberry.field(name="eTag")
+    e_tag: Optional[ETag] = strawberry.field(name="eTag")
     mime_type: Optional[str] = strawberry.field(name="mimeType")
     metadata: Optional[JSON] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+
 
 @strawberry.type
 class CopyObjectOptions(SiaType):
     mime_type: Optional[str] = strawberry.field(name="mimeType")
-    metadata: Optional[JSON] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+    metadata: Optional[Dict[str,str]] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+
 
 @strawberry.type
 class CopyObjectsRequest(SiaType):
     source_bucket: Optional[str] = strawberry.field(name="sourceBucket")
-    source_key: Optional[str] = strawberry.field(name="sourcePath")
+    source_path: Optional[str] = strawberry.field(name="sourcePath")
     destination_bucket: Optional[str] = strawberry.field(name="destinationBucket")
-    destination_key: Optional[str] = strawberry.field(name="destinationPath")
+    destination_path: Optional[str] = strawberry.field(name="destinationPath")
     mime_type: Optional[str] = strawberry.field(name="mimeType")
-    metadata: Optional[JSON] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+    metadata: Optional[Dict[str,str]] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+
+@strawberry.type
+class DownloadRange(SiaType):
+    offset: Optional[int] = strawberry.field(description="The offset of the range in bytes", name="offset")
+    length: Optional[int] = strawberry.field(description="The length of the range in bytes", name="length")
 
 @strawberry.type
 class HeadObjectOptions(SiaType):
-    range_arg: Optional[JSON] = strawberry.field(name="range", description="DownloadRange")
+    ignore_delim: Optional[bool] = strawberry.field(name="ignoreDelim")
+    range_arg: Optional[DownloadRange] = strawberry.field(name="range", description="DownloadRange")
 
-@strawberry.type
-class DownloadObjectOptions(SiaType):
-    range_arg: Optional[JSON] = strawberry.field(name="range", description="DownloadRange")
 
 @strawberry.type
 class GetObjectOptions(SiaType):
+    prefix: Optional[str] = strawberry.field(name="prefix")
+    offset: Optional[int] = strawberry.field(name="offset") 
+    limit: Optional[int] = strawberry.field(name="limit")
+    ignore_delim: Optional[bool] = strawberry.field(name="ignoreDelim")
+    marker: Optional[str] = strawberry.field(name="marker")
     only_metadata: Optional[bool] = strawberry.field(name="onlyMetadata")
+    sort_by: Optional[str] = strawberry.field(name="sortBy")
+    sort_dir: Optional[str] = strawberry.field(name="sortDir")
+
+@strawberry.type
+class DownloadObjectOptions(GetObjectOptions):
+    range: Optional[DownloadRange] = strawberry.field(name="range", description="DownloadRange")
 
 @strawberry.type
 class ListObjectOptions(SiaType):
-    bucket: Optional[str] = strawberry.field(name="bucket")
-    delimiter: Optional[str] = strawberry.field(name="delimiter")
+    prefix: Optional[str] = strawberry.field(name="prefix")
+    marker: Optional[str] = strawberry.field(name="marker") 
     limit: Optional[int] = strawberry.field(name="limit")
-    marker: Optional[str] = strawberry.field(name="marker")
     sort_by: Optional[str] = strawberry.field(name="sortBy")
     sort_dir: Optional[str] = strawberry.field(name="sortDir")
-    substring: Optional[str] = strawberry.field(name="substring")
-    slab_encryption_key: Optional[JSON] = strawberry.field(name="slabEncryptionKey", description="object.EncryptionKey")
+
 
 @strawberry.type
 class UploadObjectOptions(SiaType):
     min_shards: Optional[int] = strawberry.field(name="minShards")
     total_shards: Optional[int] = strawberry.field(name="totalShards")
+    contract_set: Optional[str] = strawberry.field(name="contractSet")
     content_length: Optional[int] = strawberry.field(name="contentLength")
     mime_type: Optional[str] = strawberry.field(name="mimeType")
-    metadata: Optional[JSON] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+    metadata: Optional[Dict[str,str]] = strawberry.field(name="metadata", description="ObjectUserMetadata")
+
 
 @strawberry.type
 class UploadMultipartUploadPartOptions(SiaType):
-    min_shards: Optional[int] = strawberry.field(name="minShards")
+    contract_set: Optional[str] = strawberry.field(name="contractSet")
+    min_shards: Optional[int] = strawberry.field(name="minShards") 
     total_shards: Optional[int] = strawberry.field(name="totalShards")
     encryption_offset: Optional[int] = strawberry.field(name="encryptionOffset")
     content_length: Optional[int] = strawberry.field(name="contentLength")
 
+
 @strawberry.type
 class S3AuthenticationSettings(SiaType):
-    v4_keypairs: Optional[JSON] = strawberry.field(name="v4Keypairs",
-        description="Mapping of accessKeyID -> secretAccessKey")
+    v4_keypairs: Optional[Dict[str,str]] = strawberry.field(
+        name="v4Keypairs", description="Mapping of accessKeyID -> secretAccessKey"
+    )
 
 
 @strawberry.type
 class UnhealthySlab(SiaType):
-    encryption_key: Optional[JSON] = strawberry.field(
-        name="encryptionKey",
-        description="Encryption key object (object.EncryptionKey)"
+    encryption_key: Optional[EncryptionKey] = strawberry.field(
+        name="key", description="Encryption key object (object.EncryptionKey)"
     )
     health: Optional[float] = strawberry.field(name="health")
 
@@ -1844,68 +2312,38 @@ class UnhealthySlab(SiaType):
 @strawberry.type
 class AddPartialSlabResponse(SiaType):
     slab_buffer_max_size_soft_reached: Optional[bool] = strawberry.field(name="slabBufferMaxSizeSoftReached")
-    slabs: Optional[List[JSON]] = strawberry.field(
-        description="List of slabs (object.SlabSlice)",
-        name="slabs"
-    )
+    slabs: Optional[List[SlabSlice]] = strawberry.field(description="List of slabs (object.SlabSlice)", name="slabs")
+
 
 @strawberry.type
 class MigrationSlabsRequest(SiaType):
+    contract_set: Optional[str] = strawberry.field(name="contractSet")
     health_cutoff: Optional[float] = strawberry.field(name="healthCutoff")
     limit: Optional[int] = strawberry.field(name="limit")
+
 
 @strawberry.type
 class PackedSlabsRequestGET(SiaType):
     locking_duration: Optional[DurationMS] = strawberry.field(name="lockingDuration")
-    min_shards: Optional[int] = strawberry.field(name="minShards")
+    min_shards: Optional[int] = strawberry.field(name="minShards") 
     total_shards: Optional[int] = strawberry.field(name="totalShards")
+    contract_set: Optional[str] = strawberry.field(name="contractSet")
     limit: Optional[int] = strawberry.field(name="limit")
+
 
 @strawberry.type
 class PackedSlabsRequestPOST(SiaType):
     slabs: Optional[List[UploadedPackedSlab]] = strawberry.field(name="slabs")
 
-@strawberry.type
-class SlabsForMigrationResponse(SiaType):
-    slabs: Optional[List[UnhealthySlab]] = strawberry.field(name="slabs")
 
 @strawberry.type
 class UpdateSlabRequest(SiaType):
-    # Represented as []UploadedSector in Go
-    uploaded_sectors: Optional[List[UploadedSector]] = strawberry.field(name="updateSlabRequest")
-
-
-
-@strawberry.type
-class ChurnUpdate(SiaType):
-    time: Optional[datetime.datetime] = strawberry.field(name="time")
-    from_state: Optional[str] = strawberry.field(name="from")
-    to_state: Optional[str] = strawberry.field(name="to")
-    reason: Optional[str] = strawberry.field(name="reason")
-    host_key: Optional[PublicKey] = strawberry.field(name="hostKey")
-    size: Optional[int] = strawberry.field(name="size")
-
-@strawberry.type
-class AccumulatedChurn(SiaType):
-    # Maps a contractID to a list of churn updates
-    churn_updates: Optional[JSON] = strawberry.field(
-        description="Dict[FileContractID -> List[ChurnUpdate]]",
-        name="churn"
-    )
-
-@strawberry.type
-class UsabilityUpdate(SiaType):
-    host_key: Optional[PublicKey] = strawberry.field(name="hk")
-    contract_id: Optional[FileContractID] = strawberry.field(name="fcid")
-    size: Optional[int] = strawberry.field(name="size")
-    from_state: Optional[str] = strawberry.field(name="from")
-    to_state: Optional[str] = strawberry.field(name="to")
-    reason: Optional[str] = strawberry.field(name="reason")
-
-
+    contract_set: Optional[str] = strawberry.field(name="contractSet")
+    slab: Optional[Slab] = strawberry.field(name="slab")
 
 
 # ------ walletd --------
+
 
 @strawberry.enum
 class IndexMode(Enum):
@@ -1920,14 +2358,16 @@ class Balance(SiaType):
     immature_siacoins: Optional[Currency] = strawberry.field(name="immatureSiacoins")
     siafunds: Optional[int] = strawberry.field(name="siafunds")
 
+
 @strawberry.type
-class Wallet(SiaType): 
+class Wallet(SiaType):
     id: Optional[int] = strawberry.field(name="id")
     name: Optional[str] = strawberry.field(name="name")
     description: Optional[str] = strawberry.field(name="description")
     date_created: Optional[datetime.datetime] = strawberry.field(name="dateCreated")
     last_updated: Optional[datetime.datetime] = strawberry.field(name="lastUpdated")
     metadata: Optional[JSON] = strawberry.field(name="metadata")
+
 
 @strawberry.type
 class StateResponse(SiaType):
@@ -1937,6 +2377,7 @@ class StateResponse(SiaType):
     build_time: Optional[datetime.datetime] = strawberry.field(name="buildTime")
     start_time: Optional[datetime.datetime] = strawberry.field(name="startTime")
     index_mode: Optional[IndexMode] = strawberry.field(name="indexMode")
+
 
 @strawberry.type
 class GatewayPeer(SiaType):
@@ -1948,11 +2389,15 @@ class GatewayPeer(SiaType):
     synced_blocks: Optional[int] = strawberry.field(name="syncedBlocks")
     sync_duration: Optional[DurationMS] = strawberry.field(name="syncDuration")
 
+
 @strawberry.type
 class TxpoolBroadcastRequest(SiaType):
     basis: Optional[ChainIndex] = strawberry.field(name="basis", description="types.ChainIndex")
     transactions: Optional[List[Transaction]] = strawberry.field(name="transactions", description="[]types.Transaction")
-    v2transactions: Optional[List[V2Transaction]] = strawberry.field(name="v2transactions", description="[]types.V2Transaction")
+    v2transactions: Optional[List[V2Transaction]] = strawberry.field(
+        name="v2transactions", description="[]types.V2Transaction"
+    )
+
 
 @strawberry.type
 class TxpoolTransactionsResponse(SiaType):
@@ -1960,20 +2405,21 @@ class TxpoolTransactionsResponse(SiaType):
     transactions: Optional[List[JSON]] = strawberry.field(name="transactions", description="[]types.Transaction")
     v2transactions: Optional[List[JSON]] = strawberry.field(name="v2transactions", description="[]types.V2Transaction")
 
+
 @strawberry.type
 class BalanceResponse(Balance):
     pass
 
+
 @strawberry.type
 class WalletReserveRequest(SiaType):
     siacoin_outputs: Optional[List[SiacoinOutputID]] = strawberry.field(
-        name="siacoinOutputs",
-        description="[]types.SiacoinOutputID"
+        name="siacoinOutputs", description="[]types.SiacoinOutputID"
     )
     siafund_outputs: Optional[List[SiafundOutputID]] = strawberry.field(
-        name="siafundOutputs",
-        description="[]types.SiafundOutputID"
+        name="siafundOutputs", description="[]types.SiafundOutputID"
     )
+
 
 @strawberry.type
 class WalletUpdateRequest(SiaType):
@@ -1981,70 +2427,51 @@ class WalletUpdateRequest(SiaType):
     description: Optional[str] = strawberry.field(name="description")
     metadata: Optional[JSON] = strawberry.field(name="metadata", description="json.RawMessage")
 
+
 @strawberry.type
 class WalletReleaseRequest(SiaType):
     siacoin_outputs: Optional[List[SiacoinOutputID]] = strawberry.field(
-        name="siacoinOutputs",
-        description="[]types.SiacoinOutputID"
+        name="siacoinOutputs", description="[]types.SiacoinOutputID"
     )
     siafund_outputs: Optional[List[SiafundOutputID]] = strawberry.field(
-        name="siafundOutputs",
-        description="[]types.SiafundOutputID"
+        name="siafundOutputs", description="[]types.SiafundOutputID"
     )
+
 
 @strawberry.type
 class WalletFundRequest(SiaType):
     transaction: Optional[Transaction] = strawberry.field(description="types.Transaction", name="transaction")
     amount: Optional[Currency] = strawberry.field(name="amount")
-    change_address: Optional[Address] = strawberry.field(
-        name="changeAddress",
-        description="types.Address"
-    )
+    change_address: Optional[Address] = strawberry.field(name="changeAddress", description="types.Address")
+
 
 @strawberry.type
 class WalletFundSFRequest(SiaType):
     transaction: Optional[Transaction] = strawberry.field(description="types.Transaction", name="transaction")
     amount: Optional[int] = strawberry.field(name="amount")
-    change_address: Optional[Address] = strawberry.field(
-        name="changeAddress",
-        description="types.Address"
-    )
-    claim_address: Optional[Address] = strawberry.field(
-        name="claimAddress",
-        description="types.Address"
-    )
+    change_address: Optional[Address] = strawberry.field(name="changeAddress", description="types.Address")
+    claim_address: Optional[Address] = strawberry.field(name="claimAddress", description="types.Address")
+
 
 @strawberry.type
 class WalletFundResponse(SiaType):
     transaction: Optional[Transaction] = strawberry.field(description="types.Transaction", name="transaction")
     to_sign: Optional[List[Hash256]] = strawberry.field(name="toSign")
-    depends_on: Optional[List[Transaction]] = strawberry.field(
-        name="dependsOn",
-        description="[]types.Transaction"
-    )
+    depends_on: Optional[List[Transaction]] = strawberry.field(name="dependsOn", description="[]types.Transaction")
+
 
 @strawberry.type
 class WalletConstructRequest(SiaType):
-    siacoins: Optional[List[SiacoinOutput]] = strawberry.field(
-        name="siacoins",
-        description="[]types.SiacoinOutput"
-    )
-    siafunds: Optional[List[SiafundOutput]] = strawberry.field(
-        name="siafunds",
-        description="[]types.SiafundOutput"
-    )
-    change_address: Optional[Address] = strawberry.field(
-        name="changeAddress",
-        description="types.Address"
-    )
+    siacoins: Optional[List[SiacoinOutput]] = strawberry.field(name="siacoins", description="[]types.SiacoinOutput")
+    siafunds: Optional[List[SiafundOutput]] = strawberry.field(name="siafunds", description="[]types.SiafundOutput")
+    change_address: Optional[Address] = strawberry.field(name="changeAddress", description="types.Address")
+
 
 @strawberry.type
 class SignaturePayload(SiaType):
-    public_key: Optional[PublicKey] = strawberry.field(
-        name="publicKey",
-        description="types.PublicKey"
-    )
+    public_key: Optional[PublicKey] = strawberry.field(name="publicKey", description="types.PublicKey")
     sig_hash: Optional[Hash256] = strawberry.field(name="sigHash")
+
 
 @strawberry.type
 class WalletConstructResponse(SiaType):
@@ -2053,6 +2480,7 @@ class WalletConstructResponse(SiaType):
     transaction: Optional[Transaction] = strawberry.field(name="transaction", description="types.Transaction")
     estimated_fee: Optional[Currency] = strawberry.field(name="estimatedFee")
 
+
 @strawberry.type
 class WalletConstructV2Response(SiaType):
     basis: Optional[ChainIndex] = strawberry.field(name="basis", description="types.ChainIndex")
@@ -2060,10 +2488,12 @@ class WalletConstructV2Response(SiaType):
     transaction: Optional[V2Transaction] = strawberry.field(name="transaction", description="types.V2Transaction")
     estimated_fee: Optional[Currency] = strawberry.field(name="estimatedFee")
 
+
 @strawberry.type
 class SeedSignRequest(SiaType):
     transaction: Optional[Transaction] = strawberry.field(name="transaction", description="types.Transaction")
     keys: Optional[List[int]] = strawberry.field(name="keys")
+
 
 @strawberry.type
 class RescanResponse(SiaType):
@@ -2072,11 +2502,13 @@ class RescanResponse(SiaType):
     start_time: Optional[datetime.datetime] = strawberry.field(name="startTime")
     error: Optional[str] = strawberry.field(name="error")
 
+
 @strawberry.type
 class ApplyUpdate(SiaType):
     update: Optional[JSON] = strawberry.field(name="update", description="consensus.ApplyUpdate")
     state: Optional[JSON] = strawberry.field(name="state", description="consensus.State")
     block: Optional[Block] = strawberry.field(name="block", description="types.Block")
+
 
 @strawberry.type
 class RevertUpdate(SiaType):
@@ -2084,10 +2516,12 @@ class RevertUpdate(SiaType):
     state: Optional[JSON] = strawberry.field(name="state", description="consensus.State")
     block: Optional[Block] = strawberry.field(name="block", description="types.Block")
 
+
 @strawberry.type
 class ConsensusUpdatesResponse(SiaType):
     applied: Optional[List[ApplyUpdate]] = strawberry.field(name="applied")
     reverted: Optional[List[RevertUpdate]] = strawberry.field(name="reverted")
+
 
 @strawberry.type
 class DebugMineRequest(SiaType):

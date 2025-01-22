@@ -3,9 +3,6 @@ from typing import List
 from strawberry.types import Info
 
 from siaql.graphql.schemas.types import HostsRequest
-
-# from ....types import *
-# from ...resolvers.renterd import RenterdBaseResolver
 from siaql.graphql.resolvers.renterd import RenterdBaseResolver
 from siaql.graphql.schemas.types import AutopilotConfig, AutopilotStateResponse, Host
 
@@ -27,22 +24,15 @@ class AutopilotQueries(RenterdBaseResolver):
         """Get autopilot state"""
         return await RenterdBaseResolver.handle_api_call(info, "get_autopilot_state")
 
-    @strawberry.field # news
+    @strawberry.field  # news
     async def autopilots(self, info: Info) -> List[AutopilotConfig]:
         """Get all autopilot configurations"""
-        return await self.handle_api_call(
-            info,
-            "get_autopilots"
-        )
+        return await self.handle_api_call(info, "get_autopilots")
 
     @strawberry.field
     async def autopilot(self, info: Info, autopilot_id: str) -> AutopilotConfig:
         """Get specific autopilot configuration"""
-        return await self.handle_api_call(
-            info,
-            "get_autopilot",
-            autopilot_id=autopilot_id
-        )
+        return await self.handle_api_call(info, "get_autopilot", autopilot_id=autopilot_id)
 
 
 @strawberry.type
@@ -63,19 +53,8 @@ class AutopilotMutations(RenterdBaseResolver):
         """Search hosts"""
         return await RenterdBaseResolver.handle_api_call(info, "search_hosts", request=request)
 
-
-    @strawberry.mutation # new
-    async def update_autopilot(
-        self,
-        info: Info,
-        autopilot_id: str,
-        config: AutopilotConfig
-    ) -> bool:
+    @strawberry.mutation  # new
+    async def update_autopilot(self, info: Info, autopilot_id: str, config: AutopilotConfig) -> bool:
         """Update specific autopilot configuration"""
-        await self.handle_api_call(
-            info,
-            "update_autopilot",
-            autopilot_id=autopilot_id,
-            config=config
-        )
+        await self.handle_api_call(info, "update_autopilot", autopilot_id=autopilot_id, config=config)
         return True

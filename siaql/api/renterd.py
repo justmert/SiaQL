@@ -1,392 +1,263 @@
-from typing import Optional, Dict, List, Any, Union
+import json
+from functools import wraps
+from typing import Any, Dict, List, Optional, Union
+
+import httpx
 from httpx import AsyncClient, BasicAuth
-from ..types import *
+
+from siaql.api.utils import APIError, handle_api_errors
+from siaql.graphql.schemas.types import (
+    Account,
+    AccountsFundRequest,
+    AccountsFundResponse,
+    AccountsSaveRequest,
+    Alert,
+    AlertsResponse,
+    AutopilotConfig,
+    AutopilotStateResponse,
+    BackupRequest,
+    Bucket,
+    BucketCreateRequest,
+    BucketUpdatePolicyRequest,
+    BusStateResponse,
+    ConsensusState,
+    ContractAcquireRequest,
+    ContractAcquireResponse,
+    ContractFormRequest,
+    ContractKeepaliveRequest,
+    ContractMetadata,
+    ContractPruneRequest,
+    ContractPruneResponse,
+    ContractReleaseRequest,
+    ContractRenewRequest,
+    ContractsArchiveRequest,
+    ContractSize,
+    ContractsOpts,
+    ContractsPrunableDataResponse,
+    Event,
+    GougingSettings,
+    Host,
+    HostChecks,
+    HostOptions,
+    HostScanRequest,
+    HostScanResponse,
+    MigrationSlabsRequest,
+    MultipartAbortRequest,
+    MultipartAddPartRequest,
+    MultipartCompleteRequest,
+    MultipartCompleteResponse,
+    MultipartCreateRequest,
+    MultipartCreateResponse,
+    MultipartListPartsRequest,
+    MultipartListPartsResponse,
+    MultipartListUploadsRequest,
+    MultipartListUploadsResponse,
+    MultipartUpload,
+    Network,
+    Object,
+    ObjectsRemoveRequest,
+    ObjectsRenameRequest,
+    ObjectsResponse,
+    ObjectsStatsResponse,
+    PackedSlab,
+    PackedSlabsRequestGET,
+    PackedSlabsRequestPOST,
+    PinnedSettings,
+    S3Settings,
+    SlabBuffer,
+    SlabsForMigrationResponse,
+    Transaction,
+    UpdateAllowlistRequest,
+    UpdateBlocklistRequest,
+    UpdateSlabRequest,
+    UploadSettings,
+    WalletRedistributeRequest,
+    WalletResponse,
+    WalletSendRequest,
+    Webhook,
+    WebhookResponse,
+)
+
+
+class RenterdError(Exception):
+    """Base exception for renterd API errors"""
+
+    pass
 
 
 class RenterdClient:
-    def __init__(
-        self,
-        autopilot_url: str = "http://localhost:9980",
-        bus_url: str = "http://localhost:9980",
-        worker_url: str = "http://localhost:9980",
-        api_password: Optional[str] = None,
-    ):
-        # Initialize clients for each component
+    """Client for the renterd API"""
 
-        self.autopilot_client = self._create_client(f"{autopilot_url.rstrip('/')}/api/autopilot", api_password)
-        self.bus_client = self._create_client(f"{bus_url.rstrip('/')}/api/bus", api_password)
-        self.worker_client = self._create_client(f"{worker_url.rstrip('/')}/api/worker", api_password)
-
-    def _create_client(self, base_url: str, api_password: Optional[str]) -> AsyncClient:
+    def __init__(self, base_url: str = "http://localhost:9980", api_password: Optional[str] = None):
+        # Ensure base_url doesn't have trailing slash and has /api
+        self.base_url = f"{base_url.rstrip('/')}/api"
         if api_password:
-            auth = BasicAuth(username="", password=api_password)
-            return AsyncClient(base_url=base_url, auth=auth, timeout=30.0)
-        return AsyncClient(base_url=base_url, timeout=30.0)
+            auth = httpx.BasicAuth(username="", password=api_password)
+            self.client = httpx.AsyncClient(base_url=self.base_url, auth=auth, timeout=30.0)
+        else:
+            self.client = httpx.AsyncClient(base_url=self.base_url, timeout=30.0)
 
     async def close(self):
-        """Close all HTTP clients"""
-        await self.autopilot_client.aclose()
-        await self.bus_client.aclose()
-        await self.worker_client.aclose()
+        """Close the HTTP client"""
+        await self.client.aclose()
+
+    # Account endpoints
+    # Account endpoints
+    @handle_api_errors(RenterdError)
+    async def get_accounts(self, owner: str) -> List[Account]:
+        """Get all accounts"""
+        response = await self.client.get("/accounts", params={"owner": owner})
+        response.raise_for_status()
+        return response.json()
+
+    @handle_api_errors(RenterdError)
+    async def post_fund_account(self, request: AccountsFundRequest) -> AccountsFundResponse:
+        """Fund an account"""
+        response = await self.client.post("/accounts/fund", json=request)
+        response.raise_for_status()
+        return response.json()
+
+    @handle_api_errors(RenterdError)
+    async def post_save_accounts(self, request: AccountsSaveRequest) -> None:
+        """Save accounts"""
+        response = await self.client.post("/accounts", json=request)
+        response.raise_for_status()
+
+    # Alert endpoints
+    @handle_api_errors(RenterdError)
+    async def get_alerts(
+        self, severity: Optional[str] = None, offset: Optional[int] = None, limit: Optional[int] = None
+    ) -> AlertsResponse:
+        """Get alerts"""
+        params = {}
+        if severity:
+            params["severity"] = severity
+        if offset is not None:
+            params["offset"] = offset
+        if limit is not None:
+            params["limit"] = limit
+        response = await self.client.get("/alerts", params=params)
+        response.raise_for_status()
+        return response.json()
+
+    @handle_api_errors(RenterdError)
+    async def post_register_alert(self, alert: Alert) -> None:
+        """Register an alert"""
+        response = await self.client.post("/alerts/register", json=alert)
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def post_dismiss_alerts(self, ids: List[str]) -> None:
+        """Dismiss alerts"""
+        response = await self.client.post("/alerts/dismiss", json=ids)
+        response.raise_for_status()
 
     # Autopilot endpoints
     @handle_api_errors(RenterdError)
     async def get_autopilot_config(self) -> AutopilotConfig:
-        response = await self.autopilot_client.get("/config")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def update_autopilot_config(self, config: AutopilotConfig) -> None:
-        response = await self.autopilot_client.put("/config", json=config)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def trigger_autopilot(self, force_scan: bool = False) -> bool:
-        response = await self.autopilot_client.post("/trigger", json={"forceScan": force_scan})
-        response.raise_for_status()
-        return response.json()["triggered"]
-
-    @handle_api_errors(RenterdError)
-    async def get_autopilot_host(self, host_key: str) -> Host:
-        response = await self.autopilot_client.get(f"/host/{host_key}")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def search_hosts(self, request: HostsRequest) -> List[Host]:
-        response = await self.autopilot_client.post("/hosts", json=request)
+        """Get autopilot configuration"""
+        response = await self.client.get("/autopilot")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
     async def get_autopilot_state(self) -> AutopilotStateResponse:
-        response = await self.autopilot_client.get("/state")
+        """Get autopilot state"""
+        response = await self.client.get("/autopilot/state")
         response.raise_for_status()
         return response.json()
 
-    # ----------------------------------------
-
-    # Worker endpoints
+    # Bus state endpoint
     @handle_api_errors(RenterdError)
-    async def get_worker_account(self, host_key: str) -> Account:
-        response = await self.worker_client.get(f"/account/{host_key}")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_worker_id(self) -> str:
-        response = await self.worker_client.get("/id")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_memory_state(self) -> MemoryResponse:
-        response = await self.worker_client.get("/memory")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def upload_object(self, bucket: str, key: str, data: str, opts: UploadObjectOptions) -> UploadObjectResponse:
-        params = {"bucket": bucket, **opts.__dict__}
-        response = await self.worker_client.put(f"/objects/{key}", params=params, content=data)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def delete_object(self, bucket: str, key: str) -> None:
-        params = {"bucket": bucket}
-        response = await self.worker_client.delete(f"/objects/{key}", params=params)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def get_worker_object(self, bucket: str, key: str, opts: DownloadObjectOptions) -> GetObjectResponse:
-        """Download object from worker"""
-        response = await self.client.get(f"/objects/{key}", params={"bucket": bucket, **opts})
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_rhp_contracts(self) -> Dict[str, Contract]:
-        """Get all contracts"""
-        response = await self.client.get("/rhp/contracts")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def broadcast_contract(self, contract_id: str) -> None:
-        """Broadcast contract"""
-        response = await self.client.post(f"/rhp/{contract_id}/broadcast")
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def prune_contract(self, contract_id: str, request: ContractPruneRequest) -> ContractPruneResponse:
-        """Prune contract"""
-        response = await self.client.post(f"/rhp/{contract_id}/prune", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_contract_roots(self, contract_id: str) -> List[str]:
-        """Get contract roots"""
-        response = await self.client.post(f"/rhp/{contract_id}/roots")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def form_contract(self, request: ContractFormRequest) -> ContractMetadata:
-        """Form a new contract"""
-        response = await self.client.post("/rhp/form", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def fund_contract(self, request: RHPFundRequest) -> None:
-        """Fund a contract"""
-        response = await self.client.post("/rhp/fund", json=request)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def renew_contract(self, request: ContractRenewRequest) -> ContractMetadata:
-        """Renew a contract"""
-        response = await self.client.post("/rhp/renew", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def scan_host(self, request: HostScanRequest) -> HostScanResponse:
-        """Scan a host"""
-        response = await self.client.post("/rhp/scan", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def sync_contract(self, request: RHPSyncRequest) -> None:
-        """Sync a contract"""
-        response = await self.client.post("/rhp/sync", json=request)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def migrate_slab(self, request: MigrationSlabsRequest) -> SlabsForMigrationResponse:
-        """Migrate a slab"""
-        response = await self.client.post("/slab/migrate", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_worker_state(self) -> WorkerStateResponse:
-        """Get worker state"""
+    async def get_bus_state(self) -> BusStateResponse:
+        """Get bus state"""
         response = await self.client.get("/state")
         response.raise_for_status()
         return response.json()
 
-    @handle_api_errors(RenterdError)
-    async def get_download_stats(self) -> DownloadStatsResponse:
-        response = await self.worker_client.get("/stats/downloads")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_upload_stats(self) -> UploadStatsResponse:
-        response = await self.worker_client.get("/stats/uploads")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def upload_multipart_part(
-        self, bucket: str, key: str, upload_id: str, part_number: int, opts: UploadMultipartUploadPartOptions
-    ) -> UploadMultipartUploadPartResponse:
-        params = {"bucket": bucket, "uploadid": upload_id, "partnumber": part_number, **opts.__dict__}
-        response = await self.worker_client.put(f"/multipart/{key}", params=params)
-        response.raise_for_status()
-        return response.json()
-
-    # ----------------------------------------
-
-    # Bus endpoints
-    @handle_api_errors(RenterdError)
-    async def get_accounts(self, owner: str) -> List[Account]:
-        response = await self.bus_client.get("/accounts", params={"owner": owner})
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def post_account(self, account_id: str, hostKey: PublicKey) -> None:
-        """Add or update an account"""
-        response = await self.client.post(f"/account/{account_id}", json={"hostKey": hostKey})
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def lock_account(
-        self, account_id: str, hostKey: PublicKey, exclusive: bool, duration: DurationMS
-    ) -> AccountsLockHandlerResponse:
-        """Lock an account"""
-        response = await self.client.post(
-            f"/account/{account_id}/lock", json={"hostKey": hostKey, "exclusive": exclusive, "duration": duration}
-        )
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def unlock_account(self, account_id: str, lockID: int) -> None:
-        """Unlock an account"""
-        response = await self.client.post(f"/account/{account_id}/unlock", json={"lockID": lockID})
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def add_account_balance(self, account_id: str, request: AccountsAddBalanceRequest) -> None:
-        response = await self.bus_client.post(f"/account/{account_id}/add", json=request)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def update_account_balance(self, account_id: str, request: AccountsUpdateBalanceRequest) -> None:
-        response = await self.bus_client.post(f"/account/{account_id}/update", json=request)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def requires_sync_account(self, account_id: str, request: AccountsRequiresSyncRequest) -> None:
-        """Mark account as requiring sync"""
-        response = await self.client.post(f"/account/{account_id}/requiressync", json=request)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def reset_drift_account(self, account_id: str) -> None:
-        """Reset account drift"""
-        response = await self.client.post(f"/account/{account_id}/resetdrift")
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def get_alerts(self, severity: str, offset: int, limit: int) -> AlertsResponse:
-        params = {"severity": severity, "offset": offset, "limit": limit}
-        response = await self.bus_client.get("/alerts", params=params)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def dismiss_alerts(self, ids: List[Hash256]) -> None:
-        response = await self.bus_client.post("/alerts/dismiss", json=ids)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def register_alert(self, alert: Alert) -> None:
-        response = await self.bus_client.post("/alerts/register", json=alert)
-        response.raise_for_status()
-
-    # Autopilot endpoints
-    @handle_api_errors(RenterdError)  #  MISSING
-    async def get_autopilots(self) -> List[AutopilotConfig]:
-        """Get all autopilot configurations"""
-        response = await self.client.get("/autopilots")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)  #  MISSING
-    async def get_autopilot(self, autopilot_id: str) -> AutopilotConfig:
-        """Get specific autopilot configuration"""
-        response = await self.client.get(f"/autopilot/{autopilot_id}")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)  #  MISSING
-    async def update_autopilot(self, autopilot_id: str, config: AutopilotConfig) -> None:
-        """Update specific autopilot configuration"""
-        response = await self.client.put(f"/autopilot/{autopilot_id}", json=config)
-        response.raise_for_status()
-
+    # Bucket endpoints
     @handle_api_errors(RenterdError)
     async def get_buckets(self) -> List[Bucket]:
-        response = await self.bus_client.get("/buckets")
+        """Get all buckets"""
+        response = await self.client.get("/buckets")
         response.raise_for_status()
         return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def create_bucket(self, name: str, policy: BucketPolicy) -> None:
-        response = await self.bus_client.post("/buckets", json={"name": name, "policy": policy})
-        response.raise_for_status()
 
     @handle_api_errors(RenterdError)
     async def get_bucket(self, name: str) -> Bucket:
-        response = await self.bus_client.get(f"/bucket/{name}")
+        """Get bucket by name"""
+        response = await self.client.get(f"/bucket/{name}")
+        response.raise_for_status()
+        return response.json()
+
+    @handle_api_errors(RenterdError)
+    async def post_create_bucket(self, request: BucketCreateRequest) -> None:
+        """Create a bucket"""
+        response = await self.client.post("/buckets", json=request)
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def put_bucket_policy(self, name: str, request: BucketUpdatePolicyRequest) -> None:
+        """Update bucket policy"""
+        response = await self.client.put(f"/bucket/{name}/policy", json=request)
         response.raise_for_status()
 
     @handle_api_errors(RenterdError)
     async def delete_bucket(self, name: str) -> None:
-        response = await self.bus_client.delete(f"/bucket/{name}")
+        """Delete a bucket"""
+        response = await self.client.delete(f"/bucket/{name}")
         response.raise_for_status()
 
-    @handle_api_errors(RenterdError)
-    async def update_bucket_policy(self, name: str, policy: BucketPolicy) -> None:
-        response = await self.bus_client.put(f"/bucket/{name}/policy", json={"policy": policy})
-        response.raise_for_status()
-
-        # Consensus endpoints
-
-    @handle_api_errors(RenterdError)
-    async def accept_block(self, block: Block) -> None:
-        response = await self.bus_client.post("/consensus/acceptblock", json=block)
-        response.raise_for_status()
-
+    # Consensus endpoints
     @handle_api_errors(RenterdError)
     async def get_consensus_state(self) -> ConsensusState:
-        response = await self.bus_client.get("/consensus/state")
+        """Get consensus state"""
+        response = await self.client.get("/consensus/state")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_consensus_siafundfee(self, payout: Currency) -> Currency:
-        """Get siafund fee for a given payout"""
-        response = await self.client.get(f"/consensus/siafundfee/{payout}")
+    async def get_consensus_network(self) -> Network:
+        """Get consensus network"""
+        response = await self.client.get("/consensus/network")
+        response.raise_for_status()
+        return response.json()
+
+    # Contract endpoints
+    @handle_api_errors(RenterdError)
+    async def get_contracts(self, opts: Optional[ContractsOpts] = None) -> List[ContractMetadata]:
+        """Get all contracts"""
+        params = {}
+        if opts:
+            if opts.filter_mode:
+                params["filtermode"] = opts.filter_mode
+        response = await self.client.get("/contracts", params=params)
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
     async def get_contract(self, id: str) -> ContractMetadata:
-        response = await self.bus_client.get(f"/contract/{id}")
+        """Get contract by ID"""
+        response = await self.client.get(f"/contract/{id}")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def delete_contract(self, contract_id: str) -> None:
-        """Delete a contract"""
-        response = await self.client.delete(f"/contract/{contract_id}")
+    async def post_archive_contracts(self, request: ContractsArchiveRequest) -> None:
+        """Archive contracts"""
+        response = await self.client.post("/contracts/archive", json=request)
         response.raise_for_status()
 
     @handle_api_errors(RenterdError)
-    async def post_contract(self, contract_id: str, contract: ContractAddRequest) -> None:
-        """Add a contract to the bus"""
-        response = await self.client.post(f"/contract/{contract_id}", json=contract)
-        response.raise_for_status()
-
-    # Contract related endpoints
-    @handle_api_errors(RenterdError)
-    async def acquire_contract(self, contract_id: str, duration: DurationMS, priority: int) -> ContractAcquireResponse:
-        response = await self.bus_client.post(
-            f"/contract/{contract_id}/acquire", json={"duration": duration, "priority": priority}
-        )
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def post_contract_keepalive(self, contract_id: str, request: ContractKeepaliveRequest) -> None:
-        """Extend duration on an already acquired lock"""
-        response = await self.client.post(f"/contract/{contract_id}/keepalive", json=request)
+    async def delete_all_contracts(self) -> None:
+        """Delete all contracts"""
+        response = await self.client.delete("/contracts/all")
         response.raise_for_status()
 
     @handle_api_errors(RenterdError)
-    async def contract_ancestors(self, contract_id: str, min_start_height: int) -> List[ContractMetadata]:
-        params = {"minstartheight": min_start_height}
-        response = await self.bus_client.get(f"/contract/{contract_id}/ancestors", params=params)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def release_contract(self, contract_id: str, lock_id: int) -> None:
-        response = await self.bus_client.post(f"/contract/{contract_id}/release", json={"lockID": lock_id})
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def get_contract_roots(self, contract_id: str) -> List[Hash256]:
-        response = await self.bus_client.get(f"/contract/{contract_id}/roots")
+    async def post_form_contract(self, request: ContractFormRequest) -> ContractMetadata:
+        """Form a new contract"""
+        response = await self.client.post("/contracts/form", json=request)
         response.raise_for_status()
         return response.json()
 
@@ -398,509 +269,411 @@ class RenterdClient:
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_contracts(self, filter_mode: str = "active") -> List[ContractMetadata]:
-        response = await self.bus_client.get("/contracts", params={"filtermode": filter_mode})
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def post_contracts_archive(self, to_archive: Dict[FileContractID, str]) -> None:
-        """Archive contracts"""
-        response = await self.client.post("/contracts/archive", json=to_archive)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def delete_contracts_all(self) -> None:
-        """Delete all contracts"""
-        response = await self.client.delete("/contracts/all")
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def get_contracts_prunable(self) -> ContractsPrunableDataResponse:
+    async def get_contracts_prunable_data(self) -> ContractsPrunableDataResponse:
         """Get prunable contracts data"""
         response = await self.client.get("/contracts/prunable")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_contracts_renewed(self, contract_id: str) -> ContractMetadata:
-        """Get renewed contract"""
-        response = await self.client.get(f"/contracts/renewed/{contract_id}")
+    async def post_broadcast_contract(self, contract_id: str) -> str:
+        """Broadcast a contract"""
+        response = await self.client.post(f"/contract/{contract_id}/broadcast")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def put_contracts_set(self, set_name: str, contract_ids: List[FileContractID]) -> None:
-        """Create a new contract set"""
-        response = await self.client.put(f"/contracts/set/{set_name}", json=contract_ids)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def delete_contracts_set(self, set_name: str) -> None:
-        """Delete a contract set"""
-        response = await self.client.delete(f"/contracts/set/{set_name}")
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def get_contracts_sets(self) -> List[str]:
-        """Get all contract set names"""
-        response = await self.client.get("/contracts/sets")
+    async def post_renew_contract(self, contract_id: str, request: ContractRenewRequest) -> ContractMetadata:
+        """Renew a contract"""
+        response = await self.client.post(f"/contract/{contract_id}/renew", json=request)
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def post_contracts_spending(self, records: List[ContractSpendingRecord]) -> None:
-        """Record contract spending"""
-        response = await self.client.post("/contracts/spending", json=records)
+    async def get_contract_roots(self, contract_id: str) -> List[str]:
+        """Get contract roots"""
+        response = await self.client.get(f"/contract/{contract_id}/roots")
+        response.raise_for_status()
+        return response.json()
+
+    @handle_api_errors(RenterdError)
+    async def get_contract_ancestors(self, contract_id: str, min_start_height: int) -> List[ContractMetadata]:
+        """Get contract ancestors"""
+        params = {"minstartheight": min_start_height}
+        response = await self.client.get(f"/contract/{contract_id}/ancestors", params=params)
+        response.raise_for_status()
+        return response.json()
+
+    @handle_api_errors(RenterdError)
+    async def post_acquire_contract(self, contract_id: str, request: ContractAcquireRequest) -> ContractAcquireResponse:
+        """Acquire a contract"""
+        response = await self.client.post(f"/contract/{contract_id}/acquire", json=request)
+        response.raise_for_status()
+        return response.json()
+
+    @handle_api_errors(RenterdError)
+    async def post_keepalive_contract(self, contract_id: str, request: ContractKeepaliveRequest) -> None:
+        """Keepalive a contract"""
+        response = await self.client.post(f"/contract/{contract_id}/keepalive", json=request)
         response.raise_for_status()
 
-    # Host related endpoints
+    @handle_api_errors(RenterdError)
+    async def post_prune_contract(self, contract_id: str, request: ContractPruneRequest) -> ContractPruneResponse:
+        """Prune a contract"""
+        response = await self.client.post(f"/contract/{contract_id}/prune", json=request)
+        response.raise_for_status()
+        return response.json()
+
+    @handle_api_errors(RenterdError)
+    async def post_release_contract(self, contract_id: str, request: ContractReleaseRequest) -> None:
+        """Release a contract"""
+        response = await self.client.post(f"/contract/{contract_id}/release", json=request)
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def put_contract_usability(self, contract_id: str, usability: str) -> None:
+        """Update contract usability"""
+        response = await self.client.put(f"/contract/{contract_id}/usability", json=usability)
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def delete_contract(self, contract_id: str) -> None:
+        """Delete a contract"""
+        response = await self.client.delete(f"/contract/{contract_id}")
+        response.raise_for_status()
+
+    # Host endpoints
+    @handle_api_errors(RenterdError)
+    async def get_hosts(self, opts: Optional[HostOptions] = None) -> List[Host]:
+        """Get all hosts"""
+        response = await self.client.get("/hosts", params=opts.__dict__ if opts else None)
+        response.raise_for_status()
+        return response.json()
+
     @handle_api_errors(RenterdError)
     async def get_host(self, pubkey: str) -> Host:
-        """Get host information"""
+        """Get host by public key"""
         response = await self.client.get(f"/host/{pubkey}")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def reset_lost_sectors(self, pubkey: str) -> None:
-        """Reset lost sectors for a host"""
-        response = await self.client.post(f"/host/{pubkey}/resetlostsectors")
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def get_hosts(self, offset: int, limit: int) -> List[Host]:
-        """Get list of hosts"""
-        params = {"offset": offset, "limit": limit}
-        response = await self.client.get("/hosts", params=params)
+    async def post_scan_host(self, hostkey: str, request: HostScanRequest) -> HostScanResponse:
+        """Scan a host"""
+        response = await self.client.post(f"/host/{hostkey}/scan", json=request)
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_hosts_allowlist(self) -> List[PublicKey]:
-        """Get hosts allowlist"""
+    async def post_reset_lost_sectors(self, hostkey: str) -> None:
+        """Reset lost sectors for a host"""
+        response = await self.client.post(f"/host/{hostkey}/resetlostsectors")
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def put_host_check(self, hostkey: str, check: HostChecks) -> None:
+        """Update host check"""
+        response = await self.client.put(f"/host/{hostkey}/check", json=check)
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def get_host_allowlist(self) -> List[str]:
+        """Get host allowlist"""
         response = await self.client.get("/hosts/allowlist")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def update_hosts_allowlist(self, request: UpdateAllowlistRequest) -> None:
-        response = await self.bus_client.put("/hosts/allowlist", json=request)
+    async def get_host_blocklist(self) -> List[str]:
+        """Get host blocklist"""
+        response = await self.client.get("/hosts/blocklist")
         response.raise_for_status()
 
     @handle_api_errors(RenterdError)
-    async def get_hosts_blocklist(self) -> List[str]:
-        response = await self.bus_client.get("/hosts/blocklist")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def update_hosts_blocklist(self, request: UpdateBlocklistRequest) -> None:
-        response = await self.bus_client.put("/hosts/blocklist", json=request)
+    async def put_update_allowlist(self, request: UpdateAllowlistRequest) -> None:
+        """Update host allowlist"""
+        response = await self.client.put("/hosts/allowlist", json=request)
         response.raise_for_status()
 
     @handle_api_errors(RenterdError)
-    async def post_hosts_interactions(self, interactions: List[HostScan]) -> None:
-        """Record host interactions"""
-        response = await self.client.post("/hosts/interactions", json=interactions)
+    async def put_update_blocklist(self, request: UpdateBlocklistRequest) -> None:
+        """Update host blocklist"""
+        response = await self.client.put("/hosts/blocklist", json=request)
         response.raise_for_status()
 
+    # Multipart upload endpoints
     @handle_api_errors(RenterdError)
-    async def remove_hosts(self, request: HostsRemoveRequest) -> int:
-        """Remove offline hosts"""
-        response = await self.client.post("/hosts/remove", json=request)
+    async def post_create_multipart_upload(self, request: MultipartCreateRequest) -> MultipartCreateResponse:
+        """Create multipart upload"""
+        response = await self.client.post("/multipart/create", json=request)
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_hosts_scanning(self, offset: int, limit: int, last_scan: str) -> List[Host]:
-        """Get hosts for scanning"""
-        params = {"offset": offset, "limit": limit, "lastScan": last_scan}
-        response = await self.client.get("/hosts/scanning", params=params)
-        response.raise_for_status()
-        return response.json()
-
-    # Metrics endpoints
-    @handle_api_errors(RenterdError)
-    async def get_metrics(self, key: str, start: str, n: int, interval: str) -> Any:
-        """Get metrics"""
-        params = {"start": start, "n": n, "interval": interval}
-        response = await self.client.get(f"/metric/{key}", params=params)
+    async def post_complete_multipart_upload(self, request: MultipartCompleteRequest) -> MultipartCompleteResponse:
+        """Complete multipart upload"""
+        response = await self.client.post("/multipart/complete", json=request)
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def delete_metrics(self, key: str, cutoff: str) -> None:
-        """Delete metrics"""
-        params = {"cutoff": cutoff}
-        response = await self.client.delete(f"/metric/{key}", params=params)
+    async def post_abort_multipart_upload(self, request: MultipartAbortRequest) -> None:
+        """Abort multipart upload"""
+        response = await self.client.post("/multipart/abort", json=request)
         response.raise_for_status()
 
     @handle_api_errors(RenterdError)
-    async def abort_multipart_upload(self, request: MultipartAbortRequest) -> None:
-        response = await self.bus_client.post("/multipart/abort", json=request)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def complete_multipart_upload(self, request: MultipartCompleteRequest) -> MultipartCompleteResponse:
-        response = await self.bus_client.post("/multipart/complete", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def create_multipart_upload(self, request: MultipartCreateRequest) -> MultipartCreateResponse:
-        response = await self.bus_client.post("/multipart/create", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def list_multipart_upload_parts(self, request: MultipartListPartsRequest) -> MultipartListPartsResponse:
-        response = await self.bus_client.post("/multipart/listparts", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def list_multipart_uploads(self, request: MultipartListUploadsRequest) -> MultipartListUploadsResponse:
-        response = await self.bus_client.post("/multipart/listuploads", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    # Multipart endpoints
-    @handle_api_errors(RenterdError)
-    async def put_multipart_part(self, request: MultipartAddPartRequest) -> None:
-        """Add a new part to multipart upload"""
+    async def put_add_multipart_part(self, request: MultipartAddPartRequest) -> None:
+        """Add multipart part"""
         response = await self.client.put("/multipart/part", json=request)
         response.raise_for_status()
 
+    @handle_api_errors(RenterdError)
+    async def get_multipart_upload(self, upload_id: str) -> MultipartUpload:
+        """Get multipart upload details"""
+        response = await self.client.get(f"/multipart/upload/{upload_id}")
+        response.raise_for_status()
+        return response.json()
+
+    @handle_api_errors(RenterdError)
+    async def post_list_multipart_uploads(self, request: MultipartListUploadsRequest) -> MultipartListUploadsResponse:
+        """List multipart uploads"""
+        response = await self.client.post("/multipart/listuploads", json=request)
+        response.raise_for_status()
+        return response.json()
+
+    @handle_api_errors(RenterdError)
+    async def post_list_multipart_parts(self, request: MultipartListPartsRequest) -> MultipartListPartsResponse:
+        """List multipart parts"""
+        response = await self.client.post("/multipart/listparts", json=request)
+        response.raise_for_status()
+        return response.json()
+
     # Object endpoints
     @handle_api_errors(RenterdError)
-    async def get_object(self, key: str) -> Object:
-        """Get object metadata"""
-        response = await self.client.get(f"/objects/{key}")
+    async def get_object(self, bucket: str, key: str, only_metadata: bool = False) -> Object:
+        """Get object or object metadata"""
+        params = {"bucket": bucket, "onlymetadata": str(only_metadata).lower()}
+        response = await self.client.get(f"/object/{key}", params=params)
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def put_object(self, key: str, request: AddObjectRequest) -> None:
-        """Store object metadata"""
-        response = await self.client.put(f"/objects/{key}", json=request)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def delete_object(self, key: str) -> None:
-        """Delete object"""
-        response = await self.client.delete(f"/objects/{key}")
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def post_objects_copy(self, request: CopyObjectsRequest) -> ObjectMetadata:
-        """Copy object"""
-        response = await self.client.post("/objects/copy", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def post_objects_list(self, request: ObjectsListRequest) -> ObjectsResponse:
+    async def get_objects(self, prefix: str, opts: Dict[str, Any]) -> ObjectsResponse:
         """List objects"""
-        response = await self.client.post("/objects/list", json=request)
+        response = await self.client.get(f"/objects/{prefix}", params=opts)
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def post_objects_rename(self, request: ObjectsRenameRequest) -> None:
+    async def post_remove_objects(self, request: ObjectsRemoveRequest) -> None:
+        """Remove objects"""
+        response = await self.client.post("/objects/remove", json=request)
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def post_rename_objects(self, request: ObjectsRenameRequest) -> None:
         """Rename objects"""
         response = await self.client.post("/objects/rename", json=request)
         response.raise_for_status()
 
-    # Params endpoints
     @handle_api_errors(RenterdError)
-    async def get_download_params(self) -> DownloadParams:
-        """Get download parameters"""
-        response = await self.client.get("/params/download")
+    async def delete_object(self, bucket: str, key: str) -> None:
+        """Delete object"""
+        params = {"bucket": bucket}
+        response = await self.client.delete(f"/object/{key}", params=params)
         response.raise_for_status()
-        return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_gouging_params(self) -> GougingParams:
-        """Get gouging parameters"""
-        response = await self.client.get("/params/gouging")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_upload_params(self) -> UploadParams:
-        """Get upload parameters"""
-        response = await self.client.get("/params/upload")
-        response.raise_for_status()
-        return response.json()
-
-    # Search endpoints
-    @handle_api_errors(RenterdError)
-    async def post_search_hosts(self, request: HostsRequest) -> List[Host]:
-        """Search hosts"""
-        response = await self.client.post("/search/hosts", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @strawberry.field
-    async def search_hosts(self, info: Info, request: HostsRequest) -> List[Host]:
-        """Search hosts"""
-        return await self.handle_api_call(info, "post_search_hosts", request=request)
-
-    @handle_api_errors(RenterdError)
-    async def get_search_objects(self, bucket: str, key: str, offset: int, limit: int) -> List[str]:
-        """Search objects"""
-        params = {"bucket": bucket, "key": key, "offset": offset, "limit": limit}
-        response = await self.client.get("/search/objects", params=params)
+    async def get_objects_stats(self, opts: Dict[str, Any]) -> ObjectsStatsResponse:
+        """Get objects stats"""
+        response = await self.client.get("/stats/objects", params=opts)
         response.raise_for_status()
         return response.json()
 
     # Settings endpoints
     @handle_api_errors(RenterdError)
-    async def get_settings(self) -> List[str]:
-        """Get all available settings keys"""
-        response = await self.client.get("/settings")
+    async def get_settings_gouging(self) -> GougingSettings:
+        """Get gouging settings"""
+        response = await self.client.get("/settings/gouging")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_setting(self, key: str) -> Any:
-        """Get setting for specific key"""
-        response = await self.client.get(f"/setting/{key}")
+    async def put_settings_gouging(self, settings: GougingSettings) -> None:
+        """Update gouging settings"""
+        response = await self.client.put("/settings/gouging", json=settings)
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def get_settings_pinned(self) -> PinnedSettings:
+        """Get pinned settings"""
+        response = await self.client.get("/settings/pinned")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def put_setting(self, key: str, value: Any) -> None:
-        """Update setting for specific key"""
-        response = await self.client.put(f"/setting/{key}", json=value)
+    async def put_settings_pinned(self, settings: PinnedSettings) -> None:
+        """Update pinned settings"""
+        response = await self.client.put("/settings/pinned", json=settings)
         response.raise_for_status()
 
     @handle_api_errors(RenterdError)
-    async def delete_setting(self, key: str) -> None:
-        """Delete setting for specific key"""
-        response = await self.client.delete(f"/setting/{key}")
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def get_slabs_for_migration(self, request: MigrationSlabsRequest) -> SlabsForMigrationResponse:
-        response = await self.bus_client.post("/slabs/migration", json=request)
+    async def get_settings_s3(self) -> S3Settings:
+        """Get S3 settings"""
+        response = await self.client.get("/settings/s3")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_partial_slab(self, key: EncryptionKey, offset: int, length: int) -> bytes:
-        params = {"offset": offset, "length": length}
-        response = await self.bus_client.get(f"/slabs/partial/{key}", params=params)
+    async def put_settings_s3(self, settings: S3Settings) -> None:
+        """Update S3 settings"""
+        response = await self.client.put("/settings/s3", json=settings)
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def get_settings_upload(self) -> UploadSettings:
+        """Get upload settings"""
+        response = await self.client.get("/settings/upload")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def add_partial_slab(self, data: bytes, min_shards: int, total_shards: int) -> AddPartialSlabResponse:
-        params = {"minshards": min_shards, "totalshards": total_shards}
-        response = await self.bus_client.post("/slabs/partial", data=data, params=params)
+    async def put_settings_upload(self, settings: UploadSettings) -> None:
+        """Update upload settings"""
+        response = await self.client.put("/settings/upload", json=settings)
         response.raise_for_status()
-        return response.json()
 
     # Slab endpoints
     @handle_api_errors(RenterdError)
-    async def get_slab(self, key: EncryptionKey) -> Slab:
-        response = await self.bus_client.get(f"/slab/{key}")
+    async def get_slab(self, key: str) -> Any:
+        """Get slab"""
+        response = await self.client.get(f"/slab/{key}")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_slab_objects(self, key: str) -> SlabObjects:
-        """Get objects associated with a slab"""
-        response = await self.client.get(f"/slab/{key}/objects")
+    async def put_update_slab(self, key: str, request: UpdateSlabRequest) -> None:
+        """Update slab"""
+        response = await self.client.put(f"/slab/{key}", json=request)
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def get_slab_buffers(self) -> List[SlabBuffer]:
+        """Get slab buffers"""
+        response = await self.client.get("/slabbuffers")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def update_slab(self, key: str, sectors: List[UploadedSector]) -> None:
-        """Update a slab"""
-        response = await self.client.put(f"/slab/{key}", json=sectors)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def refresh_health(self) -> None:
-        response = await self.bus_client.post("/slabs/refreshhealth")
-        response.raise_for_status()
-
-    # State endpoint
-    @handle_api_errors(RenterdError)
-    async def get_state(self) -> BusStateResponse:
-        """Get bus state"""
-        response = await self.client.get("/state")
-        response.raise_for_status()
-        return response.json()
-
-    # Stats endpoint
-    @handle_api_errors(RenterdError)
-    async def get_stats_objects(self) -> ObjectsStatsResponse:
-        """Get object statistics"""
-        response = await self.client.get("/stats/objects")
-        response.raise_for_status()
-        return response.json()
-
-    # Syncer endpoints
-    @handle_api_errors(RenterdError)
-    async def get_syncer_address(self) -> str:
-        response = await self.bus_client.get("/syncer/address")
+    async def post_fetch_packed_slabs(self, request: PackedSlabsRequestGET) -> List[PackedSlab]:
+        """Fetch packed slabs"""
+        response = await self.client.post("/slabbuffer/fetch", json=request)
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def post_syncer_connect(self, address: str) -> None:
-        """Connect to peer"""
-        response = await self.client.post("/syncer/connect", json=address)
+    async def post_mark_packed_slabs_uploaded(self, request: PackedSlabsRequestPOST) -> None:
+        """Mark packed slabs as uploaded"""
+        response = await self.client.post("/slabbuffer/done", json=request)
         response.raise_for_status()
 
     @handle_api_errors(RenterdError)
-    async def get_syncer_peers(self) -> List[str]:
-        """Get syncer peers"""
-        response = await self.client.get("/syncer/peers")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def post_txpool_broadcast(self, transactions: List[Transaction]) -> None:
-        """Broadcast transactions"""
-        response = await self.client.post("/txpool/broadcast", json=transactions)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def get_txpool_recommendedfee(self) -> Currency:
-        """Get recommended transaction fee"""
-        response = await self.client.get("/txpool/recommendedfee")
+    async def post_get_slabs_for_migration(self, request: MigrationSlabsRequest) -> SlabsForMigrationResponse:
+        """Get slabs for migration"""
+        response = await self.client.post("/slabs/migration", json=request)
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_txpool_transactions(self) -> List[Transaction]:
-        """Get transaction pool transactions"""
-        response = await self.client.get("/txpool/transactions")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def track_upload(self, upload_id: str) -> None:
-        response = await self.worker_client.post(f"/upload/{upload_id}")
+    async def post_refresh_slabs_health(self) -> None:
+        """Refresh slabs health"""
+        response = await self.client.post("/slabs/refreshhealth")
         response.raise_for_status()
 
+    # Upload endpoints
     @handle_api_errors(RenterdError)
-    async def finish_upload(self, upload_id: str) -> None:
-        response = await self.worker_client.delete(f"/upload/{upload_id}")
+    async def post_track_upload(self, upload_id: str) -> None:
+        """Track upload"""
+        response = await self.client.post(f"/upload/{upload_id}")
         response.raise_for_status()
 
     @handle_api_errors(RenterdError)
-    async def add_upload_sector(self, upload_id: str, roots: List[Hash256]) -> None:
-        response = await self.worker_client.post(f"/upload/{upload_id}/sector", json=roots)
+    async def delete_upload(self, upload_id: str) -> None:
+        """Delete upload"""
+        response = await self.client.delete(f"/upload/{upload_id}")
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def post_add_uploading_sectors(self, upload_id: str, roots: List[str]) -> None:
+        """Add uploading sectors"""
+        response = await self.client.post(f"/upload/{upload_id}/sector", json=roots)
         response.raise_for_status()
 
     # Wallet endpoints
     @handle_api_errors(RenterdError)
     async def get_wallet(self) -> WalletResponse:
-        """Get wallet information"""
+        """Get wallet"""
         response = await self.client.get("/wallet")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_wallet_address(self) -> str:
-        """Get wallet address"""
-        response = await self.client.get("/wallet/address")
+    async def post_send_siacoins(self, request: WalletSendRequest) -> str:
+        """Send siacoins"""
+        response = await self.client.post("/wallet/send", json=request)
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_wallet_balance(self) -> Currency:
-        """Get wallet balance"""
-        response = await self.client.get("/wallet/balance")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def discard_transaction(self, transaction: Transaction) -> None:
-        """Discard a transaction"""
-        response = await self.client.post("/wallet/discard", json=transaction)
-        response.raise_for_status()
-
-    @handle_api_errors(RenterdError)
-    async def fund_wallet(self, request: WalletFundRequest) -> WalletFundResponse:
-        """Fund wallet"""
-        response = await self.client.post("/wallet/fund", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_wallet_outputs(self) -> List[SiacoinElement]:
-        """Get wallet outputs"""
-        response = await self.client.get("/wallet/outputs")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_wallet_pending(self) -> List[Transaction]:
-        """Get pending transactions"""
-        response = await self.client.get("/wallet/pending")
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def prepare_form_contract(self, request: ContractFormRequest) -> RHPFormResponse:
-        """Prepare contract formation"""
-        response = await self.client.post("/wallet/prepare/form", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def prepare_renew_contract(self, request: ContractRenewRequest) -> RHPFormResponse:
-        """Prepare contract renewal"""
-        response = await self.client.post("/wallet/prepare/renew", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def redistribute_wallet(self, amount: Currency, outputs: int) -> List[TransactionID]:
-        """Redistribute wallet funds"""
-        request = {"amount": amount, "outputs": outputs}
+    async def post_redistribute_wallet(self, request: WalletRedistributeRequest) -> List[str]:
+        """Redistribute wallet"""
         response = await self.client.post("/wallet/redistribute", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def sign_transaction(self, request: WalletSignRequest) -> Transaction:
-        """Sign a transaction"""
-        response = await self.client.post("/wallet/sign", json=request)
-        response.raise_for_status()
-        return response.json()
-
-    @handle_api_errors(RenterdError)
-    async def get_wallet_transactions(self) -> List[Transaction]:
-        """Get wallet transactions"""
-        response = await self.client.get("/wallet/transactions")
         response.raise_for_status()
         return response.json()
 
     # Webhook endpoints
     @handle_api_errors(RenterdError)
-    async def get_webhooks(self) -> WebhookResponse:
-        response = await self.bus_client.get("/webhooks")
+    async def get_webhook_info(self) -> WebhookResponse:
+        """Get webhook info"""
+        response = await self.client.get("/webhooks")
         response.raise_for_status()
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def register_webhook(self, webhook: Webhook) -> None:
-        response = await self.bus_client.post("/webhooks", json=webhook)
+    async def post_register_webhook(self, webhook: Webhook) -> None:
+        """Register webhook"""
+        response = await self.client.post("/webhooks", json=webhook)
         response.raise_for_status()
 
     @handle_api_errors(RenterdError)
-    async def delete_webhook(self, webhook: Webhook) -> None:
-        response = await self.bus_client.post("/webhook/delete", json=webhook)
+    async def post_delete_webhook(self, webhook: Webhook) -> None:
+        """Delete webhook"""
+        response = await self.client.post("/webhook/delete", json=webhook)
         response.raise_for_status()
 
     @handle_api_errors(RenterdError)
-    async def broadcast_webhook_action(self, action: Event) -> None:
-        response = await self.bus_client.post("/webhooks/action", json=action)
+    async def post_broadcast_action(self, event: Event) -> None:
+        """Broadcast action"""
+        response = await self.client.post("/webhooks/action", json=event)
+        response.raise_for_status()
+
+    # System endpoints
+    @handle_api_errors(RenterdError)
+    async def post_backup(self, request: BackupRequest) -> None:
+        """Create backup"""
+        response = await self.client.post("/system/sqlite3/backup", json=request)
+        response.raise_for_status()
+
+    # Transaction endpoints
+    @handle_api_errors(RenterdError)
+    async def post_accept_block(self, block: Dict[str, Any]) -> None:
+        """Accept block"""
+        response = await self.client.post("/consensus/acceptblock", json=block)
+        response.raise_for_status()
+
+    @handle_api_errors(RenterdError)
+    async def post_broadcast_transaction(self, txn_set: List[Transaction]) -> None:
+        """Broadcast transaction"""
+        response = await self.client.post("/txpool/broadcast", json=txn_set)
         response.raise_for_status()
