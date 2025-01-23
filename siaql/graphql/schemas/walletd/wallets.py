@@ -11,7 +11,6 @@ from siaql.graphql.schemas.types import (
     Wallet,
     Balance,
     Address,
-    Event,
 )
 from siaql.graphql.schemas.types import (
     WalletUpdateRequest,
@@ -20,9 +19,6 @@ from siaql.graphql.schemas.types import (
     WalletFundRequest,
     WalletEvent,
     WalletFundSFRequest,
-    WalletConstructRequest,
-    WalletConstructResponse,
-    WalletConstructV2Response,
     WalletFundResponse,
 )
 
@@ -52,7 +48,7 @@ class WalletQueries:
         )
 
     @strawberry.field
-    async def wallet_unconfirmed_events(self, info: Info, wallet_id: str) -> List[Event]:
+    async def wallet_unconfirmed_events(self, info: Info, wallet_id: str) -> List[WalletEvent]:
         """Get unconfirmed wallet events"""
         return await WalletdBaseResolver.handle_api_call(info, "get_wallet_unconfirmed_events", wallet_id=wallet_id)
 
@@ -100,7 +96,7 @@ class WalletMutations:
     @strawberry.mutation
     async def add_wallet_address(self, info: Info, wallet_id: str, address: Address) -> bool:
         """Add an address to a wallet"""
-        await WalletdBaseResolver.handle_api_call(info, "put_wallet_address", wallet_id=wallet_id, address=address)
+        await WalletdBaseResolver.handle_api_call(info, "add_wallet_address", wallet_id=wallet_id, address=address)
         return True
 
     @strawberry.mutation
@@ -126,7 +122,9 @@ class WalletMutations:
         return True
 
     @strawberry.mutation
-    async def fund_transaction(self, info: Info, wallet_id: str, request: WalletFundRequest.Input) -> WalletFundResponse:
+    async def fund_transaction(
+        self, info: Info, wallet_id: str, request: WalletFundRequest.Input
+    ) -> WalletFundResponse:
         return await WalletdBaseResolver.handle_api_call(
             info, "post_wallet_fund", wallet_id=wallet_id, fund_request=request
         )
@@ -138,22 +136,4 @@ class WalletMutations:
         """Fund a siafund transaction"""
         return await WalletdBaseResolver.handle_api_call(
             info, "post_wallet_fund_siafund", wallet_id=wallet_id, fund_request=request
-        )
-
-    @strawberry.mutation
-    async def construct_transaction(
-        self, info: Info, wallet_id: str, request: WalletConstructRequest.Input
-    ) -> WalletConstructResponse:
-        """Construct a transaction"""
-        return await WalletdBaseResolver.handle_api_call(
-            info, "post_wallet_construct", wallet_id=wallet_id, construct_request=request
-        )
-
-    @strawberry.mutation
-    async def construct_v2_transaction(
-        self, info: Info, wallet_id: str, request: WalletConstructRequest.Input
-    ) -> WalletConstructV2Response:
-        """Construct a v2 transaction"""
-        return await WalletdBaseResolver.handle_api_call(
-            info, "post_wallet_construct_v2", wallet_id=wallet_id, construct_request=request
         )

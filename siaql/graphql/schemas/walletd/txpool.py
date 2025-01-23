@@ -4,7 +4,7 @@ import strawberry
 from strawberry.types import Info
 from siaql.graphql.resolvers.walletd import WalletdBaseResolver
 from strawberry.scalars import JSON
-from siaql.graphql.schemas.types import Transaction, V2Transaction, ChainIndex, Currency, TxpoolTransactionsResponse
+from siaql.graphql.schemas.types import Transaction, TxpoolBroadcastRequest, V2Transaction, ChainIndex, Currency, TxpoolTransactionsResponse
 
 
 @strawberry.type
@@ -28,7 +28,7 @@ class TxpoolQueries:
 @strawberry.type
 class TxpoolMutations:
     @strawberry.mutation
-    async def txpool_broadcast(self, info: Info, transactions: List[Transaction]) -> bool:
+    async def txpool_broadcast(self, info: Info, req: TxpoolBroadcastRequest) -> bool:
         """Broadcast transactions to network"""
-        await self.handle_api_call(info, "post_txpool_broadcast", transactions=transactions)
+        await self.handle_api_call(info, "post_txpool_broadcast", req=req)
         return True

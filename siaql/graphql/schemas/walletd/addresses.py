@@ -4,7 +4,7 @@ import strawberry
 from datetime import datetime
 from siaql.graphql.resolvers.walletd import WalletdBaseResolver
 from siaql.graphql.schemas.types import (
-    Event,
+    WalletEvent,
     SiacoinElement,     # Changed from types.SiacoinElement to just SiacoinElement
     SiafundElement,     # Changed from types.SiafundElement to just SiafundElement
     BalanceResponse    # Changed from types.UnlockConditions to just UnlockConditions
@@ -32,7 +32,7 @@ class AddressQueries:
         address: str,
         offset: int = 0,
         limit: int = 500
-    ) -> List[Event]:
+    ) -> List[WalletEvent]:
         """Get events for an address"""
 
         return await WalletdBaseResolver.handle_api_call(
@@ -48,7 +48,7 @@ class AddressQueries:
         self, 
         info: Info, 
         address: str
-    ) -> List[Event]:
+    ) -> List[WalletEvent]:
         """Get unconfirmed events for an address"""
         return await WalletdBaseResolver.handle_api_call(
             info,
