@@ -1,164 +1,131 @@
+from typing import Any, Dict, List, Optional
+
 import strawberry
-from typing import List, Optional
 from strawberry.types import Info
+
 from siaql.graphql.resolvers.renterd import RenterdBaseResolver
 from siaql.graphql.schemas.types import (
     Account,
-    MemoryResponse,
-    DownloadStatsResponse,
-    UploadStatsResponse,
-    UploadMultipartUploadPartOptions,
-    UploadMultipartUploadPartResponse,
-    UploadObjectOptions,
-    UploadObjectResponse,
+    ContractsResponse,
     GetObjectResponse,
-    Contract,
-    ContractMetadata,
-    ContractFormRequest,
-    ContractPruneRequest,
-    ContractPruneResponse,
-    ContractRenewRequest,
-    HostScanRequest,
-    HostScanResponse,
-    RHPSyncRequest,
-    RHPFundRequest,
-    MigrationSlabsRequest,
-    SlabsForMigrationResponse,
+    HeadObjectResponse,
+    HostPriceTable,
+    MemoryResponse,
+    MultipartAbortRequest,
+    MultipartAddPartRequest,
+    MultipartCompleteRequest,
+    MultipartCompleteResponse,
+    MultipartCreateRequest,
+    MultipartCreateResponse,
+    RHPPriceTableRequest,
+    RHPScanRequest,
+    RHPScanResponse,
+    Slab,
+    UnhealthySlabsResponse,
+    UploadObjectResponse,
     WorkerStateResponse,
-    DownloadObjectOptions,
 )
-from typing import Dict
 
 
 @strawberry.type
 class WorkerQueries(RenterdBaseResolver):
     @strawberry.field
-    async def account(self, info: Info, host_key: str) -> Account:
-        """Get account for a host"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_account", host_key=host_key)
+    async def worker_state(self, info: Info) -> WorkerStateResponse:
+        """Get the current state of the worker"""
+        return await self.handle_api_call(info, "get_worker_state")
+
+    @strawberry.field
+    async def worker_memory(self, info: Info) -> MemoryResponse:
+        """Get memory statistics"""
+        return await self.handle_api_call(info, "get_worker_memory")
 
     @strawberry.field
     async def worker_id(self, info: Info) -> str:
-        """Get worker ID"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_id")
+        """Get the worker ID"""
+        return await self.handle_api_call(info, "get_worker_id")
 
     @strawberry.field
-    async def memory_state(self, info: Info) -> MemoryResponse:
-        """Get memory state"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_memory_state")
+    async def worker_accounts(self, info: Info) -> List[Account]:
+        """Get all accounts"""
+        return await self.handle_api_call(info, "get_worker_accounts")
 
     @strawberry.field
-    async def download_stats(self, info: Info) -> DownloadStatsResponse:
-        """Get download statistics"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_download_stats")
+    async def worker_account(self, info: Info, host_key: str) -> Account:
+        """Get account for specific host"""
+        return await self.handle_api_call(info, "get_worker_account", host_key=host_key)
 
     @strawberry.field
-    async def upload_stats(self, info: Info) -> UploadStatsResponse:
-        """Get upload statistics"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_upload_stats")
-
-    @strawberry.field
-    async def worker_object(self, info: Info, bucket: str, key: str, opts: DownloadObjectOptions) -> GetObjectResponse:
-        """Get object from worker"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_object", bucket=bucket, key=key, opts=opts)
-
-    @strawberry.field
-    async def rhp_contracts(self, info: Info) -> Dict[str, Contract]:
+    async def worker_contracts(self, info: Info, host_timeout: Optional[int] = None) -> ContractsResponse:
         """Get all contracts"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_rhp_contracts")
+        return await self.handle_api_call(info, "get_worker_contracts", host_timeout=host_timeout)
 
     @strawberry.field
-    async def worker_state(self, info: Info) -> WorkerStateResponse:
-        """Get worker state"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_state")
+    async def worker_object(self, info: Info, bucket: str, path: str, only_metadata: bool = False) -> GetObjectResponse:
+        """Get object data"""
+        return await self.handle_api_call(
+            info, "get_worker_object", bucket=bucket, path=path, only_metadata=only_metadata
+        )
 
 
 @strawberry.type
 class WorkerMutations(RenterdBaseResolver):
     @strawberry.mutation
+    async def rhp_scan(self, info: Info, req: RHPScanRequest) -> RHPScanResponse:
+        """Perform RHP scan"""
+        return await self.handle_api_call(info, "rhp_scan", req=req)
+
+    @strawberry.mutation
+    async def rhp_price_table(self, info: Info, req: RHPPriceTableRequest) -> HostPriceTable:
+        """Get host price table"""
+        return await self.handle_api_call(info, "rhp_price_table", req=req)
+
+    @strawberry.mutation
     async def upload_object(
-        self, info: Info, bucket: str, key: str, data: str, opts: UploadObjectOptions
+        self, info: Info, bucket: str, path: str, data: bytes, options: Dict[str, Any]
     ) -> UploadObjectResponse:
         """Upload an object"""
-        return await RenterdBaseResolver.handle_api_call(
-            info, "upload_object", bucket=bucket, key=key, data=data, opts=opts
-        )
+        return await self.handle_api_call(info, "upload_object", bucket=bucket, path=path, data=data, options=options)
 
     @strawberry.mutation
-    async def delete_object(self, info: Info, bucket: str, key: str) -> bool:
+    async def delete_object(self, info: Info, bucket: str, path: str, batch: bool = False) -> bool:
         """Delete an object"""
-        await RenterdBaseResolver.handle_api_call(info, "delete_object", bucket=bucket, key=key)
+        await self.handle_api_call(info, "delete_worker_object", bucket=bucket, path=path, batch=batch)
         return True
 
     @strawberry.mutation
-    async def upload_multipart_part(
-        self,
-        info: Info,
-        bucket: str,
-        key: str,
-        upload_id: str,
-        part_number: int,
-        opts: UploadMultipartUploadPartOptions,
-    ) -> UploadMultipartUploadPartResponse:
-        """Upload part of multipart upload"""
-        return await RenterdBaseResolver.handle_api_call(
-            info,
-            "upload_multipart_part",
-            bucket=bucket,
-            key=key,
-            upload_id=upload_id,
-            part_number=part_number,
-            opts=opts,
-        )
+    async def head_object(self, info: Info, bucket: str, path: str, ignore_delim: bool = False) -> HeadObjectResponse:
+        """Get object metadata"""
+        return await self.handle_api_call(info, "head_object", bucket=bucket, path=path, ignore_delim=ignore_delim)
 
     @strawberry.mutation
-    async def broadcast_contract(self, info: Info, contract_id: str) -> bool:
-        """Broadcast contract"""
-        await RenterdBaseResolver.handle_api_call(info, "broadcast_contract", contract_id=contract_id)
+    async def multipart_create(self, info: Info, req: MultipartCreateRequest) -> MultipartCreateResponse:
+        """Create multipart upload"""
+        return await self.handle_api_call(info, "multipart_create", req=req)
+
+    @strawberry.mutation
+    async def multipart_abort(self, info: Info, req: MultipartAbortRequest) -> bool:
+        """Abort multipart upload"""
+        await self.handle_api_call(info, "multipart_abort", req=req)
         return True
 
     @strawberry.mutation
-    async def prune_contract(
-        self, info: Info, contract_id: str, request: ContractPruneRequest
-    ) -> ContractPruneResponse:
-        """Prune contract"""
-        return await RenterdBaseResolver.handle_api_call(
-            info, "prune_contract", contract_id=contract_id, request=request
-        )
+    async def multipart_complete(self, info: Info, req: MultipartCompleteRequest) -> MultipartCompleteResponse:
+        """Complete multipart upload"""
+        return await self.handle_api_call(info, "multipart_complete", req=req)
 
     @strawberry.mutation
-    async def get_contract_roots(self, info: Info, contract_id: str) -> List[str]:
-        """Get contract roots"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_contract_roots", contract_id=contract_id)
-
-    @strawberry.mutation
-    async def form_contract(self, info: Info, request: ContractFormRequest) -> ContractMetadata:
-        """Form a new contract"""
-        return await RenterdBaseResolver.handle_api_call(info, "form_contract", request=request)
-
-    @strawberry.mutation
-    async def fund_contract(self, info: Info, request: RHPFundRequest) -> bool:
-        """Fund a contract"""
-        await RenterdBaseResolver.handle_api_call(info, "fund_contract", request=request)
+    async def multipart_upload_part(self, info: Info, req: MultipartAddPartRequest) -> bool:
+        """Upload a part in multipart upload"""
+        await self.handle_api_call(info, "multipart_upload_part", req=req)
         return True
 
     @strawberry.mutation
-    async def renew_contract(self, info: Info, request: ContractRenewRequest) -> ContractMetadata:
-        """Renew a contract"""
-        return await RenterdBaseResolver.handle_api_call(info, "renew_contract", request=request)
-
-    @strawberry.mutation
-    async def scan_host(self, info: Info, request: HostScanRequest) -> HostScanResponse:
-        """Scan a host"""
-        return await RenterdBaseResolver.handle_api_call(info, "scan_host", request=request)
-
-    @strawberry.mutation
-    async def sync_contract(self, info: Info, request: RHPSyncRequest) -> bool:
-        """Sync a contract"""
-        await RenterdBaseResolver.handle_api_call(info, "sync_contract", request=request)
-        return True
-
-    @strawberry.mutation
-    async def migrate_slab(self, info: Info, request: MigrationSlabsRequest) -> SlabsForMigrationResponse:
+    async def migrate_slab(self, info: Info, slab: Slab) -> UnhealthySlabsResponse:
         """Migrate a slab"""
-        return await RenterdBaseResolver.handle_api_call(info, "migrate_slab", request=request)
+        return await self.handle_api_call(info, "migrate_slab", slab=slab)
+
+    @strawberry.mutation
+    async def reset_account_drift(self, info: Info, account_id: str) -> bool:
+        """Reset account drift"""
+        await self.handle_api_call(info, "reset_account_drift", account_id=account_id)
+        return True

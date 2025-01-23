@@ -1,81 +1,79 @@
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from typing import Any, Dict, List, Optional
 
 import strawberry
 from strawberry.types import Info
 
 from siaql.graphql.resolvers.renterd import RenterdBaseResolver
+
 from siaql.graphql.schemas.types import (
     Account,
     AccountsFundRequest,
     AccountsFundResponse,
     AccountsSaveRequest,
+    AddObjectRequest,
     Alert,
     AlertsResponse,
-    AutopilotConfig,
-    AutopilotStateResponse,
-    AutopilotTriggerRequest,
-    AutopilotTriggerResponse,
-    BackupRequest,
+    ArchivedContract,
+    Autopilot,
+    Block,
     Bucket,
     BucketCreateRequest,
-    BucketUpdatePolicyRequest,
-    BusStateResponse,
-    ConfigEvaluationRequest,
-    ConfigEvaluationResponse,
+    BucketPolicy,
     ConsensusState,
     ContractAcquireRequest,
     ContractAcquireResponse,
+    ContractAddRequest,
     ContractFormRequest,
     ContractKeepaliveRequest,
     ContractMetadata,
     ContractPruneRequest,
     ContractPruneResponse,
-    ContractReleaseRequest,
+    ContractRenewedRequest,
     ContractRenewRequest,
     ContractsArchiveRequest,
+    ContractSetUpdateRequest,
     ContractSize,
-    ContractsOpts,
     ContractSpendingRecord,
     ContractsPrunableDataResponse,
+    CopyObjectsRequest,
+    Currency,
     Event,
-    GougingSettings,
+    FileContractID,
+    GougingParams,
+    Hash256,
     Host,
-    HostChecks,
-    HostOptions,
-    HostScanRequest,
-    HostScanResponse,
-    MigrationSlabsRequest,
+    HostAddress,
+    HostCheck,
+    HostsPriceTablesRequest,
+    HostsScanRequest,
     MultipartAbortRequest,
     MultipartAddPartRequest,
     MultipartCompleteRequest,
     MultipartCompleteResponse,
     MultipartCreateRequest,
     MultipartCreateResponse,
-    MultipartListPartsRequest,
-    MultipartListPartsResponse,
-    MultipartListUploadsRequest,
-    MultipartListUploadsResponse,
     MultipartUpload,
     Network,
     Object,
-    ObjectsRemoveRequest,
+    ObjectMetadata,
+    ObjectsListRequest,
+    ObjectsListResponse,
     ObjectsRenameRequest,
-    ObjectsResponse,
-    ObjectsStatsOpts,
     ObjectsStatsResponse,
     PackedSlab,
     PackedSlabsRequestGET,
     PackedSlabsRequestPOST,
-    PinnedSettings,
-    S3Settings,
+    PublicKey,
+    SearchHostsRequest,
+    SiacoinElement,
+    Slab,
     SlabBuffer,
-    SlabsForMigrationResponse,
     Transaction,
+    TransactionID,
+    UnhealthySlabsResponse,
     UpdateAllowlistRequest,
     UpdateBlocklistRequest,
-    UpdateSlabRequest,
     UploadParams,
-    UploadSettings,
     WalletRedistributeRequest,
     WalletResponse,
     WalletSendRequest,
@@ -87,26 +85,34 @@ from siaql.graphql.schemas.types import (
 @strawberry.type
 class BusQueries(RenterdBaseResolver):
     @strawberry.field
-    async def accounts(self, info: Info, owner: str) -> List[Account]:
+    async def accounts(self, info: Info, owner: Optional[str] = None) -> List[Account]:
         return await self.handle_api_call(info, "get_accounts", owner=owner)
 
     @strawberry.field
-    async def alerts(
-        self, info: Info, severity: Optional[str] = None, offset: Optional[int] = None, limit: Optional[int] = None
-    ) -> AlertsResponse:
-        return await self.handle_api_call(info, "get_alerts", severity=severity, offset=offset, limit=limit)
+    async def alerts(self, info: Info, offset: int = 0, limit: int = -1) -> AlertsResponse:
+        return await self.handle_api_call(info, "get_alerts", offset=offset, limit=limit)
 
     @strawberry.field
-    async def autopilot_config(self, info: Info) -> AutopilotConfig:
-        return await self.handle_api_call(info, "get_autopilot_config")
+    async def autopilot(self, info: Info, id: str) -> Autopilot:
+        return await self.handle_api_call(info, "get_autopilot", id=id)
 
     @strawberry.field
-    async def autopilot_state(self, info: Info) -> AutopilotStateResponse:
-        return await self.handle_api_call(info, "get_autopilot_state")
+    async def autopilot_host_check(self, info: Info, autopilot_id: str, host_key: PublicKey) -> HostCheck:
+        return await self.handle_api_call(
+            info, "get_autopilot_host_check", autopilot_id=autopilot_id, host_key=host_key
+        )
 
     @strawberry.field
-    async def bus_state(self, info: Info) -> BusStateResponse:
-        return await self.handle_api_call(info, "get_bus_state")
+    async def consensus_network(self, info: Info) -> Network:
+        return await self.handle_api_call(info, "get_consensus_network")
+
+    @strawberry.field
+    async def multipart_upload(self, info: Info, id: str) -> MultipartUpload:
+        return await self.handle_api_call(info, "get_multipart_upload", id=id)
+
+    @strawberry.field
+    async def autopilots(self, info: Info) -> List[Autopilot]:
+        return await self.handle_api_call(info, "get_autopilots")
 
     @strawberry.field
     async def buckets(self, info: Info) -> List[Bucket]:
@@ -121,94 +127,46 @@ class BusQueries(RenterdBaseResolver):
         return await self.handle_api_call(info, "get_consensus_state")
 
     @strawberry.field
-    async def consensus_network(self, info: Info) -> Network:
-        return await self.handle_api_call(info, "get_consensus_network")
+    async def contracts(self, info: Info, contract_set: Optional[str] = None) -> List[ContractMetadata]:
+        return await self.handle_api_call(info, "get_contracts", contract_set=contract_set)
 
     @strawberry.field
-    async def contract_size(self, info: Info, contract_id: str) -> ContractSize:
-        return await self.handle_api_call(info, "get_contract_size", contract_id=contract_id)
-
-    @strawberry.field
-    async def contracts(self, info: Info, opts: Optional[ContractsOpts] = None) -> List[ContractMetadata]:
-        return await self.handle_api_call(info, "get_contracts", opts=opts)
-
-    @strawberry.field
-    async def contract(self, info: Info, id: str) -> ContractMetadata:
+    async def contract(self, info: Info, id: FileContractID) -> ContractMetadata:
         return await self.handle_api_call(info, "get_contract", id=id)
 
     @strawberry.field
-    async def contracts_prunable_data(self, info: Info) -> ContractsPrunableDataResponse:
-        return await self.handle_api_call(info, "get_contracts_prunable_data")
+    async def contract_size(self, info: Info, id: FileContractID) -> ContractSize:
+        return await self.handle_api_call(info, "get_contract_size", id=id)
 
     @strawberry.field
-    async def contract_roots(self, info: Info, contract_id: str) -> List[str]:
-        return await self.handle_api_call(info, "get_contract_roots", contract_id=contract_id)
+    async def hosts_allowlist(self, info: Info) -> List[PublicKey]:
+        return await self.handle_api_call(info, "get_hosts_allowlist")
 
     @strawberry.field
-    async def contract_ancestors(self, info: Info, contract_id: str, min_start_height: int) -> List[ContractMetadata]:
-        return await self.handle_api_call(
-            info, "get_contract_ancestors", contract_id=contract_id, min_start_height=min_start_height
-        )
+    async def hosts_blocklist(self, info: Info) -> List[str]:
+        return await self.handle_api_call(info, "get_hosts_blocklist")
 
     @strawberry.field
-    async def hosts(self, info: Info, opts: Optional[HostOptions] = None) -> List[Host]:
-        return await self.handle_api_call(info, "get_hosts", opts=opts)
+    async def host(self, info: Info, public_key: PublicKey) -> Host:
+        return await self.handle_api_call(info, "get_host", public_key=public_key)
 
     @strawberry.field
-    async def host(self, info: Info, pubkey: str) -> Host:
-        return await self.handle_api_call(info, "get_host", pubkey=pubkey)
+    async def search_hosts(self, info: Info, req: SearchHostsRequest) -> List[Host]:
+        return await self.handle_api_call(info, "search_hosts", req=req)
 
     @strawberry.field
-    async def host_allowlist(self, info: Info) -> List[str]:
-        return await self.handle_api_call(info, "get_host_allowlist")
+    async def object(self, info: Info, path: str, bucket: Optional[str] = None, only_metadata: bool = False) -> Object:
+        return await self.handle_api_call(info, "get_object", path=path, bucket=bucket, only_metadata=only_metadata)
 
     @strawberry.field
-    async def host_blocklist(self, info: Info) -> List[str]:
-        return await self.handle_api_call(info, "get_host_blocklist")
+    async def search_objects(
+        self, info: Info, key: str, bucket: str = "default", offset: int = 0, limit: int = -1
+    ) -> List[ObjectMetadata]:
+        return await self.handle_api_call(info, "search_objects", key=key, bucket=bucket, offset=offset, limit=limit)
 
     @strawberry.field
-    async def multipart_upload(self, info: Info, upload_id: str) -> MultipartUpload:
-        return await self.handle_api_call(info, "get_multipart_upload", upload_id=upload_id)
-
-    @strawberry.field
-    async def object(self, info: Info, bucket: str, key: str, only_metadata: bool = False) -> Object:
-        return await self.handle_api_call(info, "get_object", bucket=bucket, key=key, only_metadata=only_metadata)
-
-    @strawberry.field
-    async def objects(self, info: Info, prefix: str, opts: Dict[str, Any]) -> ObjectsResponse:
-        return await self.handle_api_call(info, "get_objects", prefix=prefix, opts=opts)
-
-    @strawberry.field
-    async def objects_stats(self, info: Info, opts: Optional[ObjectsStatsOpts] = None) -> ObjectsStatsResponse:
-        return await self.handle_api_call(info, "get_objects_stats", opts=opts)
-
-    @strawberry.field
-    async def params_gouging(self, info: Info) -> GougingSettings:
-        return await self.handle_api_call(info, "get_params_gouging")
-
-    @strawberry.field
-    async def params_upload(self, info: Info) -> UploadParams:
-        return await self.handle_api_call(info, "get_params_upload")
-
-    @strawberry.field
-    async def settings_gouging(self, info: Info) -> GougingSettings:
-        return await self.handle_api_call(info, "get_settings_gouging")
-
-    @strawberry.field
-    async def settings_pinned(self, info: Info) -> PinnedSettings:
-        return await self.handle_api_call(info, "get_settings_pinned")
-
-    @strawberry.field
-    async def settings_s3(self, info: Info) -> S3Settings:
-        return await self.handle_api_call(info, "get_settings_s3")
-
-    @strawberry.field
-    async def settings_upload(self, info: Info) -> UploadSettings:
-        return await self.handle_api_call(info, "get_settings_upload")
-
-    @strawberry.field
-    async def slab(self, info: Info, key: str) -> Any:
-        return await self.handle_api_call(info, "get_slab", key=key)
+    async def objects_stats(self, info: Info) -> ObjectsStatsResponse:
+        return await self.handle_api_call(info, "get_objects_stats")
 
     @strawberry.field
     async def slab_buffers(self, info: Info) -> List[SlabBuffer]:
@@ -219,47 +177,136 @@ class BusQueries(RenterdBaseResolver):
         return await self.handle_api_call(info, "get_wallet")
 
     @strawberry.field
-    async def webhook_info(self, info: Info) -> WebhookResponse:
-        return await self.handle_api_call(info, "get_webhook_info")
+    async def webhooks(self, info: Info) -> WebhookResponse:
+        return await self.handle_api_call(info, "get_webhooks")
+
+    @strawberry.field
+    async def gouging_params(self, info: Info) -> GougingParams:
+        return await self.handle_api_call(info, "get_gouging_params")
+
+    @strawberry.field
+    async def upload_params(self, info: Info) -> UploadParams:
+        return await self.handle_api_call(info, "get_upload_params")
+
+    @strawberry.field
+    async def consensus_siafund_fee(self, info: Info, payout: Currency) -> Currency:
+        return await self.handle_api_call(info, "get_consensus_siafund_fee", payout=payout)
+
+    @strawberry.field
+    async def contract_sets(self, info: Info) -> List[str]:
+        return await self.handle_api_call(info, "get_contract_sets")
+
+    @strawberry.field
+    async def contract_roots(self, info: Info, id: FileContractID) -> List[Hash256]:
+        return await self.handle_api_call(info, "get_contract_roots", id=id)
+
+    @strawberry.field
+    async def contract_ancestors(self, info: Info, id: FileContractID, min_start_height: int) -> List[ArchivedContract]:
+        return await self.handle_api_call(info, "get_contract_ancestors", id=id, min_start_height=min_start_height)
+
+    @strawberry.field
+    async def contracts_prunable(self, info: Info) -> ContractsPrunableDataResponse:
+        return await self.handle_api_call(info, "get_contracts_prunable")
+
+    @strawberry.field
+    async def hosts_scanning(
+        self, info: Info, last_scan: Optional[str] = None, offset: int = 0, limit: int = -1
+    ) -> List[HostAddress]:
+        return await self.handle_api_call(info, "get_hosts_scanning", last_scan=last_scan, offset=offset, limit=limit)
+
+    @strawberry.field
+    async def metric(
+        self, info: Info, key: str, start: str, n: int, interval: str
+    ) -> Any:  # Response type varies based on metric type
+        return await self.handle_api_call(info, "get_metric", key=key, start=start, n=n, interval=interval)
+
+    @strawberry.field
+    async def settings(self, info: Info) -> List[str]:
+        return await self.handle_api_call(info, "get_settings")
+
+    @strawberry.field
+    async def setting(self, info: Info, key: str) -> str:
+        return await self.handle_api_call(info, "get_setting", key=key)
+
+    @strawberry.field
+    async def slab(self, info: Info, key: str) -> Slab:
+        return await self.handle_api_call(info, "get_slab", key=key)
+
+    @strawberry.field
+    async def slab_objects(self, info: Info, key: str) -> List[ObjectMetadata]:
+        return await self.handle_api_call(info, "get_slab_objects", key=key)
+
+    @strawberry.field
+    async def slabs_partial(self, info: Info, key: str, offset: int, length: int) -> bytes:
+        return await self.handle_api_call(info, "get_slabs_partial", key=key, offset=offset, length=length)
+
+    @strawberry.field
+    async def syncer_address(self, info: Info) -> str:
+        return await self.handle_api_call(info, "get_syncer_address")
+
+    @strawberry.field
+    async def syncer_peers(self, info: Info) -> List[str]:
+        return await self.handle_api_call(info, "get_syncer_peers")
+
+    @strawberry.field
+    async def txpool_recommended_fee(self, info: Info) -> Currency:
+        return await self.handle_api_call(info, "get_txpool_recommended_fee")
+
+    @strawberry.field
+    async def txpool_transactions(self, info: Info) -> List[Transaction]:
+        return await self.handle_api_call(info, "get_txpool_transactions")
+
+    @strawberry.field
+    async def wallet_outputs(self, info: Info) -> List[SiacoinElement]:
+        return await self.handle_api_call(info, "get_wallet_outputs")
+
+    @strawberry.field
+    async def wallet_pending(self, info: Info) -> List[Transaction]:
+        return await self.handle_api_call(info, "get_wallet_pending")
+
+    @strawberry.field
+    async def wallet_transactions(self, info: Info, offset: int = 0, limit: int = -1) -> List[Transaction]:
+        return await self.handle_api_call(info, "get_wallet_transactions", offset=offset, limit=limit)
 
 
 @strawberry.type
 class BusMutations(RenterdBaseResolver):
     @strawberry.mutation
-    async def fund_account(self, info: Info, request: AccountsFundRequest) -> AccountsFundResponse:
-        return await self.handle_api_call(info, "post_fund_account", request=request)
+    async def update_autopilot_host_check(
+        self, info: Info, autopilot_id: str, host_key: PublicKey, check: HostCheck
+    ) -> bool:
+        await self.handle_api_call(
+            info, "update_autopilot_host_check", autopilot_id=autopilot_id, host_key=host_key, check=check
+        )
+        return True
 
     @strawberry.mutation
-    async def save_accounts(self, info: Info, request: AccountsSaveRequest) -> bool:
-        await self.handle_api_call(info, "post_save_accounts", request=request)
+    async def fund_account(self, info: Info, req: AccountsFundRequest) -> AccountsFundResponse:
+        return await self.handle_api_call(info, "fund_account", req=req)
+
+    @strawberry.mutation
+    async def save_accounts(self, info: Info, req: AccountsSaveRequest) -> bool:
+        await self.handle_api_call(info, "save_accounts", req=req)
+        return True
+
+    @strawberry.mutation
+    async def dismiss_alerts(self, info: Info, ids: List[Hash256]) -> bool:
+        await self.handle_api_call(info, "dismiss_alerts", ids=ids)
         return True
 
     @strawberry.mutation
     async def register_alert(self, info: Info, alert: Alert) -> bool:
-        await self.handle_api_call(info, "post_register_alert", alert=alert)
+        await self.handle_api_call(info, "register_alert", alert=alert)
         return True
 
     @strawberry.mutation
-    async def dismiss_alerts(self, info: Info, ids: List[str]) -> bool:
-        await self.handle_api_call(info, "post_dismiss_alerts", ids=ids)
+    async def update_autopilot(self, info: Info, id: str, autopilot: Autopilot) -> bool:
+        await self.handle_api_call(info, "update_autopilot", id=id, autopilot=autopilot)
         return True
 
     @strawberry.mutation
-    async def trigger_autopilot(self, info: Info, request: AutopilotTriggerRequest) -> AutopilotTriggerResponse:
-        return await self.handle_api_call(info, "post_trigger_autopilot", request=request)
-
-    @strawberry.mutation
-    async def evaluate_config(self, info: Info, request: ConfigEvaluationRequest) -> ConfigEvaluationResponse:
-        return await self.handle_api_call(info, "post_evaluate_config", request=request)
-
-    @strawberry.mutation
-    async def create_bucket(self, info: Info, request: BucketCreateRequest) -> bool:
-        await self.handle_api_call(info, "post_create_bucket", request=request)
-        return True
-
-    @strawberry.mutation
-    async def update_bucket_policy(self, info: Info, name: str, request: BucketUpdatePolicyRequest) -> bool:
-        await self.handle_api_call(info, "put_bucket_policy", name=name, request=request)
+    async def create_bucket(self, info: Info, req: BucketCreateRequest) -> bool:
+        await self.handle_api_call(info, "create_bucket", req=req)
         return True
 
     @strawberry.mutation
@@ -268,225 +315,281 @@ class BusMutations(RenterdBaseResolver):
         return True
 
     @strawberry.mutation
-    async def create_multipart_upload(self, info: Info, request: MultipartCreateRequest) -> MultipartCreateResponse:
-        return await self.handle_api_call(info, "post_create_multipart_upload", request=request)
-
-    @strawberry.mutation
-    async def complete_multipart_upload(
-        self, info: Info, request: MultipartCompleteRequest
-    ) -> MultipartCompleteResponse:
-        return await self.handle_api_call(info, "post_complete_multipart_upload", request=request)
-
-    @strawberry.mutation
-    async def abort_multipart_upload(self, info: Info, request: MultipartAbortRequest) -> bool:
-        await self.handle_api_call(info, "post_abort_multipart_upload", request=request)
+    async def update_contract_set(self, info: Info, set_name: str, req: ContractSetUpdateRequest) -> bool:
+        await self.handle_api_call(info, "update_contract_set", set_name=set_name, req=req)
         return True
 
     @strawberry.mutation
-    async def add_multipart_part(self, info: Info, request: MultipartAddPartRequest) -> bool:
-        await self.handle_api_call(info, "put_add_multipart_part", request=request)
+    async def delete_contract_set(self, info: Info, set_name: str) -> bool:
+        await self.handle_api_call(info, "delete_contract_set", set_name=set_name)
         return True
-
-    @strawberry.mutation
-    async def list_multipart_uploads(
-        self, info: Info, request: MultipartListUploadsRequest
-    ) -> MultipartListUploadsResponse:
-        return await self.handle_api_call(info, "post_list_multipart_uploads", request=request)
-
-    @strawberry.mutation
-    async def list_multipart_parts(self, info: Info, request: MultipartListPartsRequest) -> MultipartListPartsResponse:
-        return await self.handle_api_call(info, "post_list_multipart_parts", request=request)
-
-    @strawberry.mutation
-    async def archive_contracts(self, info: Info, request: ContractsArchiveRequest) -> bool:
-        await self.handle_api_call(info, "post_archive_contracts", request=request)
-        return True
-
-    @strawberry.mutation
-    async def delete_all_contracts(self, info: Info) -> bool:
-        await self.handle_api_call(info, "delete_all_contracts")
-        return True
-
-    @strawberry.mutation
-    async def form_contract(self, info: Info, request: ContractFormRequest) -> ContractMetadata:
-        return await self.handle_api_call(info, "post_form_contract", request=request)
-
-    @strawberry.mutation
-    async def broadcast_contract(self, info: Info, contract_id: str) -> str:
-        return await self.handle_api_call(info, "post_broadcast_contract", contract_id=contract_id)
-
-    @strawberry.mutation
-    async def renew_contract(self, info: Info, contract_id: str, request: ContractRenewRequest) -> ContractMetadata:
-        return await self.handle_api_call(info, "post_renew_contract", contract_id=contract_id, request=request)
 
     @strawberry.mutation
     async def acquire_contract(
-        self, info: Info, contract_id: str, request: ContractAcquireRequest
+        self, info: Info, id: FileContractID, req: ContractAcquireRequest
     ) -> ContractAcquireResponse:
-        return await self.handle_api_call(info, "post_acquire_contract", contract_id=contract_id, request=request)
+        return await self.handle_api_call(info, "acquire_contract", id=id, req=req)
 
     @strawberry.mutation
-    async def keepalive_contract(self, info: Info, contract_id: str, request: ContractKeepaliveRequest) -> bool:
-        await self.handle_api_call(info, "post_keepalive_contract", contract_id=contract_id, request=request)
+    async def keepalive_contract(self, info: Info, id: FileContractID, req: ContractKeepaliveRequest) -> bool:
+        await self.handle_api_call(info, "keepalive_contract", id=id, req=req)
         return True
 
     @strawberry.mutation
-    async def prune_contract(
-        self, info: Info, contract_id: str, request: ContractPruneRequest
-    ) -> ContractPruneResponse:
-        return await self.handle_api_call(info, "post_prune_contract", contract_id=contract_id, request=request)
-
-    @strawberry.mutation
-    async def release_contract(self, info: Info, contract_id: str, request: ContractReleaseRequest) -> bool:
-        await self.handle_api_call(info, "post_release_contract", contract_id=contract_id, request=request)
+    async def release_contract(self, info: Info, id: FileContractID, lock_id: int) -> bool:
+        await self.handle_api_call(info, "release_contract", id=id, lock_id=lock_id)
         return True
 
     @strawberry.mutation
-    async def update_contract_usability(self, info: Info, contract_id: str, usability: str) -> bool:
-        await self.handle_api_call(info, "put_contract_usability", contract_id=contract_id, usability=usability)
-        return True
+    async def prune_contract(self, info: Info, id: FileContractID, req: ContractPruneRequest) -> ContractPruneResponse:
+        return await self.handle_api_call(info, "prune_contract", id=id, req=req)
 
     @strawberry.mutation
-    async def delete_contract(self, info: Info, contract_id: str) -> bool:
-        await self.handle_api_call(info, "delete_contract", contract_id=contract_id)
-        return True
+    async def renew_contract(self, info: Info, id: FileContractID, req: ContractRenewRequest) -> ContractMetadata:
+        return await self.handle_api_call(info, "renew_contract", id=id, req=req)
 
     @strawberry.mutation
-    async def scan_host(self, info: Info, hostkey: str, request: HostScanRequest) -> HostScanResponse:
-        return await self.handle_api_call(info, "post_scan_host", hostkey=hostkey, request=request)
+    async def add_renewed_contract(
+        self, info: Info, id: FileContractID, req: ContractRenewedRequest
+    ) -> ContractMetadata:
+        return await self.handle_api_call(info, "add_renewed_contract", id=id, req=req)
 
     @strawberry.mutation
-    async def reset_lost_sectors(self, info: Info, hostkey: str) -> bool:
-        await self.handle_api_call(info, "post_reset_lost_sectors", hostkey=hostkey)
-        return True
+    async def add_contract(self, info: Info, id: FileContractID, req: ContractAddRequest) -> ContractMetadata:
+        return await self.handle_api_call(info, "add_contract", id=id, req=req)
 
     @strawberry.mutation
-    async def update_host_check(self, info: Info, hostkey: str, check: HostChecks) -> bool:
-        await self.handle_api_call(info, "put_host_check", hostkey=hostkey, check=check)
-        return True
-
-    @strawberry.mutation
-    async def update_allowlist(self, info: Info, request: UpdateAllowlistRequest) -> bool:
-        await self.handle_api_call(info, "put_update_allowlist", request=request)
-        return True
-
-    @strawberry.mutation
-    async def update_blocklist(self, info: Info, request: UpdateBlocklistRequest) -> bool:
-        await self.handle_api_call(info, "put_update_blocklist", request=request)
-        return True
-
-    @strawberry.mutation
-    async def remove_objects(self, info: Info, request: ObjectsRemoveRequest) -> bool:
-        await self.handle_api_call(info, "post_remove_objects", request=request)
-        return True
-
-    @strawberry.mutation
-    async def rename_objects(self, info: Info, request: ObjectsRenameRequest) -> bool:
-        await self.handle_api_call(info, "post_rename_objects", request=request)
-        return True
-
-    @strawberry.mutation
-    async def delete_object(self, info: Info, bucket: str, key: str) -> bool:
-        await self.handle_api_call(info, "delete_object", bucket=bucket, key=key)
-        return True
-
-    @strawberry.mutation
-    async def update_settings_gouging(self, info: Info, settings: GougingSettings) -> bool:
-        await self.handle_api_call(info, "put_settings_gouging", settings=settings)
-        return True
-
-    @strawberry.mutation
-    async def update_settings_pinned(self, info: Info, settings: PinnedSettings) -> bool:
-        await self.handle_api_call(info, "put_settings_pinned", settings=settings)
-        return True
-
-    @strawberry.mutation
-    async def update_settings_s3(self, info: Info, settings: S3Settings) -> bool:
-        await self.handle_api_call(info, "put_settings_s3", settings=settings)
-        return True
-
-    @strawberry.mutation
-    async def update_settings_upload(self, info: Info, settings: UploadSettings) -> bool:
-        await self.handle_api_call(info, "put_settings_upload", settings=settings)
-        return True
-
-    @strawberry.mutation
-    async def fetch_packed_slabs(self, info: Info, request: PackedSlabsRequestGET) -> List[PackedSlab]:
-        return await self.handle_api_call(info, "post_fetch_packed_slabs", request=request)
-
-    @strawberry.mutation
-    async def mark_packed_slabs_uploaded(self, info: Info, request: PackedSlabsRequestPOST) -> bool:
-        await self.handle_api_call(info, "post_mark_packed_slabs_uploaded", request=request)
-        return True
-
-    @strawberry.mutation
-    async def get_slabs_for_migration(self, info: Info, request: MigrationSlabsRequest) -> SlabsForMigrationResponse:
-        return await self.handle_api_call(info, "post_get_slabs_for_migration", request=request)
-
-    @strawberry.mutation
-    async def refresh_slabs_health(self, info: Info) -> bool:
-        await self.handle_api_call(info, "post_refresh_slabs_health")
-        return True
-
-    @strawberry.mutation
-    async def update_slab(self, info: Info, key: str, request: UpdateSlabRequest) -> bool:
-        await self.handle_api_call(info, "put_update_slab", key=key, request=request)
-        return True
-
-    @strawberry.mutation
-    async def track_upload(self, info: Info, upload_id: str) -> bool:
-        await self.handle_api_call(info, "post_track_upload", upload_id=upload_id)
-        return True
-
-    @strawberry.mutation
-    async def finish_upload(self, info: Info, upload_id: str) -> bool:
-        await self.handle_api_call(info, "delete_upload", upload_id=upload_id)
-        return True
-
-    @strawberry.mutation
-    async def add_uploading_sectors(self, info: Info, upload_id: str, roots: List[str]) -> bool:
-        await self.handle_api_call(info, "post_add_uploading_sectors", upload_id=upload_id, roots=roots)
-        return True
-
-    @strawberry.mutation
-    async def send_siacoins(self, info: Info, request: WalletSendRequest) -> str:
-        return await self.handle_api_call(info, "post_send_siacoins", request=request)
-
-    @strawberry.mutation
-    async def redistribute_wallet(self, info: Info, request: WalletRedistributeRequest) -> List[str]:
-        return await self.handle_api_call(info, "post_redistribute_wallet", request=request)
-
-    @strawberry.mutation
-    async def broadcast_action(self, info: Info, event: Event) -> bool:
-        await self.handle_api_call(info, "post_broadcast_action", event=event)
-        return True
-
-    @strawberry.mutation
-    async def register_webhook(self, info: Info, webhook: Webhook) -> bool:
-        await self.handle_api_call(info, "post_register_webhook", webhook=webhook)
-        return True
-
-    @strawberry.mutation
-    async def delete_webhook(self, info: Info, webhook: Webhook) -> bool:
-        await self.handle_api_call(info, "post_delete_webhook", webhook=webhook)
-        return True
-
-    @strawberry.mutation
-    async def backup(self, info: Info, request: BackupRequest) -> bool:
-        await self.handle_api_call(info, "post_backup", request=request)
+    async def archive_contracts(self, info: Info, req: ContractsArchiveRequest) -> bool:
+        await self.handle_api_call(info, "archive_contracts", req=req)
         return True
 
     @strawberry.mutation
     async def record_contract_spending(self, info: Info, records: List[ContractSpendingRecord]) -> bool:
-        await self.handle_api_call(info, "post_record_contract_spending", records=records)
+        await self.handle_api_call(info, "record_contract_spending", records=records)
         return True
 
     @strawberry.mutation
-    async def accept_block(self, info: Info, block: Dict[str, Any]) -> bool:
-        await self.handle_api_call(info, "post_accept_block", block=block)
+    async def update_hosts_allowlist(self, info: Info, req: UpdateAllowlistRequest) -> bool:
+        await self.handle_api_call(info, "update_hosts_allowlist", req=req)
         return True
 
     @strawberry.mutation
-    async def broadcast_transaction(self, info: Info, txn_set: List[Transaction]) -> bool:
-        await self.handle_api_call(info, "post_broadcast_transaction", txn_set=txn_set)
+    async def update_hosts_blocklist(self, info: Info, req: UpdateBlocklistRequest) -> bool:
+        await self.handle_api_call(info, "update_hosts_blocklist", req=req)
+        return True
+
+    @strawberry.mutation
+    async def record_hosts_scan(self, info: Info, req: HostsScanRequest) -> bool:
+        await self.handle_api_call(info, "record_hosts_scan", req=req)
+        return True
+
+    @strawberry.mutation
+    async def record_price_tables(self, info: Info, req: HostsPriceTablesRequest) -> bool:
+        await self.handle_api_call(info, "record_price_tables", req=req)
+        return True
+
+    @strawberry.mutation
+    async def add_object(self, info: Info, path: str, req: AddObjectRequest) -> bool:
+        await self.handle_api_call(info, "add_object", path=path, req=req)
+        return True
+
+    @strawberry.mutation
+    async def copy_object(self, info: Info, req: CopyObjectsRequest) -> ObjectMetadata:
+        return await self.handle_api_call(info, "copy_object", req=req)
+
+    @strawberry.mutation
+    async def delete_object(self, info: Info, path: str, bucket: Optional[str] = None, batch: bool = False) -> bool:
+        await self.handle_api_call(info, "delete_object", path=path, bucket=bucket, batch=batch)
+        return True
+
+    @strawberry.mutation
+    async def rename_object(self, info: Info, req: ObjectsRenameRequest) -> bool:
+        await self.handle_api_call(info, "rename_object", req=req)
+        return True
+
+    @strawberry.mutation
+    async def list_objects(self, info: Info, req: ObjectsListRequest) -> ObjectsListResponse:
+        return await self.handle_api_call(info, "list_objects", req=req)
+
+    @strawberry.mutation
+    async def create_multipart_upload(self, info: Info, req: MultipartCreateRequest) -> MultipartCreateResponse:
+        return await self.handle_api_call(info, "create_multipart_upload", req=req)
+
+    @strawberry.mutation
+    async def abort_multipart_upload(self, info: Info, req: MultipartAbortRequest) -> bool:
+        await self.handle_api_call(info, "abort_multipart_upload", req=req)
+        return True
+
+    @strawberry.mutation
+    async def complete_multipart_upload(self, info: Info, req: MultipartCompleteRequest) -> MultipartCompleteResponse:
+        return await self.handle_api_call(info, "complete_multipart_upload", req=req)
+
+    @strawberry.mutation
+    async def add_multipart_part(self, info: Info, req: MultipartAddPartRequest) -> bool:
+        await self.handle_api_call(info, "add_multipart_part", req=req)
+        return True
+
+    @strawberry.mutation
+    async def form_contract(self, info: Info, req: ContractFormRequest) -> ContractMetadata:
+        return await self.handle_api_call(info, "form_contract", req=req)
+
+    @strawberry.mutation
+    async def fetch_packed_slabs(self, info: Info, req: PackedSlabsRequestGET) -> List[PackedSlab]:
+        return await self.handle_api_call(info, "fetch_packed_slabs", req=req)
+
+    @strawberry.mutation
+    async def mark_packed_slabs_uploaded(self, info: Info, req: PackedSlabsRequestPOST) -> bool:
+        await self.handle_api_call(info, "mark_packed_slabs_uploaded", req=req)
+        return True
+
+    @strawberry.mutation
+    async def delete_host_sector(self, info: Info, host_key: PublicKey, root: Hash256) -> int:
+        return await self.handle_api_call(info, "delete_host_sector", host_key=host_key, root=root)
+
+    @strawberry.mutation
+    async def wallet_fund(
+        self, info: Info, transaction: Transaction, amount: Currency, use_unconfirmed: bool = False
+    ) -> Transaction:
+        return await self.handle_api_call(
+            info, "wallet_fund", transaction=transaction, amount=amount, use_unconfirmed=use_unconfirmed
+        )
+
+    @strawberry.mutation
+    async def wallet_redistribute(self, info: Info, req: WalletRedistributeRequest) -> List[FileContractID]:
+        return await self.handle_api_call(info, "wallet_redistribute", req=req)
+
+    @strawberry.mutation
+    async def wallet_send_siacoins(self, info: Info, req: WalletSendRequest) -> FileContractID:
+        return await self.handle_api_call(info, "wallet_send_siacoins", req=req)
+
+    @strawberry.mutation
+    async def wallet_sign_transaction(
+        self, info: Info, transaction: Transaction, to_sign: List[Hash256], covered_fields: Dict
+    ) -> Transaction:
+        return await self.handle_api_call(
+            info, "wallet_sign_transaction", transaction=transaction, to_sign=to_sign, covered_fields=covered_fields
+        )
+
+    @strawberry.mutation
+    async def wallet_discard_transaction(self, info: Info, transaction: Transaction) -> bool:
+        await self.handle_api_call(info, "wallet_discard_transaction", transaction=transaction)
+        return True
+
+    @strawberry.mutation
+    async def register_webhook(self, info: Info, webhook: Webhook) -> bool:
+        await self.handle_api_call(info, "register_webhook", webhook=webhook)
+        return True
+
+    @strawberry.mutation
+    async def delete_webhook(self, info: Info, webhook: Webhook) -> bool:
+        await self.handle_api_call(info, "delete_webhook", webhook=webhook)
+        return True
+
+    @strawberry.mutation
+    async def broadcast_action(self, info: Info, event: Event) -> bool:
+        await self.handle_api_call(info, "broadcast_action", event=event)
+        return True
+
+    @strawberry.mutation
+    async def refresh_health(self, info: Info) -> bool:
+        await self.handle_api_call(info, "refresh_health")
+        return True
+
+    @strawberry.mutation
+    async def unhealthy_slabs(
+        self, info: Info, health_cutoff: float, contract_set: str, limit: int
+    ) -> UnhealthySlabsResponse:
+        return await self.handle_api_call(
+            info, "get_unhealthy_slabs", health_cutoff=health_cutoff, contract_set=contract_set, limit=limit
+        )
+
+    @strawberry.mutation
+    async def update_setting(self, info: Info, key: str, value: str) -> bool:
+        await self.handle_api_call(info, "update_setting", key=key, value=value)
+        return True
+
+    @strawberry.mutation
+    async def delete_setting(self, info: Info, key: str) -> bool:
+        await self.handle_api_call(info, "delete_setting", key=key)
+        return True
+
+    @strawberry.mutation
+    async def sync_connect(self, info: Info, addr: str) -> bool:
+        await self.handle_api_call(info, "sync_connect", addr=addr)
+        return True
+
+    @strawberry.mutation
+    async def txpool_broadcast(self, info: Info, transactions: List[Transaction]) -> bool:
+        await self.handle_api_call(info, "txpool_broadcast", transactions=transactions)
+        return True
+
+    @strawberry.mutation
+    async def consensus_accept_block(self, info: Info, block: Block) -> bool:
+        await self.handle_api_call(info, "consensus_accept_block", block=block)
+        return True
+
+    @strawberry.mutation
+    async def update_bucket_policy(self, info: Info, name: str, policy: BucketPolicy) -> bool:
+        await self.handle_api_call(info, "update_bucket_policy", name=name, policy=policy)
+        return True
+
+    @strawberry.mutation
+    async def delete_contracts_all(self, info: Info) -> bool:
+        await self.handle_api_call(info, "delete_contracts_all")
+        return True
+
+    @strawberry.mutation
+    async def contract_broadcast(self, info: Info, id: FileContractID) -> TransactionID:
+        return await self.handle_api_call(info, "contract_broadcast", id=id)
+
+    @strawberry.mutation
+    async def hosts_reset_lost_sectors(self, info: Info, hostkey: PublicKey) -> bool:
+        await self.handle_api_call(info, "hosts_reset_lost_sectors", hostkey=hostkey)
+        return True
+
+    @strawberry.mutation
+    async def hosts_remove(self, info: Info, max_downtime_hours: int, max_consecutive_failures: int) -> int:
+        return await self.handle_api_call(
+            info,
+            "hosts_remove",
+            max_downtime_hours=max_downtime_hours,
+            max_consecutive_failures=max_consecutive_failures,
+        )
+
+    @strawberry.mutation
+    async def update_metric(self, info: Info, key: str, data: Any) -> bool:
+        await self.handle_api_call(info, "update_metric", key=key, data=data)
+        return True
+
+    @strawberry.mutation
+    async def delete_metric(self, info: Info, key: str, cutoff: str) -> bool:
+        await self.handle_api_call(info, "delete_metric", key=key, cutoff=cutoff)
+        return True
+
+    @strawberry.mutation
+    async def slabs_migration(
+        self, info: Info, health_cutoff: float, contract_set: str, limit: int
+    ) -> UnhealthySlabsResponse:
+        return await self.handle_api_call(
+            info, "slabs_migration", health_cutoff=health_cutoff, contract_set=contract_set, limit=limit
+        )
+
+    @strawberry.mutation
+    async def update_slab(self, info: Info, slab: Slab) -> bool:
+        await self.handle_api_call(info, "update_slab", slab=slab)
+        return True
+
+    @strawberry.mutation
+    async def upload_track(self, info: Info, id: str) -> bool:
+        await self.handle_api_call(info, "upload_track", id=id)
+        return True
+
+    @strawberry.mutation
+    async def upload_add_sector(self, info: Info, id: str, contract_id: FileContractID, root: Hash256) -> bool:
+        await self.handle_api_call(info, "upload_add_sector", id=id, contract_id=contract_id, root=root)
+        return True
+
+    @strawberry.mutation
+    async def upload_finished(self, info: Info, id: str) -> bool:
+        await self.handle_api_call(info, "upload_finished", id=id)
         return True
