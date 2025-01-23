@@ -3,27 +3,12 @@ from strawberry.types import Info
 import strawberry
 from datetime import datetime
 from siaql.graphql.resolvers.walletd import WalletdBaseResolver
-from siaql.graphql.schemas.types import State
+from siaql.graphql.schemas.types import StateResponse
 
 
 @strawberry.type
 class StateQueries(WalletdBaseResolver):
     @strawberry.field
-    async def state(self, info: Info) -> State:
-        """Gets the current state of the running walletd node"""
-        def transform_state(state: dict) -> State:
-            return State(
-                version=state["version"],
-                commit=state["commit"],
-                os=state["os"],
-                build_time=datetime.fromisoformat(state["buildTime"].replace('Z', '+00:00')),
-                start_time=datetime.fromisoformat(state["startTime"].replace('Z', '+00:00')),
-                index_mode=state["indexMode"]
-            )
-
-        data = await WalletdBaseResolver.handle_api_call(
-            info,
-            "get_state",
-            transform_func=transform_state
-        )
-        return data
+    async def state(self, info: Info) -> StateResponse:
+        """Get current state of walletd daemon"""
+        return await self.handle_api_call(info, "get_state")

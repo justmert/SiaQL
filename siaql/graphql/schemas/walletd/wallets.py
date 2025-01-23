@@ -18,6 +18,7 @@ from siaql.graphql.schemas.types import (
     WalletReserveRequest,
     WalletReleaseRequest,
     WalletFundRequest,
+    WalletEvent,
     WalletFundSFRequest,
     WalletConstructRequest,
     WalletConstructResponse,
@@ -44,7 +45,7 @@ class WalletQueries:
         return await WalletdBaseResolver.handle_api_call(info, "get_wallet_balance", wallet_id=wallet_id)
 
     @strawberry.field
-    async def wallet_events(self, info: Info, wallet_id: str, offset: int = 0, limit: int = 500) -> List[Event]:
+    async def wallet_events(self, info: Info, wallet_id: str, offset: int = 0, limit: int = 500) -> List[WalletEvent]:
         """Get wallet events"""
         return await WalletdBaseResolver.handle_api_call(
             info, "get_wallet_events", wallet_id=wallet_id, offset=offset, limit=limit
@@ -57,7 +58,7 @@ class WalletQueries:
 
     @strawberry.field
     async def wallet_siacoin_outputs(
-        self, info: Info, wallet_id: str, offset: Optional[int] = 0, limit: Optional[int] = 100
+        self, info: Info, wallet_id: str, offset: Optional[int] = 0, limit: Optional[int] = 1000
     ) -> List[SiacoinElement]:
         """Get wallet siacoin outputs"""
         data = await WalletdBaseResolver.handle_api_call(
@@ -67,7 +68,7 @@ class WalletQueries:
 
     @strawberry.field
     async def wallet_siafund_outputs(
-        self, info: Info, wallet_id: str, offset: Optional[int] = 0, limit: Optional[int] = 100
+        self, info: Info, wallet_id: str, offset: Optional[int] = 0, limit: Optional[int] = 1000
     ) -> List[SiafundElement]:
         """Get wallet siafund outputs"""
         data = await WalletdBaseResolver.handle_api_call(

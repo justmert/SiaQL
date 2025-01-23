@@ -1429,6 +1429,13 @@ class MemoryStatus(SiaType):
 
 
 @strawberry.type
+class MigrateSlabResponse(SiaType):
+    num_shards_migrated: Optional[int] = strawberry.field(name="numShardsMigrated")
+    surcharge_applied: Optional[bool] = strawberry.field(name="surchargeApplied")
+    error: Optional[str] = strawberry.field(name="error")
+
+
+@strawberry.type
 class ContractRevision(SiaType):
     revision: Optional[FileContractRevision] = strawberry.field(
         description="The revised file contract", name="revision"
@@ -2120,6 +2127,14 @@ class ContractReleaseRequest(SiaType):
 
 
 @strawberry.type
+class ContractRootsResponse(SiaType):
+    roots: Optional[List[Hash256]] = strawberry.field(description="List of root hashes", name="roots")
+    uploading: Optional[List[Hash256]] = strawberry.field(
+        description="List of root hashes currently being uploaded", name="uploading"
+    )
+
+
+@strawberry.type
 class ContractRenewRequest(SiaType):
     end_height: Optional[int] = strawberry.field(name="endHeight")
     expected_new_storage: Optional[int] = strawberry.field(name="expectedNewStorage")
@@ -2543,6 +2558,11 @@ class UploadObjectOptions(SiaType):
 
 
 @strawberry.type
+class DeleteObjectOptions(SiaType):
+    batch: Optional[bool] = strawberry.field(name="batch")
+
+
+@strawberry.type
 class UploadObjectResponse(SiaType):
     etag: Optional[str] = strawberry.field(description="ETag of the uploaded object", name="etag")
 
@@ -2662,12 +2682,11 @@ class GatewayPeer(SiaType):
     first_seen: Optional[datetime.datetime] = strawberry.field(name="firstSeen")
     connected_since: Optional[datetime.datetime] = strawberry.field(name="connectedSince")
     synced_blocks: Optional[int] = strawberry.field(name="syncedBlocks")
-    sync_duration: Optional[DurationMS] = strawberry.field(name="syncDuration")
+    sync_duration: Optional[Duration] = strawberry.field(name="syncDuration")
 
 
 @strawberry.type
 class TxpoolBroadcastRequest(SiaType):
-    basis: Optional[ChainIndex] = strawberry.field(name="basis", description="types.ChainIndex")
     transactions: Optional[List[Transaction]] = strawberry.field(name="transactions", description="[]types.Transaction")
     v2transactions: Optional[List[V2Transaction]] = strawberry.field(
         name="v2transactions", description="[]types.V2Transaction"
@@ -2676,9 +2695,10 @@ class TxpoolBroadcastRequest(SiaType):
 
 @strawberry.type
 class TxpoolTransactionsResponse(SiaType):
-    basis: Optional[JSON] = strawberry.field(name="basis", description="types.ChainIndex")
-    transactions: Optional[List[JSON]] = strawberry.field(name="transactions", description="[]types.Transaction")
-    v2transactions: Optional[List[JSON]] = strawberry.field(name="v2transactions", description="[]types.V2Transaction")
+    transactions: Optional[List[Transaction]] = strawberry.field(name="transactions", description="[]types.Transaction")
+    v2transactions: Optional[List[V2Transaction]] = strawberry.field(
+        name="v2transactions", description="[]types.V2Transaction"
+    )
 
 
 @strawberry.type
@@ -2689,11 +2709,12 @@ class BalanceResponse(Balance):
 @strawberry.type
 class WalletReserveRequest(SiaType):
     siacoin_outputs: Optional[List[SiacoinOutputID]] = strawberry.field(
-        name="siacoinOutputs", description="[]types.SiacoinOutputID"
+        description="List of Siacoin output IDs to reserve", name="siacoinOutputs"
     )
     siafund_outputs: Optional[List[SiafundOutputID]] = strawberry.field(
-        name="siafundOutputs", description="[]types.SiafundOutputID"
+        description="List of Siafund output IDs to reserve", name="siafundOutputs"
     )
+    duration: Optional[Duration] = strawberry.field(description="Duration to reserve the outputs for", name="duration")
 
 
 @strawberry.type
@@ -2725,7 +2746,7 @@ class WalletFundSFRequest(SiaType):
 class WalletFundRequest(SiaType):
     transaction: Optional[Transaction] = strawberry.field(name="transaction")
     amount: Optional[Currency] = strawberry.field(name="amount")
-    use_unconfirmed_txns: Optional[bool] = strawberry.field(name="useUnconfirmedTxns")
+    change_address: Optional[Address] = strawberry.field(name="changeAddress")
 
 
 @strawberry.type
@@ -2767,35 +2788,6 @@ class WalletFundResponse(SiaType):
 
 
 @strawberry.type
-class WalletConstructRequest(SiaType):
-    siacoins: Optional[List[SiacoinOutput]] = strawberry.field(name="siacoins", description="[]types.SiacoinOutput")
-    siafunds: Optional[List[SiafundOutput]] = strawberry.field(name="siafunds", description="[]types.SiafundOutput")
-    change_address: Optional[Address] = strawberry.field(name="changeAddress", description="types.Address")
-
-
-@strawberry.type
-class SignaturePayload(SiaType):
-    public_key: Optional[PublicKey] = strawberry.field(name="publicKey", description="types.PublicKey")
-    sig_hash: Optional[Hash256] = strawberry.field(name="sigHash")
-
-
-@strawberry.type
-class WalletConstructResponse(SiaType):
-    basis: Optional[ChainIndex] = strawberry.field(name="basis", description="types.ChainIndex")
-    id: Optional[TransactionID] = strawberry.field(name="id", description="types.TransactionID")
-    transaction: Optional[Transaction] = strawberry.field(name="transaction", description="types.Transaction")
-    estimated_fee: Optional[Currency] = strawberry.field(name="estimatedFee")
-
-
-@strawberry.type
-class WalletConstructV2Response(SiaType):
-    basis: Optional[ChainIndex] = strawberry.field(name="basis", description="types.ChainIndex")
-    id: Optional[TransactionID] = strawberry.field(name="id", description="types.TransactionID")
-    transaction: Optional[V2Transaction] = strawberry.field(name="transaction", description="types.V2Transaction")
-    estimated_fee: Optional[Currency] = strawberry.field(name="estimatedFee")
-
-
-@strawberry.type
 class SeedSignRequest(SiaType):
     transaction: Optional[Transaction] = strawberry.field(name="transaction", description="types.Transaction")
     keys: Optional[List[int]] = strawberry.field(name="keys")
@@ -2830,6 +2822,11 @@ class ConsensusUpdatesResponse(SiaType):
 
 
 @strawberry.type
-class DebugMineRequest(SiaType):
-    blocks: Optional[int] = strawberry.field(name="blocks")
-    address: Optional[Address] = strawberry.field(name="address", description="types.Address")
+class WalletEvent(SiaType):
+    id: Optional[Hash256] = strawberry.field(description="Unique identifier for the event", name="id")
+    index: Optional[ChainIndex] = strawberry.field(description="Chain index where event occurred", name="index") 
+    type: Optional[str] = strawberry.field(description="Type of event", name="type")
+    data: Optional[JSON] = strawberry.field(description="Event-specific data", name="data")
+    maturity_height: Optional[int] = strawberry.field(description="Block height when event matures", name="maturityHeight")
+    timestamp: Optional[datetime.datetime] = strawberry.field(description="Time event occurred", name="timestamp")
+    relevant: Optional[List[Address]] = strawberry.field(description="Relevant addresses", name="relevant")

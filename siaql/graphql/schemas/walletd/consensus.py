@@ -6,11 +6,11 @@ from strawberry.types import Info
 from siaql.graphql.resolvers.walletd import WalletdBaseResolver
 from siaql.graphql.schemas.types import (
     ChainIndex,
-    State,        # From consensus.State 
+    ConsensusState,        # From consensus.State 
     Network,      # From consensus.Network
     ApplyUpdate,  # From consensus.ApplyUpdate
     RevertUpdate,  # From consensus.RevertUpdate
-    Block
+    Block,
 )
 
 @strawberry.type
@@ -32,7 +32,7 @@ class ConsensusQueries(WalletdBaseResolver):
         )
 
     @strawberry.field
-    async def consensus_tip_state(self, info: Info) -> State:
+    async def consensus_tip_state(self, info: Info) -> ConsensusState:
         """Get the current consensus tip state"""
         return await WalletdBaseResolver.handle_api_call(
             info,

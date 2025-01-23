@@ -12,7 +12,9 @@ from siaql.graphql.schemas.types import (
     AccountsFundResponse,
     AccountsSaveRequest,
     AddObjectRequest,
+    AddPartialSlabResponse,
     Alert,
+    AlertsOpts,
     AlertsResponse,
     ArchivedContract,
     Autopilot,
@@ -22,6 +24,7 @@ from siaql.graphql.schemas.types import (
     Bucket,
     BucketCreateRequest,
     BucketPolicy,
+    BusStateResponse,
     ConfigEvaluationRequest,
     ConfigEvaluationResponse,
     ConsensusState,
@@ -35,6 +38,7 @@ from siaql.graphql.schemas.types import (
     ContractPruneResponse,
     ContractRenewedRequest,
     ContractRenewRequest,
+    ContractRootsResponse,
     ContractsArchiveRequest,
     ContractSetUpdateRequest,
     ContractSize,
@@ -43,11 +47,13 @@ from siaql.graphql.schemas.types import (
     ContractsResponse,
     CopyObjectsRequest,
     Currency,
-    Event,
+    DeleteObjectOptions,
+    DownloadStatsResponse,
     FileContractID,
     GetObjectResponse,
     GougingParams,
     Hash256,
+    HeadObjectOptions,
     HeadObjectResponse,
     Host,
     HostAddress,
@@ -55,8 +61,11 @@ from siaql.graphql.schemas.types import (
     HostPriceTable,
     HostResponse,
     HostsPriceTablesRequest,
+    HostsRemoveRequest,
     HostsScanRequest,
     MemoryResponse,
+    MigrateSlabResponse,
+    MigrationSlabsRequest,
     MultipartAbortRequest,
     MultipartAddPartRequest,
     MultipartCompleteRequest,
@@ -66,6 +75,7 @@ from siaql.graphql.schemas.types import (
     MultipartListPartsRequest,
     MultipartListPartsResponse,
     MultipartListUploadsRequest,
+    MultipartListUploadsResponse,
     MultipartUpload,
     Network,
     Object,
@@ -90,12 +100,20 @@ from siaql.graphql.schemas.types import (
     UnhealthySlabsResponse,
     UpdateAllowlistRequest,
     UpdateBlocklistRequest,
+    UploadID,
+    UploadObjectOptions,
     UploadObjectResponse,
     UploadParams,
+    UploadSectorRequest,
+    UploadStatsResponse,
+    WalletFundRequest,
+    WalletFundResponse,
     WalletRedistributeRequest,
     WalletResponse,
     WalletSendRequest,
+    WalletSignRequest,
     Webhook,
+    WebhookEvent,
     WebhookResponse,
     WorkerStateResponse,
 )
@@ -103,6 +121,7 @@ from siaql.graphql.schemas.types import (
 
 class RenterdError(Exception):
     """Base exception for renterd API errors"""
+
     pass
 
 
@@ -139,8 +158,8 @@ class RenterdClient:
 
     # Alert endpoints
     @handle_api_errors(RenterdError)
-    async def get_alerts(self, offset: int = 0, limit: int = -1) -> AlertsResponse:
-        response = await self.client.get("/bus/alerts", params={"offset": offset, "limit": limit})
+    async def get_alerts(self, opts: AlertsOpts) -> AlertsResponse:
+        response = await self.client.get("/bus/alerts", params={**opts.dict()})
         return response.json()
 
     @handle_api_errors(RenterdError)
@@ -165,11 +184,6 @@ class RenterdClient:
     @handle_api_errors(RenterdError)
     async def update_autopilot(self, id: str, autopilot: Autopilot) -> None:
         await self.client.put(f"/bus/autopilot/{id}", json=autopilot.dict())
-
-    @handle_api_errors(RenterdError)
-    async def get_autopilot_host_check(self, autopilot_id: str, host_key: PublicKey) -> HostCheck:
-        response = await self.client.get(f"/bus/autopilot/{autopilot_id}/host/{host_key}/check")
-        return response.json()
 
     @handle_api_errors(RenterdError)
     async def update_autopilot_host_check(self, autopilot_id: str, host_key: PublicKey, check: HostCheck) -> None:
@@ -318,7 +332,7 @@ class RenterdClient:
         await self.client.post(f"/bus/contract/{id}/release", json={"lockID": lock_id})
 
     @handle_api_errors(RenterdError)
-    async def get_contract_roots(self, id: FileContractID) -> List[Hash256]:
+    async def get_contract_roots(self, id: FileContractID) -> ContractRootsResponse:
         response = await self.client.get(f"/bus/contract/{id}/roots")
         return response.json()
 
@@ -356,10 +370,10 @@ class RenterdClient:
         await self.client.post("/bus/hosts/pricetables", json=req.dict())
 
     @handle_api_errors(RenterdError)
-    async def hosts_remove(self, max_downtime_hours: int, max_consecutive_failures: int) -> int:
+    async def hosts_remove(self, req: HostsRemoveRequest) -> int:
         response = await self.client.post(
-            "/hosts/remove",
-            json={"maxDowntimeHours": max_downtime_hours, "maxConsecutiveScanFailures": max_consecutive_failures},
+            "/bus/hosts/remove",
+            json=req.dict(),
         )
         return response.json()
 
@@ -424,8 +438,9 @@ class RenterdClient:
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def list_multipart_uploads(self, req: MultipartListUploadsRequest) -> None:
-        await self.client.post("/bus/multipart/listuploads", json=req.dict())
+    async def list_multipart_uploads(self, req: MultipartListUploadsRequest) -> MultipartListUploadsResponse:
+        response = await self.client.post("/bus/multipart/listuploads", json=req.dict())
+        return response.json()
 
     @handle_api_errors(RenterdError)
     async def list_multipart_parts(self, req: MultipartListPartsRequest) -> MultipartListPartsResponse:
@@ -529,10 +544,8 @@ class RenterdClient:
 
     # Slab endpoints
     @handle_api_errors(RenterdError)
-    async def slabs_migration(self, health_cutoff: float, contract_set: str, limit: int) -> UnhealthySlabsResponse:
-        response = await self.client.post(
-            "/slabs/migration", json={"healthCutoff": health_cutoff, "contractSet": contract_set, "limit": limit}
-        )
+    async def slabs_migration(self, req: MigrationSlabsRequest) -> UnhealthySlabsResponse:
+        response = await self.client.post("/bus/slabs/migration", json=req.dict())
         return response.json()
 
     @handle_api_errors(RenterdError)
@@ -542,9 +555,12 @@ class RenterdClient:
         return response.content
 
     @handle_api_errors(RenterdError)
-    async def add_slabs_partial(self, data: bytes, min_shards: int, total_shards: int, contract_set: str) -> None:
+    async def add_slabs_partial(
+        self, data: bytes, min_shards: int, total_shards: int, contract_set: str
+    ) -> AddPartialSlabResponse:
         params = {"minShards": min_shards, "totalShards": total_shards, "contractSet": contract_set}
-        await self.client.post("/bus/slabs/partial", content=data, params=params)
+        response = await self.client.post("/bus/slabs/partial", content=data, params=params)
+        return response.json()
 
     @handle_api_errors(RenterdError)
     async def refresh_health(self) -> None:
@@ -566,7 +582,7 @@ class RenterdClient:
 
     # State endpoints
     @handle_api_errors(RenterdError)
-    async def get_state(self) -> Dict:
+    async def get_state(self) -> BusStateResponse:
         response = await self.client.get("/bus/state")
         return response.json()
 
@@ -604,7 +620,7 @@ class RenterdClient:
 
     @handle_api_errors(RenterdError)
     async def txpool_broadcast(self, transactions: List[Transaction]) -> None:
-        await self.client.post("/bus/txpool/broadcast", json=[t.dict() for t in transactions])
+        await self.client.post("/bus/txpool/broadcast", json=transactions)
 
     # Upload endpoints
     @handle_api_errors(RenterdError)
@@ -616,8 +632,8 @@ class RenterdClient:
         await self.client.delete(f"/bus/upload/{id}")
 
     @handle_api_errors(RenterdError)
-    async def upload_add_sector(self, id: str, contract_id: FileContractID, root: Hash256) -> None:
-        await self.client.post(f"/bus/upload/{id}/sector", json={"contractID": contract_id, "root": root})
+    async def upload_add_sector(self, id: UploadID, req: UploadSectorRequest) -> None:
+        await self.client.post(f"/bus/upload/{id}/sector", json=req.dict())
 
     # Wallet endpoints
     @handle_api_errors(RenterdError)
@@ -626,16 +642,14 @@ class RenterdClient:
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def wallet_discard(self, transaction: Transaction) -> None:
+    async def wallet_discard_transaction(self, transaction: Transaction) -> None:
         await self.client.post("/bus/wallet/discard", json=transaction.dict())
 
     @handle_api_errors(RenterdError)
-    async def wallet_fund(
-        self, transaction: Transaction, amount: Currency, use_unconfirmed: bool = False
-    ) -> Transaction:
+    async def wallet_fund(self, req: WalletFundRequest) -> WalletFundResponse:
         response = await self.client.post(
-            "/wallet/fund",
-            json={"transaction": transaction.dict(), "amount": str(amount), "useUnconfirmedTxns": use_unconfirmed},
+            "/bus/wallet/fund",
+            json=req.dict(),
         )
         return response.json()
 
@@ -650,26 +664,20 @@ class RenterdClient:
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def wallet_redistribute(self, req: WalletRedistributeRequest) -> List[FileContractID]:
+    async def wallet_redistribute(self, req: WalletRedistributeRequest) -> List[TransactionID]:
         response = await self.client.post("/bus/wallet/redistribute", json=req.dict())
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def wallet_send_siacoins(self, req: WalletSendRequest) -> FileContractID:
+    async def wallet_send_siacoins(self, req: WalletSendRequest) -> TransactionID:
         response = await self.client.post("/bus/wallet/send", json=req.dict())
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def wallet_sign_transaction(
-        self, transaction: Transaction, to_sign: List[Hash256], covered_fields: Dict
-    ) -> Transaction:
+    async def wallet_sign_transaction(self, req: WalletSignRequest) -> Transaction:
         response = await self.client.post(
-            "/wallet/sign",
-            json={
-                "transaction": transaction.dict(),
-                "toSign": [str(h) for h in to_sign],
-                "coveredFields": covered_fields,
-            },
+            "/bus/wallet/sign",
+            json=req.dict(),
         )
         return response.json()
 
@@ -690,7 +698,7 @@ class RenterdClient:
         await self.client.post("/bus/webhooks", json=webhook.dict())
 
     @handle_api_errors(RenterdError)
-    async def broadcast_action(self, event: Event) -> None:
+    async def broadcast_action(self, event: WebhookEvent) -> None:
         await self.client.post("/bus/webhooks/action", json=event.dict())
 
     @handle_api_errors(RenterdError)
@@ -713,24 +721,8 @@ class RenterdClient:
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_autopilot_hosts(
-        self,
-        filter_mode: Optional[str] = None,
-        usability_mode: Optional[str] = None,
-        address_contains: Optional[str] = None,
-        key_in: Optional[List[PublicKey]] = None,
-        offset: int = 0,
-        limit: int = -1,
-    ) -> List[HostResponse]:
-        req = SearchHostsRequest(
-            offset=offset,
-            limit=limit,
-            filter_mode=filter_mode,
-            usability_mode=usability_mode,
-            address_contains=address_contains,
-            key_in=key_in,
-        )
-        response = await self.client.post("/autopilot/hosts", json=req.dict())
+    async def get_autopilot_hosts(self, opts: SearchHostsRequest) -> List[HostResponse]:
+        response = await self.client.post("/autopilot/hosts", params=opts)
         return response.json()
 
     @handle_api_errors(RenterdError)
@@ -791,34 +783,30 @@ class RenterdClient:
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_worker_object(self, bucket: str, path: str, only_metadata: bool = False) -> GetObjectResponse:
-        params = {"bucket": bucket, "onlymetadata": only_metadata}
+    async def get_worker_object(self, bucket: str, path: str, opts: GetObjectResponse) -> GetObjectResponse:
+        params = {"bucket": bucket, **opts.dict()}
         response = await self.client.get(f"/worker/objects/{path}", params=params)
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def head_object(self, bucket: str, path: str, ignore_delim: bool = False) -> HeadObjectResponse:
-        params = {"bucket": bucket, "ignoreDelim": ignore_delim}
+    async def head_object(self, bucket: str, path: str, opts: HeadObjectOptions) -> HeadObjectResponse:
+        params = {"bucket": bucket, **opts.dict()}
         response = await self.client.head(f"/worker/objects/{path}", params=params)
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def upload_object(self, bucket: str, path: str, data: bytes, options: Dict[str, Any]) -> UploadObjectResponse:
-        params = {
-            "bucket": bucket,
-            "contractset": options.get("contract_set"),
-            "minshards": options.get("min_shards"),
-            "totalshards": options.get("total_shards"),
-            "mimetype": options.get("mime_type"),
-        }
+    async def upload_object(
+        self, bucket: str, path: str, data: bytes, options: UploadObjectOptions
+    ) -> UploadObjectResponse:
+        params = {"bucket": bucket, **UploadObjectOptions.dict()}
         response = await self.client.put(
             f"/worker/objects/{path}", content=data, params=params, headers=options.get("metadata", {})
         )
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def delete_worker_object(self, bucket: str, path: str, batch: bool = False) -> None:
-        params = {"bucket": bucket, "batch": batch}
+    async def delete_worker_object(self, bucket: str, path: str, opts: DeleteObjectOptions) -> None:
+        params = {"bucket": bucket, **opts.dict()}
         await self.client.delete(f"/worker/objects/{path}", params=params)
 
     @handle_api_errors(RenterdError)
@@ -836,22 +824,22 @@ class RenterdClient:
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def multipart_upload_part(self, req: MultipartAddPartRequest) -> None:
-        await self.client.put("/worker/multipart/part", json=req.dict())
+    async def multipart_upload(self, path: str, req: MultipartAddPartRequest) -> None:
+        await self.client.put(f"/worker/multipart/{path}", json=req.dict())
 
     @handle_api_errors(RenterdError)
-    async def migrate_slab(self, slab: Slab, contract_set: Optional[str] = None) -> UnhealthySlabsResponse:
+    async def migrate_slab(self, slab: Slab, contract_set: Optional[str] = None) -> MigrateSlabResponse:
         params = {"contractset": contract_set} if contract_set else None
         response = await self.client.post("/worker/slab/migrate", json=slab.dict(), params=params)
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_worker_downloads_stats(self) -> Dict[str, Any]:
+    async def get_worker_downloads_stats(self) -> DownloadStatsResponse:
         response = await self.client.get("/worker/stats/downloads")
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def get_worker_uploads_stats(self) -> Dict[str, Any]:
+    async def get_worker_uploads_stats(self) -> UploadStatsResponse:
         response = await self.client.get("/worker/stats/uploads")
         return response.json()
 
@@ -860,5 +848,5 @@ class RenterdClient:
         await self.client.post(f"/worker/account/{account_id}/resetdrift")
 
     @handle_api_errors(RenterdError)
-    async def register_worker_event(self, event: Event) -> None:
+    async def register_worker_event(self, event: WebhookEvent) -> None:
         await self.client.post("/worker/event", json=event.dict())

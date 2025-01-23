@@ -265,7 +265,6 @@ class WalletdClient:
         response.raise_for_status()
         return response.json()
 
-
     @handle_api_errors(WalletdError)
     async def get_address_events(self, address: str, offset: int = 0, limit: int = 500) -> List[Dict[str, Any]]:
         """Get events for an address"""
@@ -310,8 +309,6 @@ class WalletdClient:
         response.raise_for_status()
         return response.json()
 
-    # newly added
-    # Rescan endpoints
     @handle_api_errors(WalletdError)
     async def get_rescan_status(self) -> RescanResponse:
         """Get rescan status"""

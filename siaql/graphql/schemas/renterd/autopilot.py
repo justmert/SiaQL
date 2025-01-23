@@ -2,7 +2,6 @@ import strawberry
 from typing import List
 from strawberry.types import Info
 
-from siaql.graphql.schemas.types import HostsRequest
 from siaql.graphql.resolvers.renterd import RenterdBaseResolver
 from siaql.graphql.schemas.types import (
     AutopilotConfig,
@@ -11,6 +10,7 @@ from siaql.graphql.schemas.types import (
     ConfigEvaluationRequest,
     ConfigEvaluationResponse,
     PublicKey,
+    SearchHostsRequest,
 )
 from typing import Optional
 
@@ -33,27 +33,9 @@ class AutopilotQueries(RenterdBaseResolver):
         return await self.handle_api_call(info, "get_autopilot_host", host_key=host_key)
 
     @strawberry.field
-    async def autopilot_hosts(
-        self,
-        info: Info,
-        filter_mode: Optional[str] = None,
-        usability_mode: Optional[str] = None,
-        address_contains: Optional[str] = None,
-        key_in: Optional[List[PublicKey]] = None,
-        offset: int = 0,
-        limit: int = -1,
-    ) -> List[HostResponse]:
+    async def autopilot_hosts(self, info: Info, opts: SearchHostsRequest) -> List[HostResponse]:
         """Get information about all hosts"""
-        return await self.handle_api_call(
-            info,
-            "get_autopilot_hosts",
-            filter_mode=filter_mode,
-            usability_mode=usability_mode,
-            address_contains=address_contains,
-            key_in=key_in,
-            offset=offset,
-            limit=limit,
-        )
+        return await self.handle_api_call(info, "get_autopilot_hosts", opts=opts)
 
 
 @strawberry.type
