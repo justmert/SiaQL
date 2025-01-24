@@ -11,4 +11,4 @@ class StateQueries(WalletdBaseResolver):
     @strawberry.field
     async def state(self, info: Info) -> StateResponse:
         """Get current state of walletd daemon"""
-        return await self.handle_api_call(info, "get_state")
+        return await WalletdBaseResolver.handle_api_call(info, "get_state")

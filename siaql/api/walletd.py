@@ -22,7 +22,6 @@ from siaql.graphql.schemas.types import (
     RescanResponse,
     ConsensusState,
     Network,
-    BalanceResponse,
     Wallet,
     WalletEvent,
     WalletFundRequest,
@@ -265,7 +264,7 @@ class WalletdClient:
     # Address-related endpoints
 
     @handle_api_errors(WalletdError)
-    async def get_address_balance(self, address: str) -> BalanceResponse:
+    async def get_address_balance(self, address: str) -> Balance:
         """Get balance for address"""
         response = await self.client.get(f"/addresses/{address}/balance")
         response.raise_for_status()

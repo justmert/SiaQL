@@ -12,7 +12,7 @@ class OutputsQueries:
         data = await WalletdBaseResolver.handle_api_call(info, "get_siacoin_output", id=id)
         return data
 
-    @strawberry.mutation
+    @strawberry.field
     async def get_siafund_output(self, info: Info, id: str) -> SiafundElement:
         """Start rescan from height"""
         await WalletdBaseResolver.handle_api_call(info, "get_siafund_output", id=id)

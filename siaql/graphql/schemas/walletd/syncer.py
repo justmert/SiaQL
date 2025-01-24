@@ -6,34 +6,25 @@ from strawberry.types import Info
 from siaql.graphql.resolvers.walletd import WalletdBaseResolver
 from siaql.graphql.schemas.types import GatewayPeer, Block
 
+
 @strawberry.type
 class SyncerQueries:
     @strawberry.field
     async def syncer_peers(self, info: Info) -> List[GatewayPeer]:
         """Get list of connected peers"""
-        return await WalletdBaseResolver.handle_api_call(
-            info,
-            "get_syncer_peers"
-        )
+        return await WalletdBaseResolver.handle_api_call(info, "get_syncer_peers")
+
 
 @strawberry.type
 class SyncerMutations:
     @strawberry.mutation
     async def syncer_connect(self, info: Info, addr: str) -> bool:
         """Connect to a peer"""
-        await WalletdBaseResolver.handle_api_call(
-            info,
-            "post_syncer_connect",
-            addr=addr
-        )
+        await WalletdBaseResolver.handle_api_call(info, "post_syncer_connect", addr=addr)
         return True
 
     @strawberry.mutation
     async def syncer_broadcast_block(self, info: Info, block: Block.Input) -> bool:
         """Broadcast a block to all peers"""
-        await WalletdBaseResolver.handle_api_call(
-            info,
-            "post_syncer_broadcast_block",
-            block=block
-        )
+        await WalletdBaseResolver.handle_api_call(info, "post_syncer_broadcast_block", block=block)
         return True

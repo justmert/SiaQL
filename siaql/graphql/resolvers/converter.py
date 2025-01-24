@@ -26,9 +26,30 @@ from strawberry.types.enum import EnumDefinition as StrawberryEnum
 from strawberry.types.lazy_type import LazyType
 from strawberry.types.scalar import ScalarDefinition, ScalarWrapper
 from strawberry.types.union import StrawberryUnion
+from dateutil import parser
 
 
 class TypeConverter:
+    @staticmethod
+    def parse_datetime(value: str) -> datetime:
+        """
+        Parse datetime strings with various formats.
+        Uses python-dateutil for maximum compatibility.
+        """
+        if not isinstance(value, str):
+            raise ValueError(f"Expected string for datetime parsing, got {type(value)}")
+
+        try:
+            # First try direct fromisoformat
+            return datetime.fromisoformat(value)
+        except ValueError:
+            try:
+                # If that fails, try with dateutil parser
+                return parser.parse(value)
+            except (ValueError, TypeError) as e:
+                # If all parsing attempts fail
+                raise ValueError(f"Unable to parse datetime string: {value}")
+
     @classmethod
     def get_base_type(cls, type_obj: Any) -> Type:
         """Extract the base type from Strawberry type wrappers"""
@@ -63,10 +84,17 @@ class TypeConverter:
         if value is None:
             return None
 
+        if isinstance(target_type, StrawberryOptional):
+            return cls.convert_value(value, target_type.of_type)  # Unwrap optional
+
         # Handle StrawberryList
         if isinstance(target_type, StrawberryList):
-            if not isinstance(value, list):
+            if value is None:
                 return None
+
+            if not isinstance(value, (list, tuple)):
+                return None
+            # Convert each item in the list using the list's element type
             return [cls.convert_value(item, target_type.of_type) for item in value]
 
         # Handle LazyType
@@ -135,7 +163,7 @@ class TypeConverter:
                 elif issubclass(base_type, (int, float)):
                     return base_type(value)
                 elif issubclass(base_type, datetime) and isinstance(value, str):
-                    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+                    return cls.parse_datetime(value)
                 elif issubclass(base_type, enum.Enum):
                     if isinstance(value, str):
                         try:
@@ -187,30 +215,29 @@ class TypeConverter:
         if isinstance(target_type, ScalarWrapper):
             return target_type.parse_value(data)
 
-        # Get field mappings including inherited fields
         field_mappings = {}  # JSON name -> (Python name, field)
         all_fields = cls.get_all_fields(target_type)
 
-        # Build field mappings
         for field in all_fields.values():
             python_name, json_name = cls.get_field_name_mapping(field)
             field_mappings[json_name] = (python_name, field)
-
-            # Also map the Python name if different
             if python_name != json_name:
                 field_mappings[python_name] = (python_name, field)
 
         result = {}
 
-        # Process each field in the input data
         for key, value in data.items():
             if key in field_mappings:
                 python_name, field = field_mappings[key]
                 field_type = field.type if hasattr(field, "type") else field
-                converted_value = cls.convert_value(value, field_type)
-                result[python_name] = converted_value
+                try:
+                    converted_value = cls.convert_value(value, field_type)
+                    result[python_name] = converted_value
+                except Exception as e:
+                    print(f"Error converting field {key}: {str(e)}")
+                    result[python_name] = None
             else:
-                print(f"No mapping found for {key}. Available mappings: {list(field_mappings.keys())}")
+                print(f"No mapping found for {key}")
 
         return result
 
