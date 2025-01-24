@@ -6,6 +6,7 @@ from siaql.graphql.resolvers.walletd import WalletdBaseResolver
 from strawberry.scalars import JSON
 from typing import List, Optional, Dict, Any
 from enum import Enum
+from strawberry.types.enum import EnumDefinition
 
 from dataclasses import dataclass
 from typing import Type, TypeVar, get_type_hints, Optional, get_origin, get_args
@@ -20,50 +21,83 @@ T = TypeVar("T")
 _input_type_cache: Dict[str, Any] = {}
 
 
-def _process_field_type(field_type):
-    """Process field type to handle Optional and List types"""
-    # Handle Strawberry Optional
-    if isinstance(field_type, strawberry.types.base.StrawberryOptional):
-        return Optional[_process_field_type(field_type.of_type)]
-        
-    if get_origin(field_type) is Optional:
-        args = get_args(field_type)
-        base_type = _process_field_type(args[0])
-        return Optional[base_type]
-    elif get_origin(field_type) is list:
-        args = get_args(field_type)
-        base_type = _process_field_type(args[0])
-        return list[base_type]
-
-    # If it's a SiaType, get its input version
-    if isinstance(field_type, type) and issubclass(field_type, SiaType):
-        return field_type.Input
-
-    return field_type
-
-
 def is_valid_input_type(field_type):
     """Check if a type can be used as input"""
     basic_types = (str, int, float, bool, datetime.datetime, datetime.date)
-    
+
     # Handle Strawberry Optional types
     if isinstance(field_type, strawberry.types.base.StrawberryOptional):
         return is_valid_input_type(field_type.of_type)
-        
-    # Handle Optional and List
-    if get_origin(field_type) in (Optional, list):
-        field_type = get_args(field_type)[0]
-        return is_valid_input_type(field_type)
 
-    # Check if it's a basic type, SiaType, or a strawberry scalar
-    return (
-        isinstance(field_type, type) and 
-        (
-            issubclass(field_type, basic_types) or 
-            issubclass(field_type, SiaType) or
-            hasattr(field_type, '__strawberry_scalar__')
-        )
-    )
+    # Handle Strawberry List type
+    if isinstance(field_type, strawberry.types.base.StrawberryList):
+        return is_valid_input_type(field_type.of_type)
+
+    # Handle standard Optional and List
+    origin = get_origin(field_type)
+    if origin in (Optional, list):
+        args = get_args(field_type)
+        if not args:
+            return False
+        return is_valid_input_type(args[0])
+
+    # Handle scalar wrappers
+    if isinstance(field_type, strawberry.types.scalar.ScalarWrapper):
+        return True
+
+    # Handle Enums (Strawberry EnumDefinition)
+    if isinstance(field_type, EnumDefinition):
+        return True
+
+    # Handle SiaType subclasses
+    if isinstance(field_type, type) and issubclass(field_type, SiaType):
+        return True
+
+    # Check basic types (exact match)
+    if field_type in basic_types:
+        return True
+
+    return False
+
+
+def _process_field_type(field_type):
+    """Process field type to handle Optional and List types"""
+    # Handle Strawberry Enum definitions first
+    if isinstance(field_type, EnumDefinition):
+        return field_type.wrapped_cls  # Return original Enum class
+
+    # Handle Strawberry Optional
+    if isinstance(field_type, strawberry.types.base.StrawberryOptional):
+        processed_type = _process_field_type(field_type.of_type)
+        return Optional[processed_type]
+
+    # Handle Strawberry List
+    if isinstance(field_type, strawberry.types.base.StrawberryList):
+        inner_type = _process_field_type(field_type.of_type)
+        return List[inner_type]
+
+    # Handle ScalarWrapper
+    if isinstance(field_type, strawberry.types.scalar.ScalarWrapper):
+        return str  # Convert scalars to strings for input types
+
+    # Handle standard Optional and List
+    origin = get_origin(field_type)
+    if origin in (Optional, list):
+        args = get_args(field_type)
+        if not args:
+            return field_type
+        base_type = _process_field_type(args[0])
+        if origin is Optional:
+            return Optional[base_type]
+        return List[base_type]
+
+    # Handle SiaType subclasses
+    if isinstance(field_type, type) and issubclass(field_type, SiaType):
+        input_type = field_type.Input
+        return input_type if input_type is not None else str
+
+    return field_type
+
 
 def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
     """Create an input version of a type"""
@@ -73,6 +107,9 @@ def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
 
     class_dict = {}
     annotations = {}
+
+    # Get Strawberry fields which contain the metadata
+    strawberry_fields = cls.__strawberry_definition__.fields
 
     # Process fields
     for field in fields(cls):
@@ -87,11 +124,20 @@ def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
 
             annotations[field.name] = field_type
 
-            if hasattr(field, "metadata"):
-                metadata = field.metadata.get("strawberry", {})
-                field_kwargs = {k: v for k, v in metadata.items() if k in ("name", "description")}
-                field_kwargs["default"] = None
-                class_dict[field.name] = strawberry.field(**field_kwargs)
+            # Get the corresponding Strawberry field
+            strawberry_field = next((f for f in strawberry_fields if f.python_name == field.name), None)
+
+            if strawberry_field:
+                field_kwargs = {
+                    "name": strawberry_field.graphql_name,
+                    "description": strawberry_field.description,
+                    "default": None,
+                }
+            else:
+                field_kwargs = {"name": field.name, "default": None}
+
+            class_dict[field.name] = strawberry.field(**field_kwargs)
+
         except Exception as e:
             print(f"Exception processing field {field.name}: {e}")
             continue
@@ -108,41 +154,34 @@ def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
             field_obj = next((f for f in fields(self.__class__) if f.name == field_name), None)
             if field_obj:
                 # Get JSON field name from strawberry metadata
-                json_name = field_obj.metadata.get("strawberry", {}).get("name", field_name)
-                
+                json_name = field_obj.graphql_name if hasattr(field, "graphql_name") else field_obj.name
                 # Skip None values
                 if field_value is None:
                     continue
-                
+
                 # Handle nested objects
-                if hasattr(field_value, 'dict'):
+                if hasattr(field_value, "dict"):
                     result[json_name] = field_value.dict()
                 # Handle lists
                 elif isinstance(field_value, list):
-                    result[json_name] = [
-                        item.dict() if hasattr(item, 'dict') else item 
-                        for item in field_value
-                    ]
+                    result[json_name] = [item.dict() if hasattr(item, "dict") else item for item in field_value]
                 # Handle other values directly
                 else:
                     result[json_name] = field_value
         return result
 
-    class_dict['dict'] = dict
+    class_dict["dict"] = dict
 
     # Create the input type class
-    input_cls = type(f"{cls.__name__}Input", (), {
-        "__annotations__": annotations,
-        **class_dict,
-        "__module__": cls.__module__
-    })
+    input_cls = type(
+        f"{cls.__name__}Input", (), {"__annotations__": annotations, **class_dict, "__module__": cls.__module__}
+    )
 
     # Apply strawberry input decorator
     input_cls = strawberry.input(input_cls)
-    
+
     _input_type_cache[cache_key] = input_cls
     return input_cls
-
 
 
 @strawberry.type
@@ -176,37 +215,37 @@ class SiaType:
 
         return _input_type_cache.get(cache_key)
 
-    def dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for JSON serialization"""
-        result = {}
-        for field in fields(self.__class__):
-            # Get the JSON field name from strawberry metadata
-            field_name = field.name
-            json_name = field.metadata.get("strawberry", {}).get("name", field_name)
-            
-            # Get the field value
-            value = getattr(self, field_name)
-            
-            # Skip None values
-            if value is None:
-                continue
+    # def dict(self) -> Dict[str, Any]:
+    #     """Convert to dictionary for JSON serialization"""
+    #     result = {}
+    #     for field in fields(self.__class__):
+    #         # Get the JSON field name from strawberry metadata
+    #         field_name = field.name
+    #         json_name = field.metadata.get("strawberry", {}).get("name", field_name)
 
-            # Handle nested SiaTypes
-            if isinstance(value, SiaType):
-                result[json_name] = value.dict()
-            # Handle lists
-            elif isinstance(value, list):
-                result[json_name] = [
-                    item.dict() if isinstance(item, SiaType) else str(item) if hasattr(item, '__strawberry_scalar__') else item 
-                    for item in value if item is not None
-                ]
-            # Handle scalar types (like PublicKey)
-            elif hasattr(value, '__strawberry_scalar__'):
-                result[json_name] = str(value)
-            else:
-                result[json_name] = value
+    #         # Get the field value
+    #         value = getattr(self, field_name)
 
-        return result
+    #         # Skip None values
+    #         if value is None:
+    #             continue
+
+    #         # Handle nested SiaTypes
+    #         if isinstance(value, SiaType):
+    #             result[json_name] = value.dict()
+    #         # Handle lists
+    #         elif isinstance(value, list):
+    #             result[json_name] = [
+    #                 item.dict() if isinstance(item, SiaType) else str(item) if hasattr(item, '__strawberry_scalar__') else item
+    #                 for item in value if item is not None
+    #             ]
+    #         # Handle scalar types (like PublicKey)
+    #         elif hasattr(value, '__strawberry_scalar__'):
+    #             result[json_name] = str(value)
+    #         else:
+    #             result[json_name] = value
+
+    #     return result
 
 
 # ****************************************
@@ -1891,10 +1930,10 @@ class WebhookResponse(SiaType):
 
 @strawberry.enum
 class Severity(Enum):
-    INFO: int = strawberry.enum_value(1, description="Indicates that the alert is informational.")
-    WARNING: int = strawberry.enum_value(2, description="Indicates that the alert is a warning.")
-    ERROR: int = strawberry.enum_value(3, description="Indicates that the alert is an error.")
-    CRITICAL: int = strawberry.enum_value(4, description="Indicates that the alert is critical.")
+    INFO = strawberry.enum_value(1, description="Indicates that the alert is informational.")
+    WARNING = strawberry.enum_value(2, description="Indicates that the alert is a warning.")
+    ERROR = strawberry.enum_value(3, description="Indicates that the alert is an error.")
+    CRITICAL = strawberry.enum_value(4, description="Indicates that the alert is critical.")
 
 
 @strawberry.type
@@ -3205,47 +3244,53 @@ class ResizeVolumeRequest(SiaType):
 
 @strawberry.enum
 class SectorAction(Enum):
-    APPEND = "append"
-    UPDATE = "update"
-    SWAP = "swap"
-    TRIM = "trim"
+    APPEND = strawberry.enum_value("append", description="Append sector action")
+    UPDATE = strawberry.enum_value("update", description="Update sector action")
+    SWAP = strawberry.enum_value("swap", description="Swap sector action")
+    TRIM = strawberry.enum_value("trim", description="Trim sector action")
 
 
 @strawberry.enum
 class ContractStatus(Enum):
     # Contract has been formed but not yet confirmed on blockchain
-    PENDING = 0
+    PENDING = strawberry.enum_value(0, description="Contract has been formed but not yet confirmed on blockchain")
     # Contract formation transaction was never confirmed
-    REJECTED = 1
+    REJECTED = strawberry.enum_value(1, description="Contract formation transaction was never confirmed")
     # Contract is confirmed and currently active
-    ACTIVE = 2
+    ACTIVE = strawberry.enum_value(2, description="Contract is confirmed and currently active")
     # Storage proof confirmed or contract expired without host burning Siacoin
-    SUCCESSFUL = 3
+    SUCCESSFUL = strawberry.enum_value(
+        3, description="Storage proof confirmed or contract expired without host burning Siacoin"
+    )
     # Contract ended without storage proof and host burned Siacoin
-    FAILED = 4
+    FAILED = strawberry.enum_value(4, description="Contract ended without storage proof and host burned Siacoin")
 
 
 @strawberry.enum
 class V2ContractStatus(Enum):
     # Contract has been formed but not yet confirmed on blockchain
-    PENDING = "pending"
+    PENDING = strawberry.enum_value(
+        "pending", description="Contract has been formed but not yet confirmed on blockchain"
+    )
     # Contract formation transaction was never confirmed
-    REJECTED = "rejected"
+    REJECTED = strawberry.enum_value("rejected", description="Contract formation transaction was never confirmed")
     # Contract is confirmed and currently active
-    ACTIVE = "active"
+    ACTIVE = strawberry.enum_value("active", description="Contract is confirmed and currently active")
     # Contract has been renewed
-    RENEWED = "renewed"
+    RENEWED = strawberry.enum_value("renewed", description="Contract has been renewed")
     # Storage proof confirmed or contract expired without host burning Siacoin
-    SUCCESSFUL = "successful"
+    SUCCESSFUL = strawberry.enum_value(
+        "successful", description="Storage proof confirmed or contract expired without host burning Siacoin"
+    )
     # Contract ended without storage proof and host burned Siacoin
-    FAILED = "failed"
+    FAILED = strawberry.enum_value("failed", description="Contract ended without storage proof and host burned Siacoin")
 
 
 @strawberry.enum
 class ContractSortField(Enum):
-    STATUS = "status"
-    NEGOTIATION_HEIGHT = "negotiationHeight"
-    EXPIRATION_HEIGHT = "expirationHeight"
+    STATUS = strawberry.enum_value("status", description="Sort by contract status")
+    NEGOTIATION_HEIGHT = strawberry.enum_value("negotiationHeight", description="Sort by negotiation height")
+    EXPIRATION_HEIGHT = strawberry.enum_value("expirationHeight", description="Sort by expiration height")
 
 
 @strawberry.type
@@ -3454,5 +3499,3 @@ class MetricsInterval(Enum):
 
 
 print(SearchHostsRequest.Input)  # Check if this returns a valid input type
-
-

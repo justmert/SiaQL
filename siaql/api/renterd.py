@@ -503,13 +503,10 @@ class RenterdClient:
         response = await self.client.post("/bus/slabbuffer/fetch", json=req.dict())
         return response.json()
 
+    # Search endpoints
     @handle_api_errors(RenterdError)
     async def search_hosts(self, req: SearchHostsRequest) -> List[Host]:
-        print("Request object:", req)  # Debug print
-        print("Request dict:", req.dict())  # Debug print
         response = await self.client.post("/bus/search/hosts", json=req.dict())
-        print("Response status:", response.status_code)  # Debug print
-        print("Response content:", response.content)  # Debug print
         return response.json()
 
     @handle_api_errors(RenterdError)
