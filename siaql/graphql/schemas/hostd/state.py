@@ -6,8 +6,8 @@ from siaql.graphql.resolvers.hostd import HostdBaseResolver
 
 
 @strawberry.type
-class StateQueries(HostdBaseResolver):
+class StateQueries:
     @strawberry.field
     async def state(self, info: Info) -> HostdState:
         """Get current host state"""
-        return await self.handle_api_call(info, "get_state")
+        return await HostdBaseResolver.handle_api_call(info, "get_state")
