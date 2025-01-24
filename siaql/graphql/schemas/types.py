@@ -22,6 +22,10 @@ _input_type_cache: Dict[str, Any] = {}
 
 def _process_field_type(field_type):
     """Process field type to handle Optional and List types"""
+    # Handle Strawberry Optional
+    if isinstance(field_type, strawberry.types.base.StrawberryOptional):
+        return Optional[_process_field_type(field_type.of_type)]
+        
     if get_origin(field_type) is Optional:
         args = get_args(field_type)
         base_type = _process_field_type(args[0])
@@ -41,14 +45,25 @@ def _process_field_type(field_type):
 def is_valid_input_type(field_type):
     """Check if a type can be used as input"""
     basic_types = (str, int, float, bool, datetime.datetime, datetime.date)
-
+    
+    # Handle Strawberry Optional types
+    if isinstance(field_type, strawberry.types.base.StrawberryOptional):
+        return is_valid_input_type(field_type.of_type)
+        
     # Handle Optional and List
     if get_origin(field_type) in (Optional, list):
         field_type = get_args(field_type)[0]
+        return is_valid_input_type(field_type)
 
-    # Check if it's a basic type or SiaType
-    return isinstance(field_type, type) and (issubclass(field_type, basic_types) or issubclass(field_type, SiaType))
-
+    # Check if it's a basic type, SiaType, or a strawberry scalar
+    return (
+        isinstance(field_type, type) and 
+        (
+            issubclass(field_type, basic_types) or 
+            issubclass(field_type, SiaType) or
+            hasattr(field_type, '__strawberry_scalar__')
+        )
+    )
 
 def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
     """Create an input version of a type"""
@@ -62,28 +77,72 @@ def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
     # Process fields
     for field in fields(cls):
         if not is_valid_input_type(field.type):
+            print(f"Field {field.name} failed validation")
             continue
 
         try:
             field_type = _process_field_type(field.type)
+            if isinstance(field_type, strawberry.types.base.StrawberryOptional):
+                field_type = Optional[field_type.of_type]
+
             annotations[field.name] = field_type
 
             if hasattr(field, "metadata"):
                 metadata = field.metadata.get("strawberry", {})
                 field_kwargs = {k: v for k, v in metadata.items() if k in ("name", "description")}
+                field_kwargs["default"] = None
                 class_dict[field.name] = strawberry.field(**field_kwargs)
-        except Exception:
+        except Exception as e:
+            print(f"Exception processing field {field.name}: {e}")
             continue
 
     if not annotations:
+        print("No valid annotations found")
         return None
 
-    input_cls = strawberry.input(
-        type(f"{cls.__name__}Input", (), {"__annotations__": annotations, **class_dict, "__module__": cls.__module__})
-    )
+    # Add dict method to the class_dict
+    def dict(self) -> Dict[str, Any]:
+        result = {}
+        for field_name, field_value in self.__dict__.items():
+            # Get the field object to access metadata
+            field_obj = next((f for f in fields(self.__class__) if f.name == field_name), None)
+            if field_obj:
+                # Get JSON field name from strawberry metadata
+                json_name = field_obj.metadata.get("strawberry", {}).get("name", field_name)
+                
+                # Skip None values
+                if field_value is None:
+                    continue
+                
+                # Handle nested objects
+                if hasattr(field_value, 'dict'):
+                    result[json_name] = field_value.dict()
+                # Handle lists
+                elif isinstance(field_value, list):
+                    result[json_name] = [
+                        item.dict() if hasattr(item, 'dict') else item 
+                        for item in field_value
+                    ]
+                # Handle other values directly
+                else:
+                    result[json_name] = field_value
+        return result
 
+    class_dict['dict'] = dict
+
+    # Create the input type class
+    input_cls = type(f"{cls.__name__}Input", (), {
+        "__annotations__": annotations,
+        **class_dict,
+        "__module__": cls.__module__
+    })
+
+    # Apply strawberry input decorator
+    input_cls = strawberry.input(input_cls)
+    
     _input_type_cache[cache_key] = input_cls
     return input_cls
+
 
 
 @strawberry.type
@@ -116,6 +175,38 @@ class SiaType:
                 _input_type_cache[cache_key] = input_type
 
         return _input_type_cache.get(cache_key)
+
+    def dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for JSON serialization"""
+        result = {}
+        for field in fields(self.__class__):
+            # Get the JSON field name from strawberry metadata
+            field_name = field.name
+            json_name = field.metadata.get("strawberry", {}).get("name", field_name)
+            
+            # Get the field value
+            value = getattr(self, field_name)
+            
+            # Skip None values
+            if value is None:
+                continue
+
+            # Handle nested SiaTypes
+            if isinstance(value, SiaType):
+                result[json_name] = value.dict()
+            # Handle lists
+            elif isinstance(value, list):
+                result[json_name] = [
+                    item.dict() if isinstance(item, SiaType) else str(item) if hasattr(item, '__strawberry_scalar__') else item 
+                    for item in value if item is not None
+                ]
+            # Handle scalar types (like PublicKey)
+            elif hasattr(value, '__strawberry_scalar__'):
+                result[json_name] = str(value)
+            else:
+                result[json_name] = value
+
+        return result
 
 
 # ****************************************
@@ -3360,3 +3451,8 @@ class MetricsInterval(Enum):
     WEEKLY = strawberry.enum_value("weekly", description="1 week interval")
     MONTHLY = strawberry.enum_value("monthly", description="1 month interval")
     YEARLY = strawberry.enum_value("yearly", description="1 year interval")
+
+
+print(SearchHostsRequest.Input)  # Check if this returns a valid input type
+
+
