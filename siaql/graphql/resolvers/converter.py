@@ -1,6 +1,7 @@
 # siaql/graphql/resolvers/walletd.py
 import enum
 import inspect
+import logging
 from dataclasses import fields
 from datetime import datetime
 from functools import wraps
@@ -27,6 +28,9 @@ from strawberry.types.lazy_type import LazyType
 from strawberry.types.scalar import ScalarDefinition, ScalarWrapper
 from strawberry.types.union import StrawberryUnion
 from dateutil import parser
+
+
+logger = logging.getLogger('siaql.resolvers.converter')
 
 
 class TypeConverter:
@@ -234,10 +238,10 @@ class TypeConverter:
                     converted_value = cls.convert_value(value, field_type)
                     result[python_name] = converted_value
                 except Exception as e:
-                    print(f"Error converting field {key}: {str(e)}")
+                    logger.error("Error converting field %s: %s", key, str(e))
                     result[python_name] = None
             else:
-                print(f"No mapping found for {key}")
+                logger.warning("No mapping found for %s", key)
 
         return result
 

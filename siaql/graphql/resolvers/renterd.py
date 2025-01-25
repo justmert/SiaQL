@@ -2,9 +2,11 @@ from typing import Any, Callable, Dict, Optional, TypeVar
 from strawberry.types import Info
 from siaql.graphql.resolvers.converter import TypeConverter
 from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput, QueryFiltering
+import logging
 
 T = TypeVar("T")
 
+logger = logging.getLogger('siaql.resolvers.renterd')
 
 class RenterdBaseResolver:
     """Base resolver class for Renterd API"""
@@ -27,7 +29,7 @@ class RenterdBaseResolver:
         try:
             # 1. Get raw data from API
             result = await method_func(*args, **kwargs)
-            print(f"DEBUG: {method_func}")
+            logger.debug("Executing method: %s", method_func)
 
             # 2. Apply any custom transformations
             if transform_func:
@@ -51,5 +53,5 @@ class RenterdBaseResolver:
 
             return result
         except Exception as e:
-            print(f"Error in handle_api_call: {e}")
+            logger.error("Error in handle_api_call: %s", e)
             raise e

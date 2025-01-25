@@ -15,6 +15,10 @@ from typing import Type, TypeVar, get_type_hints, Optional, get_origin, get_args
 from functools import wraps
 from dataclasses import dataclass, fields
 
+import logging
+
+logger = logging.getLogger('siaql.schemas.types')
+
 T = TypeVar("T")
 
 # Cache for input types
@@ -114,7 +118,7 @@ def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
     # Process fields
     for field in fields(cls):
         if not is_valid_input_type(field.type):
-            print(f"Field {field.name} failed validation")
+            logger.error("Field %s failed validation", field.name)
             continue
 
         try:
@@ -139,11 +143,11 @@ def create_input_type(cls: Type[T]) -> Optional[Type[T]]:
             class_dict[field.name] = strawberry.field(**field_kwargs)
 
         except Exception as e:
-            print(f"Exception processing field {field.name}: {e}")
+            logger.error("Exception processing field %s: %s", field.name, e)
             continue
 
     if not annotations:
-        print("No valid annotations found")
+        logger.error("No valid annotations found")
         return None
 
     # Add dict method to the class_dict
@@ -3199,7 +3203,9 @@ class AddVolumeRequest(SiaType):
 
 @strawberry.type
 class VolumeStats(SiaType):
-    failed_reads: Optional[int] = strawberry.field(description="Number of failed read operations", name="failedReads")
+    failed_reads: Optional[int] = strawberry.field(
+        description="Number of failed read operations", name="failedReads"
+    )
     failed_writes: Optional[int] = strawberry.field(
         description="Number of failed write operations", name="failedWrites"
     )
@@ -3217,7 +3223,9 @@ class VolumeStats(SiaType):
 class Volume(SiaType):
     id: Optional[int] = strawberry.field(description="Unique identifier for the volume", name="id")
     local_path: Optional[str] = strawberry.field(description="Local filesystem path of the volume", name="localPath")
-    used_sectors: Optional[int] = strawberry.field(description="Number of sectors currently in use", name="usedSectors")
+    used_sectors: Optional[int] = strawberry.field(
+        description="Number of sectors currently in use", name="usedSectors"
+    )
     total_sectors: Optional[int] = strawberry.field(
         description="Total number of sectors available", name="totalSectors"
     )
@@ -3498,4 +3506,4 @@ class MetricsInterval(Enum):
     YEARLY = strawberry.enum_value("yearly", description="1 year interval")
 
 
-print(SearchHostsRequest.Input)  # Check if this returns a valid input type
+logger.debug("SearchHostsRequest.Input: %s", SearchHostsRequest.Input)  # Check if this returns a valid input type

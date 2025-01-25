@@ -3,8 +3,11 @@ from strawberry.types import Info
 from siaql.graphql.resolvers.converter import TypeConverter
 from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput, QueryFiltering
 from functools import wraps
+import logging
 
 T = TypeVar("T")
+
+logger = logging.getLogger('siaql.resolvers.hostd')
 
 
 class HostdBaseResolver:
@@ -28,7 +31,7 @@ class HostdBaseResolver:
         try:
             # 1. Get raw data from API
             result = await method_func(*args, **kwargs)
-            print(f"DEBUG: {method_func}")
+            logger.debug("Executing method: %s", method_func)
 
             # 2. Apply any custom transformations
             if transform_func:
@@ -52,5 +55,5 @@ class HostdBaseResolver:
 
             return result
         except Exception as e:
-            print(f"Error in handle_api_call: {e}")
+            logger.error("Error in handle_api_call: %s", e)
             raise e

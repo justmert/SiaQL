@@ -24,8 +24,11 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 
 import inspect
 import enum
+import logging
 
 from datetime import datetime
+
+logger = logging.getLogger('siaql.resolvers.walletd')
 
 T = TypeVar("T")
 
@@ -51,7 +54,7 @@ class WalletdBaseResolver:
         try:
             # 1. Get raw data from API
             result = await method_func(*args, **kwargs)
-            print(f"DEBUG: {method_func}")
+            logger.debug("Executing method: %s", method_func)
 
             # 2. Apply any custom transformations
             if transform_func:
@@ -75,5 +78,5 @@ class WalletdBaseResolver:
 
             return result
         except Exception as e:
-            print(f"Error in handle_api_call: {e}")
+            logger.error("Error in handle_api_call: %s", e)
             raise e
