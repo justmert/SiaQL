@@ -2,6 +2,7 @@ from typing import Any, Callable, Dict, Optional, TypeVar
 from strawberry.types import Info
 from siaql.graphql.resolvers.converter import TypeConverter
 from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput, QueryFiltering
+from functools import wraps
 
 T = TypeVar("T")
 
@@ -27,6 +28,7 @@ class HostdBaseResolver:
         try:
             # 1. Get raw data from API
             result = await method_func(*args, **kwargs)
+            print(f"DEBUG: {method_func}")
 
             # 2. Apply any custom transformations
             if transform_func:

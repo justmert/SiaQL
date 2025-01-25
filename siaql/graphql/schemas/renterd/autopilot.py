@@ -13,29 +13,82 @@ from siaql.graphql.schemas.types import (
     SearchHostsRequest,
 )
 from typing import Optional
+from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput
 
 
 @strawberry.type
 class AutopilotQueries:
     @strawberry.field
-    async def autopilot_config(self, info: Info) -> AutopilotConfig:
+    async def autopilot_config(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> AutopilotConfig:
         """Get the autopilot configuration"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_autopilot_config")
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_autopilot_config",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def autopilot_state(self, info: Info) -> AutopilotStateResponse:
+    async def autopilot_state(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> AutopilotStateResponse:
         """Get the current state of the autopilot"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_autopilot_state")
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_autopilot_state",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def autopilot_host(self, info: Info, host_key: PublicKey) -> HostResponse:
+    async def autopilot_host(
+        self,
+        info: Info,
+        host_key: PublicKey,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> HostResponse:
         """Get information about a specific host"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_autopilot_host", host_key=host_key)
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_autopilot_host",
+            host_key=host_key,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def autopilot_hosts(self, info: Info, opts: SearchHostsRequest.Input) -> List[HostResponse]:
+    async def autopilot_hosts(
+        self,
+        info: Info,
+        opts: SearchHostsRequest.Input,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[HostResponse]:
         """Get information about all hosts"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_autopilot_hosts", opts=opts)
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_autopilot_hosts",
+            opts=opts,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
 
 @strawberry.type

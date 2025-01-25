@@ -1,17 +1,27 @@
 import strawberry
-from typing import List
+from typing import List, Optional
 from strawberry.types import Info
 
 from siaql.graphql.schemas.types import Alert, Hash256
+from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput
+
 from siaql.graphql.resolvers.hostd import HostdBaseResolver
 
 
 @strawberry.type
 class AlertQueries:
     @strawberry.field
-    async def alerts(self, info: Info) -> List[Alert]:
+    async def alerts(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Alert]:
         """Get active alerts"""
-        return await HostdBaseResolver.handle_api_call(info, "get_alerts")
+        return await HostdBaseResolver.handle_api_call(
+            info, "get_alerts", filter_input=filter, sort_input=sort, pagination_input=pagination
+        )
 
 
 @strawberry.type

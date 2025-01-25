@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 
 import strawberry
 from strawberry.types import Info
+from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput
 
 from siaql.graphql.resolvers.walletd import WalletdBaseResolver
 from siaql.graphql.schemas.types import (
@@ -26,49 +27,147 @@ from siaql.graphql.schemas.types import (
 @strawberry.type
 class WalletQueries:
     @strawberry.field
-    async def wallets(self, info: Info) -> List[Wallet]:
+    async def wallets(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Wallet]:
         """Get all wallets"""
-        return await WalletdBaseResolver.handle_api_call(info, "get_wallets")
-
-    @strawberry.field
-    async def wallet_addresses(self, info: Info, wallet_id: str) -> List[Address]:
-        """Get addresses for a wallet"""
-        return await WalletdBaseResolver.handle_api_call(info, "get_wallet_addresses", wallet_id=wallet_id)
-
-    @strawberry.field
-    async def wallet_balance(self, info: Info, wallet_id: str) -> Balance:
-        """Get wallet balance"""
-        return await WalletdBaseResolver.handle_api_call(info, "get_wallet_balance", wallet_id=wallet_id)
-
-    @strawberry.field
-    async def wallet_events(self, info: Info, wallet_id: str, offset: int = 0, limit: int = 500) -> List[WalletEvent]:
-        """Get wallet events"""
         return await WalletdBaseResolver.handle_api_call(
-            info, "get_wallet_events", wallet_id=wallet_id, offset=offset, limit=limit
+            info,
+            "get_wallets",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
         )
 
     @strawberry.field
-    async def wallet_unconfirmed_events(self, info: Info, wallet_id: str) -> List[WalletEvent]:
+    async def wallet_addresses(
+        self,
+        info: Info,
+        wallet_id: str,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Address]:
+        """Get addresses for a wallet"""
+        return await WalletdBaseResolver.handle_api_call(
+            info,
+            "get_wallet_addresses",
+            wallet_id=wallet_id,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def wallet_balance(
+        self,
+        info: Info,
+        wallet_id: str,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Balance:
+        """Get wallet balance"""
+        return await WalletdBaseResolver.handle_api_call(
+            info,
+            "get_wallet_balance",
+            wallet_id=wallet_id,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def wallet_events(
+        self,
+        info: Info,
+        wallet_id: str,
+        offset: int = 0,
+        limit: int = 500,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[WalletEvent]:
+        """Get wallet events"""
+        return await WalletdBaseResolver.handle_api_call(
+            info,
+            "get_wallet_events",
+            wallet_id=wallet_id,
+            offset=offset,
+            limit=limit,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def wallet_unconfirmed_events(
+        self,
+        info: Info,
+        wallet_id: str,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[WalletEvent]:
         """Get unconfirmed wallet events"""
-        return await WalletdBaseResolver.handle_api_call(info, "get_wallet_unconfirmed_events", wallet_id=wallet_id)
+        return await WalletdBaseResolver.handle_api_call(
+            info,
+            "get_wallet_unconfirmed_events",
+            wallet_id=wallet_id,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
     async def wallet_siacoin_outputs(
-        self, info: Info, wallet_id: str, offset: Optional[int] = 0, limit: Optional[int] = 1000
+        self,
+        info: Info,
+        wallet_id: str,
+        offset: Optional[int] = 0,
+        limit: Optional[int] = 1000,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
     ) -> List[SiacoinElement]:
         """Get wallet siacoin outputs"""
         data = await WalletdBaseResolver.handle_api_call(
-            info, "get_wallet_siacoin_outputs", wallet_id=wallet_id, offset=offset, limit=limit
+            info,
+            "get_wallet_siacoin_outputs",
+            wallet_id=wallet_id,
+            offset=offset,
+            limit=limit,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
         )
         return data
 
     @strawberry.field
     async def wallet_siafund_outputs(
-        self, info: Info, wallet_id: str, offset: Optional[int] = 0, limit: Optional[int] = 1000
+        self,
+        info: Info,
+        wallet_id: str,
+        offset: Optional[int] = 0,
+        limit: Optional[int] = 1000,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
     ) -> List[SiafundElement]:
         """Get wallet siafund outputs"""
         data = await WalletdBaseResolver.handle_api_call(
-            info, "get_wallet_siafund_outputs", wallet_id=wallet_id, offset=offset, limit=limit
+            info,
+            "get_wallet_siafund_outputs",
+            wallet_id=wallet_id,
+            offset=offset,
+            limit=limit,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
         )
         return data
 

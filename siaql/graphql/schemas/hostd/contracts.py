@@ -9,25 +9,53 @@ from siaql.graphql.schemas.types import (
     ContractsResponse,
     IntegrityCheckResult,
 )
+from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput
+
 from siaql.graphql.resolvers.hostd import HostdBaseResolver
 
 
 @strawberry.type
 class ContractQueries:
     @strawberry.field
-    async def contracts(self, info: Info, filter: ContractFilter.Input) -> ContractsResponse:
+    async def contracts(
+        self,
+        info: Info,
+        filter: ContractFilter.Input,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> ContractsResponse:
         """Get contracts matching the filter"""
-        return await HostdBaseResolver.handle_api_call(info, "post_contracts", filter=filter)
+        return await HostdBaseResolver.handle_api_call(
+            info, "post_contracts", filter=filter, sort_input=sort, pagination_input=pagination
+        )
 
     @strawberry.field
-    async def contract(self, info: Info, id: FileContractID) -> Contract:
+    async def contract(
+        self,
+        info: Info,
+        id: FileContractID,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Contract:
         """Get a specific contract by ID"""
-        return await HostdBaseResolver.handle_api_call(info, "get_contract", id=id)
+        return await HostdBaseResolver.handle_api_call(
+            info, "get_contract", id=id, filter_input=filter, sort_input=sort, pagination_input=pagination
+        )
 
     @strawberry.field
-    async def contract_integrity(self, info: Info, id: FileContractID) -> Optional[IntegrityCheckResult]:
+    async def contract_integrity(
+        self,
+        info: Info,
+        id: FileContractID,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Optional[IntegrityCheckResult]:
         """Get integrity check result for a contract"""
-        return await HostdBaseResolver.handle_api_call(info, "get_contract_integrity", id=id)
+        return await HostdBaseResolver.handle_api_call(
+            info, "get_contract_integrity", id=id, filter_input=filter, sort_input=sort, pagination_input=pagination
+        )
 
 
 @strawberry.type

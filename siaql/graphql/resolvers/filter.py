@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Optional, TypeVar, Union
 import strawberry
 from dateutil import parser
 from strawberry.scalars import JSON
+from strawberry.types import Info
+from strawberry.types import Info
 
 
 @strawberry.enum

@@ -32,56 +32,173 @@ from siaql.graphql.schemas.types import (
     WebhookEvent,
     WorkerStateResponse,
 )
+from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput
 
 
 @strawberry.type
 class WorkerQueries:
     @strawberry.field
-    async def worker_state(self, info: Info) -> WorkerStateResponse:
+    async def worker_state(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> WorkerStateResponse:
         """Get the current state of the worker"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_state")
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_worker_state",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def worker_memory(self, info: Info) -> MemoryResponse:
+    async def worker_memory(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> MemoryResponse:
         """Get memory statistics"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_memory")
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_worker_memory",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def worker_id(self, info: Info) -> str:
+    async def worker_id(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> str:
         """Get the worker ID"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_id")
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_worker_id",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def worker_accounts(self, info: Info) -> List[Account]:
+    async def worker_accounts(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Account]:
         """Get all accounts"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_accounts")
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_worker_accounts",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def worker_account(self, info: Info, host_key: str) -> Account:
+    async def worker_account(
+        self,
+        info: Info,
+        host_key: str,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Account:
         """Get account for specific host"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_account", host_key=host_key)
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_worker_account",
+            host_key=host_key,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def worker_contracts(self, info: Info, host_timeout: Optional[int] = None) -> ContractsResponse:
+    async def worker_contracts(
+        self,
+        info: Info,
+        host_timeout: Optional[int] = None,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> ContractsResponse:
         """Get all contracts"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_contracts", host_timeout=host_timeout)
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_worker_contracts",
+            host_timeout=host_timeout,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
     async def worker_object(
-        self, info: Info, bucket: str, path: str, opts: GetObjectOptions.Input
+        self,
+        info: Info,
+        bucket: str,
+        path: str,
+        opts: GetObjectOptions.Input,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
     ) -> GetObjectResponse:
         """Get object data"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_object", bucket=bucket, path=path, opts=opts)
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_worker_object",
+            bucket=bucket,
+            path=path,
+            opts=opts,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def download_stats(self, info: Info) -> DownloadStatsResponse:
+    async def download_stats(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> DownloadStatsResponse:
         """Get download statistics"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_downloads_stats")
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_worker_downloads_stats",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def upload_stats(self, info: Info) -> UploadStatsResponse:
+    async def upload_stats(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> UploadStatsResponse:
         """Get upload statistics"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_worker_uploads_stats")
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_worker_uploads_stats",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
 
 @strawberry.type

@@ -2795,7 +2795,7 @@ class StateResponse(SiaType):
 
 @strawberry.type
 class GatewayPeer(SiaType):
-    address: Optional[str] = strawberry.field(name="address")
+    addr: Optional[str] = strawberry.field(name="address")
     inbound: Optional[bool] = strawberry.field(name="inbound")
     version: Optional[str] = strawberry.field(name="version")
     first_seen: Optional[datetime.datetime] = strawberry.field(name="firstSeen")

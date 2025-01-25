@@ -1,21 +1,39 @@
 import strawberry
 from strawberry.types import Info
+from typing import Optional
 
 from siaql.graphql.schemas.types import HostSettings, PinnedSettings
 from siaql.graphql.resolvers.hostd import HostdBaseResolver
+from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput
 
 
 @strawberry.type
 class SettingsQueries:
     @strawberry.field
-    async def settings(self, info: Info) -> HostSettings:
+    async def settings(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> HostSettings:
         """Get current host settings"""
-        return await HostdBaseResolver.handle_api_call(info, "get_settings")
+        return await HostdBaseResolver.handle_api_call(
+            info, "get_settings", filter_input=filter, sort_input=sort, pagination_input=pagination
+        )
 
     @strawberry.field
-    async def pinned_settings(self, info: Info) -> PinnedSettings:
+    async def pinned_settings(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> PinnedSettings:
         """Get pinned settings"""
-        return await HostdBaseResolver.handle_api_call(info, "get_pinned_settings")
+        return await HostdBaseResolver.handle_api_call(
+            info, "get_pinned_settings", filter_input=filter, sort_input=sort, pagination_input=pagination
+        )
 
 
 @strawberry.type

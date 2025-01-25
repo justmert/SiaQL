@@ -4,19 +4,38 @@ from strawberry.types import Info
 
 from siaql.graphql.schemas.types import AddVolumeRequest, ResizeVolumeRequest, UpdateVolumeRequest, Volume, VolumeMeta
 from siaql.graphql.resolvers.hostd import HostdBaseResolver
+from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput
+from typing import Optional
 
 
 @strawberry.type
 class VolumeQueries:
     @strawberry.field
-    async def volumes(self, info: Info) -> List[VolumeMeta]:
+    async def volumes(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[VolumeMeta]:
         """Get list of volumes"""
-        return await HostdBaseResolver.handle_api_call(info, "get_volumes")
+        return await HostdBaseResolver.handle_api_call(
+            info, "get_volumes", filter_input=filter, sort_input=sort, pagination_input=pagination
+        )
 
     @strawberry.field
-    async def volume(self, info: Info, id: int) -> VolumeMeta:
+    async def volume(
+        self,
+        info: Info,
+        id: int,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> VolumeMeta:
         """Get specific volume"""
-        return await HostdBaseResolver.handle_api_call(info, "get_volume", id=id)
+        return await HostdBaseResolver.handle_api_call(
+            info, "get_volume", id=id, filter_input=filter, sort_input=sort, pagination_input=pagination
+        )
 
 
 @strawberry.type

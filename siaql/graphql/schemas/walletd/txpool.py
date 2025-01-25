@@ -12,24 +12,63 @@ from siaql.graphql.schemas.types import (
     Currency,
     TxpoolTransactionsResponse,
 )
+from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput
 
 
 @strawberry.type
 class TxpoolQueries:
     @strawberry.field
-    async def txpool_parents(self, info: Info, transaction: Transaction.Input) -> List[Transaction]:
+    async def txpool_parents(
+        self,
+        info: Info,
+        transaction: Transaction.Input,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Transaction]:
         """Get parent transactions from pool"""
-        return await WalletdBaseResolver.handle_api_call(info, "get_txpool_parents", transaction=transaction)
+        return await WalletdBaseResolver.handle_api_call(
+            info,
+            "get_txpool_parents",
+            transaction=transaction,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def txpool_transactions(self, info: Info) -> TxpoolTransactionsResponse:
+    async def txpool_transactions(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> TxpoolTransactionsResponse:
         """Get all transactions in the transaction pool"""
-        return await WalletdBaseResolver.handle_api_call(info, "get_txpool_transactions")
+        return await WalletdBaseResolver.handle_api_call(
+            info,
+            "get_txpool_transactions",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def txpool_fee(self, info: Info) -> Currency:
+    async def txpool_fee(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Currency:
         """Get the recommended transaction fee"""
-        return await WalletdBaseResolver.handle_api_call(info, "get_txpool_fee")
+        return await WalletdBaseResolver.handle_api_call(
+            info,
+            "get_txpool_fee",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
 
 @strawberry.type

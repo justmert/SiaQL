@@ -27,6 +27,7 @@ class RenterdBaseResolver:
         try:
             # 1. Get raw data from API
             result = await method_func(*args, **kwargs)
+            print(f"DEBUG: {method_func}")
 
             # 2. Apply any custom transformations
             if transform_func:

@@ -5,14 +5,27 @@ import strawberry
 from strawberry.types import Info
 from siaql.graphql.resolvers.walletd import WalletdBaseResolver
 from siaql.graphql.schemas.types import GatewayPeer, Block
+from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput
 
 
 @strawberry.type
 class SyncerQueries:
     @strawberry.field
-    async def syncer_peers(self, info: Info) -> List[GatewayPeer]:
+    async def syncer_peers(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[GatewayPeer]:
         """Get list of connected peers"""
-        return await WalletdBaseResolver.handle_api_call(info, "get_syncer_peers")
+        return await WalletdBaseResolver.handle_api_call(
+            info,
+            "get_syncer_peers",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
 
 @strawberry.type

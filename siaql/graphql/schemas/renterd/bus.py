@@ -41,7 +41,6 @@ from siaql.graphql.schemas.types import (
     ContractsPrunableDataResponse,
     CopyObjectsRequest,
     Currency,
-    Event,
     FileContractID,
     GougingParams,
     Hash256,
@@ -103,76 +102,286 @@ from strawberry.scalars import JSON
 @strawberry.type
 class BusQueries:
     @strawberry.field
-    async def accounts(self, info: Info, owner: Optional[str] = None) -> List[Account]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_accounts", owner=owner)
+    async def accounts(
+        self,
+        info: Info,
+        owner: Optional[str] = None,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Account]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_accounts",
+            owner=owner,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def alerts(self, info: Info, opts: AlertsOpts.Input) -> AlertsResponse:
-        return await RenterdBaseResolver.handle_api_call(info, "get_alerts", opts=opts)
+    async def alerts(
+        self,
+        info: Info,
+        opts: AlertsOpts.Input,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> AlertsResponse:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_alerts",
+            opts=opts,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def autopilot(self, info: Info, id: str) -> Autopilot:
-        return await RenterdBaseResolver.handle_api_call(info, "get_autopilot", id=id)
+    async def autopilot(
+        self,
+        info: Info,
+        id: str,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Autopilot:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_autopilot",
+            id=id,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def get_state(self, info: Info) -> BusStateResponse:
+    async def get_state(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> BusStateResponse:
         """Get the current bus state"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_state")
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_state",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def contract_renewed(self, info: Info, id: FileContractID) -> ContractMetadata:
+    async def contract_renewed(
+        self,
+        info: Info,
+        id: FileContractID,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> ContractMetadata:
         """Get the renewed contract for a given contract ID"""
-        return await RenterdBaseResolver.handle_api_call(info, "get_contract_renewed", id=id)
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_contract_renewed",
+            id=id,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def consensus_network(self, info: Info) -> Network:
-        return await RenterdBaseResolver.handle_api_call(info, "get_consensus_network")
+    async def consensus_network(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Network:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_consensus_network",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
     async def multipart_list_parts(
-        self, info: Info, req: MultipartListPartsRequest.Input
+        self,
+        info: Info,
+        req: MultipartListPartsRequest.Input,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
     ) -> MultipartListPartsResponse:
         """List parts of a multipart upload"""
-        return await RenterdBaseResolver.handle_api_call(info, "list_multipart_parts", req=req)
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "list_multipart_parts",
+            req=req,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
     async def multipart_list_uploads(
-        self, info: Info, req: MultipartListUploadsRequest.Input
+        self,
+        info: Info,
+        req: MultipartListUploadsRequest.Input,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
     ) -> MultipartListUploadsResponse:
         """List all multipart uploads"""
-        return await RenterdBaseResolver.handle_api_call(info, "list_multipart_uploads", req=req)
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "list_multipart_uploads",
+            req=req,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def multipart_upload(self, info: Info, id: str) -> MultipartUpload:
-        return await RenterdBaseResolver.handle_api_call(info, "get_multipart_upload", id=id)
+    async def multipart_upload(
+        self,
+        info: Info,
+        id: str,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> MultipartUpload:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_multipart_upload",
+            id=id,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def autopilots(self, info: Info) -> List[Autopilot]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_autopilots")
+    async def autopilots(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Autopilot]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_autopilots",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def buckets(self, info: Info) -> List[Bucket]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_buckets")
+    async def buckets(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Bucket]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_buckets",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def bucket(self, info: Info, name: str) -> Bucket:
-        return await RenterdBaseResolver.handle_api_call(info, "get_bucket", name=name)
+    async def bucket(
+        self,
+        info: Info,
+        name: str,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Bucket:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_bucket",
+            name=name,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def consensus_state(self, info: Info) -> ConsensusState:
-        return await RenterdBaseResolver.handle_api_call(info, "get_consensus_state")
+    async def consensus_state(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> ConsensusState:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_consensus_state",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def contracts(self, info: Info, contract_set: Optional[str] = None) -> List[ContractMetadata]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_contracts", contract_set=contract_set)
+    async def contracts(
+        self,
+        info: Info,
+        contract_set: Optional[str] = None,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[ContractMetadata]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_contracts",
+            contract_set=contract_set,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def contract(self, info: Info, id: FileContractID) -> ContractMetadata:
-        return await RenterdBaseResolver.handle_api_call(info, "get_contract", id=id)
+    async def contract(
+        self,
+        info: Info,
+        id: FileContractID,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> ContractMetadata:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_contract",
+            id=id,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def contract_size(self, info: Info, id: FileContractID) -> ContractSize:
-        return await RenterdBaseResolver.handle_api_call(info, "get_contract_size", id=id)
+    async def contract_size(
+        self,
+        info: Info,
+        id: FileContractID,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> ContractSize:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_contract_size",
+            id=id,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
     async def get_hosts(
@@ -188,146 +397,541 @@ class BusQueries:
         )
 
     @strawberry.field
-    async def hosts_allowlist(self, info: Info) -> List[PublicKey]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_hosts_allowlist")
+    async def hosts_allowlist(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[PublicKey]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_hosts_allowlist",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def hosts_blocklist(self, info: Info) -> List[str]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_hosts_blocklist")
+    async def hosts_blocklist(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[str]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_hosts_blocklist",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def host(self, info: Info, public_key: PublicKey) -> Host:
-        return await RenterdBaseResolver.handle_api_call(info, "get_host", public_key=public_key)
+    async def host(
+        self,
+        info: Info,
+        public_key: PublicKey,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Host:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_host",
+            public_key=public_key,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def search_hosts(self, info: Info, req: SearchHostsRequest.Input) -> List[Host]:
-        return await RenterdBaseResolver.handle_api_call(info, "search_hosts", req=req)
+    async def search_hosts(
+        self,
+        info: Info,
+        req: SearchHostsRequest.Input,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Host]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "search_hosts",
+            req=req,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def object(self, info: Info, path: str, bucket: Optional[str] = None, only_metadata: bool = False) -> Object:
+    async def object(
+        self,
+        info: Info,
+        path: str,
+        bucket: Optional[str] = None,
+        only_metadata: bool = False,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Object:
         return await RenterdBaseResolver.handle_api_call(
             info, "get_object", path=path, bucket=bucket, only_metadata=only_metadata
         )
 
     @strawberry.field
     async def search_objects(
-        self, info: Info, key: str, bucket: str = "default", offset: int = 0, limit: int = -1
+        self,
+        info: Info,
+        key: str,
+        bucket: str = "default",
+        offset: int = 0,
+        limit: int = -1,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
     ) -> List[ObjectMetadata]:
         return await RenterdBaseResolver.handle_api_call(
             info, "search_objects", key=key, bucket=bucket, offset=offset, limit=limit
         )
 
     @strawberry.field
-    async def objects_stats(self, info: Info) -> ObjectsStatsResponse:
-        return await RenterdBaseResolver.handle_api_call(info, "get_objects_stats")
-
-    @strawberry.field
-    async def slab_buffers(self, info: Info) -> List[SlabBuffer]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_slab_buffers")
-
-    @strawberry.field
-    async def wallet(self, info: Info) -> WalletResponse:
-        return await RenterdBaseResolver.handle_api_call(info, "get_wallet")
-
-    @strawberry.field
-    async def webhooks(self, info: Info) -> WebhookResponse:
-        return await RenterdBaseResolver.handle_api_call(info, "get_webhooks")
-
-    @strawberry.field
-    async def gouging_params(self, info: Info) -> GougingParams:
-        return await RenterdBaseResolver.handle_api_call(info, "get_gouging_params")
-
-    @strawberry.field
-    async def upload_params(self, info: Info) -> UploadParams:
-        return await RenterdBaseResolver.handle_api_call(info, "get_upload_params")
-
-    @strawberry.field
-    async def consensus_siafund_fee(self, info: Info, payout: Currency) -> Currency:
-        return await RenterdBaseResolver.handle_api_call(info, "get_consensus_siafund_fee", payout=payout)
-
-    @strawberry.field
-    async def contract_sets(self, info: Info) -> List[str]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_contract_sets")
-
-    @strawberry.field
-    async def contract_roots(self, info: Info, id: FileContractID) -> ContractRootsResponse:
-        return await RenterdBaseResolver.handle_api_call(info, "get_contract_roots", id=id)
-
-    @strawberry.field
-    async def contract_ancestors(self, info: Info, id: FileContractID, min_start_height: int) -> List[ArchivedContract]:
+    async def objects_stats(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> ObjectsStatsResponse:
         return await RenterdBaseResolver.handle_api_call(
-            info, "get_contract_ancestors", id=id, min_start_height=min_start_height
+            info,
+            "get_objects_stats",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
         )
 
     @strawberry.field
-    async def contracts_prunable(self, info: Info) -> ContractsPrunableDataResponse:
-        return await RenterdBaseResolver.handle_api_call(info, "get_contracts_prunable")
+    async def slab_buffers(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[SlabBuffer]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_slab_buffers",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def wallet(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> WalletResponse:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_wallet",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def webhooks(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> WebhookResponse:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_webhooks",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def gouging_params(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> GougingParams:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_gouging_params",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def upload_params(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> UploadParams:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_upload_params",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def consensus_siafund_fee(
+        self,
+        info: Info,
+        payout: Currency,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Currency:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_consensus_siafund_fee",
+            payout=payout,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def contract_sets(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[str]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_contract_sets",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def contract_roots(
+        self,
+        info: Info,
+        id: FileContractID,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> ContractRootsResponse:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_contract_roots",
+            id=id,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def contract_ancestors(
+        self,
+        info: Info,
+        id: FileContractID,
+        min_start_height: int,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[ArchivedContract]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_contract_ancestors",
+            id=id,
+            min_start_height=min_start_height,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def contracts_prunable(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> ContractsPrunableDataResponse:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_contracts_prunable",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
     async def hosts_scanning(
-        self, info: Info, last_scan: Optional[str] = None, offset: int = 0, limit: int = -1
+        self,
+        info: Info,
+        last_scan: Optional[str] = None,
+        offset: int = 0,
+        limit: int = -1,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
     ) -> List[HostAddress]:
         return await RenterdBaseResolver.handle_api_call(
-            info, "get_hosts_scanning", last_scan=last_scan, offset=offset, limit=limit
+            info,
+            "get_hosts_scanning",
+            last_scan=last_scan,
+            offset=offset,
+            limit=limit,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
         )
 
     @strawberry.field
     async def metric(
-        self, info: Info, key: str, start: str, n: int, interval: str
+        self,
+        info: Info,
+        key: str,
+        start: str,
+        n: int,
+        interval: str,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
     ) -> JSON:  # Response type varies based on metric type
         return await RenterdBaseResolver.handle_api_call(
-            info, "get_metric", key=key, start=start, n=n, interval=interval
+            info,
+            "get_metric",
+            key=key,
+            start=start,
+            n=n,
+            interval=interval,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
         )
 
     @strawberry.field
-    async def settings(self, info: Info) -> List[str]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_settings")
-
-    @strawberry.field
-    async def setting(self, info: Info, key: str) -> str:
-        return await RenterdBaseResolver.handle_api_call(info, "get_setting", key=key)
-
-    @strawberry.field
-    async def slab(self, info: Info, key: str) -> Slab:
-        return await RenterdBaseResolver.handle_api_call(info, "get_slab", key=key)
-
-    @strawberry.field
-    async def slab_objects(self, info: Info, key: str) -> List[ObjectMetadata]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_slab_objects", key=key)
-
-    @strawberry.field
-    async def slabs_partial(self, info: Info, key: str, offset: int, length: int) -> str:
+    async def settings(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[str]:
         return await RenterdBaseResolver.handle_api_call(
-            info, "get_slabs_partial", key=key, offset=offset, length=length
+            info,
+            "get_settings",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
         )
 
     @strawberry.field
-    async def syncer_address(self, info: Info) -> str:
-        return await RenterdBaseResolver.handle_api_call(info, "get_syncer_address")
+    async def setting(
+        self,
+        info: Info,
+        key: str,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> str:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_setting",
+            key=key,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def syncer_peers(self, info: Info) -> List[str]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_syncer_peers")
+    async def slab(
+        self,
+        info: Info,
+        key: str,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Slab:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_slab",
+            key=key,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def txpool_recommended_fee(self, info: Info) -> Currency:
-        return await RenterdBaseResolver.handle_api_call(info, "get_txpool_recommended_fee")
+    async def slab_objects(
+        self,
+        info: Info,
+        key: str,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[ObjectMetadata]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_slab_objects",
+            key=key,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def txpool_transactions(self, info: Info) -> List[Transaction]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_txpool_transactions")
+    async def slabs_partial(
+        self,
+        info: Info,
+        key: str,
+        offset: int,
+        length: int,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> str:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_slabs_partial",
+            key=key,
+            offset=offset,
+            length=length,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def wallet_outputs(self, info: Info) -> List[SiacoinElement]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_wallet_outputs")
+    async def syncer_address(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> str:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_syncer_address",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def wallet_pending(self, info: Info) -> List[Transaction]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_wallet_pending")
+    async def syncer_peers(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[str]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_syncer_peers",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
     @strawberry.field
-    async def wallet_transactions(self, info: Info, offset: int = 0, limit: int = -1) -> List[Transaction]:
-        return await RenterdBaseResolver.handle_api_call(info, "get_wallet_transactions", offset=offset, limit=limit)
+    async def txpool_recommended_fee(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> Currency:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_txpool_recommended_fee",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def txpool_transactions(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Transaction]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_txpool_transactions",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def wallet_outputs(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[SiacoinElement]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_wallet_outputs",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def wallet_pending(
+        self,
+        info: Info,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Transaction]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_wallet_pending",
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
+
+    @strawberry.field
+    async def wallet_transactions(
+        self,
+        info: Info,
+        offset: int = 0,
+        limit: int = -1,
+        filter: Optional[FilterInput] = None,
+        sort: Optional[SortInput] = None,
+        pagination: Optional[PaginationInput] = None,
+    ) -> List[Transaction]:
+        return await RenterdBaseResolver.handle_api_call(
+            info,
+            "get_wallet_transactions",
+            offset=offset,
+            limit=limit,
+            filter_input=filter,
+            sort_input=sort,
+            pagination_input=pagination,
+        )
 
 
 @strawberry.type
