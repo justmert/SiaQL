@@ -21,7 +21,7 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 @strawberry.type
 class AutopilotQueries:
     @strawberry.field
-    async def autopilot_config(
+    async def renterd_autopilot_config(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -38,7 +38,7 @@ class AutopilotQueries:
         )
 
     @strawberry.field
-    async def autopilot_state(
+    async def renterd_autopilot_state(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -55,7 +55,7 @@ class AutopilotQueries:
         )
 
     @strawberry.field
-    async def autopilot_host(
+    async def renterd_autopilot_host(
         self,
         info: Info,
         host_key: PublicKey,
@@ -74,7 +74,7 @@ class AutopilotQueries:
         )
 
     @strawberry.field
-    async def autopilot_hosts(
+    async def renterd_autopilot_hosts(
         self,
         info: Info,
         opts: SearchHostsRequest.Input,
@@ -96,19 +96,19 @@ class AutopilotQueries:
 @strawberry.type
 class AutopilotMutations(RenterdBaseResolver):
     @strawberry.mutation
-    async def update_autopilot_config(self, info: Info, config: AutopilotConfig.Input) -> bool:
+    async def renterd_update_autopilot_config(self, info: Info, config: AutopilotConfig.Input) -> bool:
         """Update the autopilot configuration"""
         await RenterdBaseResolver.handle_api_call(info, "update_autopilot_config", config=config)
         return True
 
     @strawberry.mutation
-    async def trigger_autopilot(self, info: Info, req: AutopilotTriggerRequest.Input) -> AutopilotTriggerResponse:
+    async def renterd_trigger_autopilot(self, info: Info, req: AutopilotTriggerRequest.Input) -> AutopilotTriggerResponse:
         """Trigger an iteration of the autopilot's main loop"""
         response = await RenterdBaseResolver.handle_api_call(info, "trigger_autopilot", req=req)
         return response
 
     @strawberry.mutation
-    async def evaluate_autopilot_config(
+    async def renterd_evaluate_autopilot_config(
         self, info: Info, req: ConfigEvaluationRequest.Input
     ) -> ConfigEvaluationResponse:
         """Evaluate an autopilot configuration"""

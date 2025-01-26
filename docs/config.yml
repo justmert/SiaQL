@@ -7,7 +7,7 @@ spectaql:
   x-hidePoweredBy: true
 
 introspection:
-  url: http://127.0.0.1:8001/graphql
+  url: http://127.0.0.1:9090/graphql
 
 info:
   title: SiaQL Documentation

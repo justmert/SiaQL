@@ -10,7 +10,7 @@ from siaql.graphql.resolvers.hostd import HostdBaseResolver
 @strawberry.type
 class AccountQueries:
     @strawberry.field
-    async def accounts(
+    async def hostd_accounts(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -23,7 +23,7 @@ class AccountQueries:
         )
 
     @strawberry.field
-    async def account_funding(
+    async def hostd_account_funding(
         self,
         info: Info,
         account: str,

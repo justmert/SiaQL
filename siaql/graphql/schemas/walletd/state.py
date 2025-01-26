@@ -10,7 +10,7 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 @strawberry.type
 class StateQueries(WalletdBaseResolver):
     @strawberry.field
-    async def state(
+    async def walletd_state(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,

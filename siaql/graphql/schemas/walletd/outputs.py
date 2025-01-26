@@ -10,7 +10,7 @@ from typing import Optional
 @strawberry.type
 class OutputsQueries:
     @strawberry.field
-    async def get_siacoin_output(
+    async def walletd_get_siacoin_output(
         self,
         info: Info,
         id: str,
@@ -30,7 +30,7 @@ class OutputsQueries:
         return data
 
     @strawberry.field
-    async def get_siafund_output(
+    async def walletd_get_siafund_output(
         self,
         info: Info,
         id: str,

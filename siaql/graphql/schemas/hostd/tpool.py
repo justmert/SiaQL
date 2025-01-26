@@ -11,7 +11,7 @@ from typing import Optional
 @strawberry.type
 class TPoolQueries:
     @strawberry.field
-    async def tpool_fee(
+    async def hostd_tpool_fee(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,

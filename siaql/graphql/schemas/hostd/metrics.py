@@ -11,7 +11,7 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 @strawberry.type
 class MetricsQueries:
     @strawberry.field
-    async def metrics(
+    async def hostd_metrics(
         self,
         info: Info,
         timestamp: Optional[datetime] = None,
@@ -25,7 +25,7 @@ class MetricsQueries:
         )
 
     @strawberry.field
-    async def period_metrics(
+    async def hostd_period_metrics(
         self,
         info: Info,
         start: datetime,

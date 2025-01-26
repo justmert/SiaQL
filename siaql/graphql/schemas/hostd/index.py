@@ -10,7 +10,7 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 @strawberry.type
 class IndexQueries:
     @strawberry.field
-    async def index_tip(
+    async def hostd_index_tip(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,

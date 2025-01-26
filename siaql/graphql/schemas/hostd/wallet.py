@@ -19,7 +19,7 @@ from typing import Optional
 @strawberry.type
 class WalletQueries:
     @strawberry.field
-    async def wallet(
+    async def hostd_wallet(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -32,7 +32,7 @@ class WalletQueries:
         )
 
     @strawberry.field
-    async def wallet_events(
+    async def hostd_wallet_events(
         self,
         info: Info,
         limit: int = 100,
@@ -53,7 +53,7 @@ class WalletQueries:
         )
 
     @strawberry.field
-    async def wallet_pending(
+    async def hostd_wallet_pending(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -69,6 +69,6 @@ class WalletQueries:
 @strawberry.type
 class WalletMutations:
     @strawberry.mutation
-    async def send_siacoins(self, info: Info, req: WalletSendSiacoinsRequest.Input) -> TransactionID:
+    async def hostd_send_siacoins(self, info: Info, req: WalletSendSiacoinsRequest.Input) -> TransactionID:
         """Send siacoins to an address"""
         return await HostdBaseResolver.handle_api_call(info, "post_wallet_send", req=req)

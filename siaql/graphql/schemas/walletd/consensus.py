@@ -18,7 +18,7 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 @strawberry.type
 class ConsensusQueries(WalletdBaseResolver):
     @strawberry.field
-    async def consensus_network(
+    async def walletd_consensus_network(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -31,7 +31,7 @@ class ConsensusQueries(WalletdBaseResolver):
         )
 
     @strawberry.field
-    async def consensus_tip(
+    async def walletd_consensus_tip(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -44,7 +44,7 @@ class ConsensusQueries(WalletdBaseResolver):
         )
 
     @strawberry.field
-    async def consensus_tip_state(
+    async def walletd_consensus_tip_state(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -57,7 +57,7 @@ class ConsensusQueries(WalletdBaseResolver):
         )
 
     @strawberry.field
-    async def consensus_index(
+    async def walletd_consensus_index(
         self,
         info: Info,
         height: int,
@@ -76,7 +76,7 @@ class ConsensusQueries(WalletdBaseResolver):
         )
 
     @strawberry.field
-    async def consensus_updates(
+    async def walletd_consensus_updates(
         self,
         info: Info,
         index: ChainIndex.Input,

@@ -10,7 +10,7 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 @strawberry.type
 class AddressQueries:
     @strawberry.field
-    async def address_balance(
+    async def walletd_address_balance(
         self,
         info: Info,
         address: str,
@@ -30,7 +30,7 @@ class AddressQueries:
         return data
 
     @strawberry.field
-    async def address_events(
+    async def walletd_address_events(
         self,
         info: Info,
         address: str,
@@ -53,7 +53,7 @@ class AddressQueries:
         )
 
     @strawberry.field
-    async def address_unconfirmed_events(
+    async def walletd_address_unconfirmed_events(
         self,
         info: Info,
         address: str,
@@ -72,7 +72,7 @@ class AddressQueries:
         )
 
     @strawberry.field
-    async def address_siacoin_outputs(
+    async def walletd_address_siacoin_outputs(
         self,
         info: Info,
         address: str,
@@ -95,7 +95,7 @@ class AddressQueries:
         )
 
     @strawberry.field
-    async def address_siafund_outputs(
+    async def walletd_address_siafund_outputs(
         self,
         info: Info,
         address: str,

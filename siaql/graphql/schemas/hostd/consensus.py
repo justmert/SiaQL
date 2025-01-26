@@ -11,7 +11,7 @@ from siaql.graphql.resolvers.hostd import HostdBaseResolver
 @strawberry.type
 class ConsensusQueries:
     @strawberry.field
-    async def consensus_tip(
+    async def hostd_consensus_tip(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -24,7 +24,7 @@ class ConsensusQueries:
         )
 
     @strawberry.field
-    async def consensus_tip_state(
+    async def hostd_consensus_tip_state(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -37,7 +37,7 @@ class ConsensusQueries:
         )
 
     @strawberry.field
-    async def consensus_network(
+    async def hostd_consensus_network(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,

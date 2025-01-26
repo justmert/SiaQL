@@ -98,8 +98,8 @@ class QueryFiltering:
 
         parts = field_path.split(".")
         current = obj
-
         for part in parts:
+            print("current", current)
             if current is None:
                 return None
 
@@ -121,7 +121,7 @@ class QueryFiltering:
                 current = getattr(current, part)
             else:
                 return None
-
+        print('current', current)
         return current
 
     @classmethod
@@ -158,13 +158,12 @@ class QueryFiltering:
             if filter_value is not None:
                 return exists_check == (str(filter_value).lower() == "true")
             return exists_check
-
+        
+        print(field_value)
         if field_value is None:
             return False
-
         field_val = cls.convert_value_for_comparison(field_value)
         filter_val = cls.convert_value_for_comparison(filter_value)
-
         try:
             if operator == FilterOperator.EQ:
                 return field_val == filter_val
@@ -202,7 +201,6 @@ class QueryFiltering:
         """Apply filter to list of items"""
         if not filter_input or not items:
             return items
-
         return [
             item
             for item in items

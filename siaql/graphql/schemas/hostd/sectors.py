@@ -10,7 +10,7 @@ from typing import Optional
 @strawberry.type
 class SectorQueries:
     @strawberry.field
-    async def verify_sector(
+    async def hostd_verify_sector(
         self,
         info: Info,
         root: Hash256,
@@ -27,7 +27,7 @@ class SectorQueries:
 @strawberry.type
 class SectorMutations:
     @strawberry.mutation
-    async def delete_sector(self, info: Info, root: Hash256) -> bool:
+    async def hostd_delete_sector(self, info: Info, root: Hash256) -> bool:
         """Delete a sector"""
         await HostdBaseResolver.handle_api_call(info, "delete_sector", root=root)
         return True

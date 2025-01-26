@@ -38,7 +38,7 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 @strawberry.type
 class WorkerQueries:
     @strawberry.field
-    async def worker_state(
+    async def renterd_worker_state(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -55,7 +55,7 @@ class WorkerQueries:
         )
 
     @strawberry.field
-    async def worker_memory(
+    async def renterd_worker_memory(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -72,7 +72,7 @@ class WorkerQueries:
         )
 
     @strawberry.field
-    async def worker_id(
+    async def renterd_worker_id(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -89,7 +89,7 @@ class WorkerQueries:
         )
 
     @strawberry.field
-    async def worker_accounts(
+    async def renterd_worker_accounts(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -106,7 +106,7 @@ class WorkerQueries:
         )
 
     @strawberry.field
-    async def worker_account(
+    async def renterd_worker_account(
         self,
         info: Info,
         host_key: str,
@@ -125,7 +125,7 @@ class WorkerQueries:
         )
 
     @strawberry.field
-    async def worker_contracts(
+    async def renterd_worker_contracts(
         self,
         info: Info,
         host_timeout: Optional[int] = None,
@@ -144,7 +144,7 @@ class WorkerQueries:
         )
 
     @strawberry.field
-    async def worker_object(
+    async def renterd_worker_object(
         self,
         info: Info,
         bucket: str,
@@ -167,7 +167,7 @@ class WorkerQueries:
         )
 
     @strawberry.field
-    async def download_stats(
+    async def renterd_download_stats(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -184,7 +184,7 @@ class WorkerQueries:
         )
 
     @strawberry.field
-    async def upload_stats(
+    async def renterd_upload_stats(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -204,17 +204,17 @@ class WorkerQueries:
 @strawberry.type
 class WorkerMutations(RenterdBaseResolver):
     @strawberry.mutation
-    async def rhp_scan(self, info: Info, req: RHPScanRequest.Input) -> RHPScanResponse:
+    async def renterd_rhp_scan(self, info: Info, req: RHPScanRequest.Input) -> RHPScanResponse:
         """Perform RHP scan"""
         return await RenterdBaseResolver.handle_api_call(info, "rhp_scan", req=req)
 
     @strawberry.mutation
-    async def rhp_price_table(self, info: Info, req: RHPPriceTableRequest.Input) -> HostPriceTable:
+    async def renterd_rhp_price_table(self, info: Info, req: RHPPriceTableRequest.Input) -> HostPriceTable:
         """Get host price table"""
         return await RenterdBaseResolver.handle_api_call(info, "rhp_price_table", req=req)
 
     @strawberry.mutation
-    async def upload_object(
+    async def renterd_upload_object(
         self, info: Info, bucket: str, path: str, data: str, options: UploadObjectOptions.Input
     ) -> UploadObjectResponse:
         """Upload an object"""
@@ -223,53 +223,53 @@ class WorkerMutations(RenterdBaseResolver):
         )
 
     @strawberry.mutation
-    async def delete_object(self, info: Info, bucket: str, path: str, opts: DeleteObjectOptions.Input) -> bool:
+    async def renterd_delete_object(self, info: Info, bucket: str, path: str, opts: DeleteObjectOptions.Input) -> bool:
         """Delete an object"""
         await RenterdBaseResolver.handle_api_call(info, "delete_worker_object", bucket=bucket, path=path, opts=opts)
         return True
 
     @strawberry.mutation
-    async def head_object(
+    async def renterd_head_object(
         self, info: Info, bucket: str, path: str, opts: HeadObjectOptions.Input
     ) -> HeadObjectResponse:
         """Get object metadata"""
         return await RenterdBaseResolver.handle_api_call(info, "head_object", bucket=bucket, path=path, opts=opts)
 
     @strawberry.mutation
-    async def multipart_create(self, info: Info, req: MultipartCreateRequest.Input) -> MultipartCreateResponse:
+    async def renterd_multipart_create(self, info: Info, req: MultipartCreateRequest.Input) -> MultipartCreateResponse:
         """Create multipart upload"""
         return await RenterdBaseResolver.handle_api_call(info, "multipart_create", req=req)
 
     @strawberry.mutation
-    async def multipart_abort(self, info: Info, req: MultipartAbortRequest.Input) -> bool:
+    async def renterd_multipart_abort(self, info: Info, req: MultipartAbortRequest.Input) -> bool:
         """Abort multipart upload"""
         await RenterdBaseResolver.handle_api_call(info, "multipart_abort", req=req)
         return True
 
     @strawberry.mutation
-    async def multipart_complete(self, info: Info, req: MultipartCompleteRequest.Input) -> MultipartCompleteResponse:
+    async def renterd_multipart_complete(self, info: Info, req: MultipartCompleteRequest.Input) -> MultipartCompleteResponse:
         """Complete multipart upload"""
         return await RenterdBaseResolver.handle_api_call(info, "multipart_complete", req=req)
 
     @strawberry.mutation
-    async def multipart_upload(self, info: Info, path: str, req: MultipartAddPartRequest.Input) -> bool:
+    async def renterd_multipart_upload(self, info: Info, path: str, req: MultipartAddPartRequest.Input) -> bool:
         """Upload a part in multipart upload"""
         await RenterdBaseResolver.handle_api_call(info, "multipart_upload", path=path, req=req)
         return True
 
     @strawberry.mutation
-    async def migrate_slab(self, info: Info, slab: Slab.Input) -> MigrateSlabResponse:
+    async def renterd_migrate_slab(self, info: Info, slab: Slab.Input) -> MigrateSlabResponse:
         """Migrate a slab"""
         return await RenterdBaseResolver.handle_api_call(info, "migrate_slab", slab=slab)
 
     @strawberry.mutation
-    async def reset_account_drift(self, info: Info, account_id: str) -> bool:
+    async def renterd_reset_account_drift(self, info: Info, account_id: str) -> bool:
         """Reset account drift"""
         await RenterdBaseResolver.handle_api_call(info, "reset_account_drift", account_id=account_id)
         return True
 
     @strawberry.mutation
-    async def register_worker_event(self, info: Info, event: WebhookEvent.Input) -> bool:
+    async def renterd_register_worker_event(self, info: Info, event: WebhookEvent.Input) -> bool:
         """Register a worker event"""
         await RenterdBaseResolver.handle_api_call(info, "register_worker_event", event=event)
         return True

@@ -11,7 +11,7 @@ from siaql.graphql.resolvers.hostd import HostdBaseResolver
 @strawberry.type
 class AlertQueries:
     @strawberry.field
-    async def alerts(
+    async def hostd_alerts(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -27,7 +27,7 @@ class AlertQueries:
 @strawberry.type
 class AlertMutations:
     @strawberry.mutation
-    async def dismiss_alerts(self, info: Info, ids: List[Hash256]) -> bool:
+    async def hostd_dismiss_alerts(self, info: Info, ids: List[Hash256]) -> bool:
         """Dismiss specified alerts"""
         await HostdBaseResolver.handle_api_call(info, "post_alerts_dismiss", ids=ids)
         return True

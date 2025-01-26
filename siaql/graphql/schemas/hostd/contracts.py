@@ -17,7 +17,7 @@ from siaql.graphql.resolvers.hostd import HostdBaseResolver
 @strawberry.type
 class ContractQueries:
     @strawberry.field
-    async def contracts(
+    async def hostd_contracts(
         self,
         info: Info,
         filter: ContractFilter.Input,
@@ -30,7 +30,7 @@ class ContractQueries:
         )
 
     @strawberry.field
-    async def contract(
+    async def hostd_contract(
         self,
         info: Info,
         id: FileContractID,
@@ -44,7 +44,7 @@ class ContractQueries:
         )
 
     @strawberry.field
-    async def contract_integrity(
+    async def hostd_contract_integrity(
         self,
         info: Info,
         id: FileContractID,
@@ -61,13 +61,13 @@ class ContractQueries:
 @strawberry.type
 class ContractMutations:
     @strawberry.mutation
-    async def check_contract_integrity(self, info: Info, id: FileContractID) -> bool:
+    async def hostd_check_contract_integrity(self, info: Info, id: FileContractID) -> bool:
         """Start integrity check for a contract"""
         await HostdBaseResolver.handle_api_call(info, "put_contract_integrity", id=id)
         return True
 
     @strawberry.mutation
-    async def delete_contract_integrity(self, info: Info, id: FileContractID) -> bool:
+    async def hostd_delete_contract_integrity(self, info: Info, id: FileContractID) -> bool:
         """Delete integrity check result for a contract"""
         await HostdBaseResolver.handle_api_call(info, "delete_contract_integrity", id=id)
         return True

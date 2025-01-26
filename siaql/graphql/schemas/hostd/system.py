@@ -10,7 +10,7 @@ from typing import Optional
 @strawberry.type
 class SystemQueries:
     @strawberry.field
-    async def system_dir(
+    async def hostd_system_dir(
         self,
         info: Info,
         path: str,
@@ -27,13 +27,13 @@ class SystemQueries:
 @strawberry.type
 class SystemMutations:
     @strawberry.mutation
-    async def create_dir(self, info: Info, path: str) -> bool:
+    async def hostd_create_dir(self, info: Info, path: str) -> bool:
         """Create a directory"""
         await HostdBaseResolver.handle_api_call(info, "put_system_dir", path=path)
         return True
 
     @strawberry.mutation
-    async def backup_sqlite3(self, info: Info, path: str) -> bool:
+    async def hostd_backup_sqlite3(self, info: Info, path: str) -> bool:
         """Create a backup of the SQLite3 database"""
         await HostdBaseResolver.handle_api_call(info, "post_system_sqlite3_backup", path=path)
         return True

@@ -50,7 +50,7 @@ SiaQL can be configured through environment variables (`.env` file), command-lin
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `HOST` | 127.0.0.1 | Server host address |
-| `PORT` | 8000 | Server port |
+| `PORT` | 9090 | Server port |
 | `ENABLE_RENTERD` | true | Enable/disable renterd integration |
 | `RENTERD_URL` | <http://localhost:9981> | Renterd API URL |
 | `RENTERD_PASSWORD` | None | Renterd API password |
@@ -83,43 +83,58 @@ SiaQL is compatible with following versions of Sia components:
 
 ## Example Queries
 
-### Query Wallet Balance
+All [queries](http://localhost:3000/#group-Operations-Queries) are written as its respective Sia component. For example `renterd_Contracts` for  Renterd  [contracts](https://api.sia.tech/renterd#3aca247e-0dd0-449a-abab-d15494b77c37) endpoint.
 
+1. Get Sorted Contracts
 ```graphql
-query {
-  wallets {
+query GetSortedContracts {
+  renterdContracts(
+    sort: {
+      field: "size"
+      direction: DESC
+    }
+  ) {
     id
-    balance {
-      siacoins
-      siafunds
+    size
+    hostKey
+    state
+    totalCost
+    spending {
+      uploads
+      downloads
+      fundAccount
+      deletions
+      sectorRoots
     }
   }
 }
 ```
 
-### Query Host Settings
-
+2. Get Reliable Hosts
 ```graphql
-query {
-  settings {
-    acceptingContracts
-    maxContractDuration
-    storagePrice
-    collateralMultiplier
-  }
-}
-```
-
-### Query Storage Contracts
-
-```graphql
-query {
-  contracts {
-    id
-    status
-    size
-    startHeight
-    windowEnd
+query GetReliableHosts {
+  renterdGetHosts(
+    filter: {
+      field: "interactions.successfulInteractions"
+      operator: GT
+      value: "100"
+    }
+    sort: {
+      field: "interactions.uptime"
+      direction: DESC
+    }
+    pagination: {
+      offset: 0
+      limit: 20
+    }
+  ) {
+    publicKey
+    netAddress
+    interactions {
+      successfulInteractions
+      uptime
+      lastScan
+    }
   }
 }
 ```

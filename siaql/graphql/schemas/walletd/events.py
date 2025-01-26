@@ -11,7 +11,7 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 @strawberry.type
 class EventQueries:
     @strawberry.field
-    async def event(
+    async def walletd_event(
         self,
         info: Info,
         event_id: Hash256,

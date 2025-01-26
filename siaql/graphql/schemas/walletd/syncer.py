@@ -11,7 +11,7 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 @strawberry.type
 class SyncerQueries:
     @strawberry.field
-    async def syncer_peers(
+    async def walletd_syncer_peers(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -31,13 +31,13 @@ class SyncerQueries:
 @strawberry.type
 class SyncerMutations:
     @strawberry.mutation
-    async def syncer_connect(self, info: Info, addr: str) -> bool:
+    async def walletd_syncer_connect(self, info: Info, addr: str) -> bool:
         """Connect to a peer"""
         await WalletdBaseResolver.handle_api_call(info, "post_syncer_connect", addr=addr)
         return True
 
     @strawberry.mutation
-    async def syncer_broadcast_block(self, info: Info, block: Block.Input) -> bool:
+    async def walletd_syncer_broadcast_block(self, info: Info, block: Block.Input) -> bool:
         """Broadcast a block to all peers"""
         await WalletdBaseResolver.handle_api_call(info, "post_syncer_broadcast_block", block=block)
         return True

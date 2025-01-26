@@ -11,7 +11,7 @@ from typing import Optional
 @strawberry.type
 class RescanQueries:
     @strawberry.field
-    async def rescan_status(
+    async def walletd_rescan_status(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -32,7 +32,7 @@ class RescanQueries:
 @strawberry.type
 class RescanMutations:
     @strawberry.mutation
-    async def start_rescan(self, info: Info, height: int) -> bool:
+    async def walletd_start_rescan(self, info: Info, height: int) -> bool:
         """Start rescan from height"""
         await WalletdBaseResolver.handle_api_call(info, "start_rescan", height=height)
         return True

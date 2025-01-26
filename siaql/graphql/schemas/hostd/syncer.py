@@ -10,7 +10,7 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 @strawberry.type
 class SyncerQueries:
     @strawberry.field
-    async def syncer_address(
+    async def hostd_syncer_address(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -23,7 +23,7 @@ class SyncerQueries:
         )
 
     @strawberry.field
-    async def syncer_peers(
+    async def hostd_syncer_peers(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -39,7 +39,7 @@ class SyncerQueries:
 @strawberry.type
 class SyncerMutations:
     @strawberry.mutation
-    async def connect_peer(self, info: Info, address: str) -> bool:
+    async def hostd_connect_peer(self, info: Info, address: str) -> bool:
         """Connect to a peer"""
         await HostdBaseResolver.handle_api_call(info, "put_syncer_peer", address=address)
         return True

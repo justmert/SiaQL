@@ -18,7 +18,7 @@ from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInp
 @strawberry.type
 class TxpoolQueries:
     @strawberry.field
-    async def txpool_parents(
+    async def walletd_txpool_parents(
         self,
         info: Info,
         transaction: Transaction.Input,
@@ -37,7 +37,7 @@ class TxpoolQueries:
         )
 
     @strawberry.field
-    async def txpool_transactions(
+    async def walletd_txpool_transactions(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -54,7 +54,7 @@ class TxpoolQueries:
         )
 
     @strawberry.field
-    async def txpool_fee(
+    async def walletd_txpool_fee(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -74,7 +74,7 @@ class TxpoolQueries:
 @strawberry.type
 class TxpoolMutations:
     @strawberry.mutation
-    async def txpool_broadcast(self, info: Info, req: TxpoolBroadcastRequest.Input) -> bool:
+    async def walletd_txpool_broadcast(self, info: Info, req: TxpoolBroadcastRequest.Input) -> bool:
         """Broadcast transactions to network"""
         await WalletdBaseResolver.handle_api_call(info, "txpool_broadcast", req=req)
         return True

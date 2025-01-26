@@ -27,7 +27,7 @@ from siaql.graphql.schemas.types import (
 @strawberry.type
 class WalletQueries:
     @strawberry.field
-    async def wallets(
+    async def walletd_wallets(
         self,
         info: Info,
         filter: Optional[FilterInput] = None,
@@ -44,7 +44,7 @@ class WalletQueries:
         )
 
     @strawberry.field
-    async def wallet_addresses(
+    async def walletd_wallet_addresses(
         self,
         info: Info,
         wallet_id: str,
@@ -63,7 +63,7 @@ class WalletQueries:
         )
 
     @strawberry.field
-    async def wallet_balance(
+    async def walletd_wallet_balance(
         self,
         info: Info,
         wallet_id: str,
@@ -82,7 +82,7 @@ class WalletQueries:
         )
 
     @strawberry.field
-    async def wallet_events(
+    async def walletd_wallet_events(
         self,
         info: Info,
         wallet_id: str,
@@ -105,7 +105,7 @@ class WalletQueries:
         )
 
     @strawberry.field
-    async def wallet_unconfirmed_events(
+    async def walletd_wallet_unconfirmed_events(
         self,
         info: Info,
         wallet_id: str,
@@ -124,7 +124,7 @@ class WalletQueries:
         )
 
     @strawberry.field
-    async def wallet_siacoin_outputs(
+    async def walletd_wallet_siacoin_outputs(
         self,
         info: Info,
         wallet_id: str,
@@ -148,7 +148,7 @@ class WalletQueries:
         return data
 
     @strawberry.field
-    async def wallet_siafund_outputs(
+    async def walletd_wallet_siafund_outputs(
         self,
         info: Info,
         wallet_id: str,
@@ -175,37 +175,37 @@ class WalletQueries:
 @strawberry.type
 class WalletMutations:
     @strawberry.mutation
-    async def add_wallet(self, info: Info, wallet: WalletUpdateRequest.Input) -> Wallet:
+    async def walletd_add_wallet(self, info: Info, wallet: WalletUpdateRequest.Input) -> Wallet:
         """Add a new wallet"""
         return await WalletdBaseResolver.handle_api_call(info, "post_add_wallet", wallet_update=wallet)
 
     @strawberry.mutation
-    async def update_wallet(self, info: Info, wallet_id: str, wallet: WalletUpdateRequest.Input) -> Wallet:
+    async def walletd_update_wallet(self, info: Info, wallet_id: str, wallet: WalletUpdateRequest.Input) -> Wallet:
         """Update a wallet"""
         return await WalletdBaseResolver.handle_api_call(
             info, "post_update_wallet", wallet_id=wallet_id, wallet_update=wallet
         )
 
     @strawberry.mutation
-    async def delete_wallet(self, info: Info, wallet_id: str) -> bool:
+    async def walletd_delete_wallet(self, info: Info, wallet_id: str) -> bool:
         """Delete a wallet"""
         await WalletdBaseResolver.handle_api_call(info, "delete_wallet", wallet_id=wallet_id)
         return True
 
     @strawberry.mutation
-    async def add_wallet_address(self, info: Info, wallet_id: str, address: Address) -> bool:
+    async def walletd_add_wallet_address(self, info: Info, wallet_id: str, address: Address) -> bool:
         """Add an address to a wallet"""
         await WalletdBaseResolver.handle_api_call(info, "add_wallet_address", wallet_id=wallet_id, address=address)
         return True
 
     @strawberry.mutation
-    async def remove_wallet_address(self, info: Info, wallet_id: str, address: str) -> bool:
+    async def walletd_remove_wallet_address(self, info: Info, wallet_id: str, address: str) -> bool:
         """Remove an address from a wallet"""
         await WalletdBaseResolver.handle_api_call(info, "delete_wallet_address", wallet_id=wallet_id, address=address)
         return True
 
     @strawberry.mutation
-    async def reserve_outputs(self, info: Info, wallet_id: str, request: WalletReserveRequest.Input) -> bool:
+    async def walletd_reserve_outputs(self, info: Info, wallet_id: str, request: WalletReserveRequest.Input) -> bool:
         """Reserve outputs"""
         await WalletdBaseResolver.handle_api_call(
             info, "post_wallet_reserve", wallet_id=wallet_id, reserve_request=request
@@ -213,7 +213,7 @@ class WalletMutations:
         return True
 
     @strawberry.mutation
-    async def release_outputs(self, info: Info, wallet_id: str, request: WalletReleaseRequest.Input) -> bool:
+    async def walletd_release_outputs(self, info: Info, wallet_id: str, request: WalletReleaseRequest.Input) -> bool:
         """Release outputs"""
         await WalletdBaseResolver.handle_api_call(
             info, "post_wallet_release", wallet_id=wallet_id, release_request=request
@@ -221,7 +221,7 @@ class WalletMutations:
         return True
 
     @strawberry.mutation
-    async def fund_transaction(
+    async def walletd_fund_transaction(
         self, info: Info, wallet_id: str, request: WalletFundRequest.Input
     ) -> WalletFundResponse:
         return await WalletdBaseResolver.handle_api_call(
@@ -229,7 +229,7 @@ class WalletMutations:
         )
 
     @strawberry.mutation
-    async def fund_siafund_transaction(
+    async def walletd_fund_siafund_transaction(
         self, info: Info, wallet_id: str, request: WalletFundSFRequest.Input
     ) -> WalletFundResponse:
         """Fund a siafund transaction"""
