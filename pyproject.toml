@@ -4,20 +4,20 @@ version = "0.1.0"
 description = "GraphQL interface for Sia network components"
 authors = ["Mert Köklü <kklumert@gmail.com>"]
 readme = "README.md"
-packages = [{include = "siaql"}]
+packages = [{ include = "siaql" }]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-strawberry-graphql = {extras = ["debug-server"], version = "^0.258.0"}
-typer = {extras = ["all"], version = "^0.9.0"}
-httpx = "^0.27.0"
-uvicorn = {extras = ["standard"], version = "^0.27.0"}
-rich = "^13.7.0"
+strawberry-graphql = { extras = ["debug-server"], version = "^0.258.0" }
+typer = { extras = ["all"], version = "^0.9.4" }
+httpx = "^0.27.2"
+uvicorn = { extras = ["standard"], version = "^0.27.0" }
+rich = "^13.9.4"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.0.0"
-pytest-asyncio = "^0.23.5"
-black = "^24.1.1"
+pytest = "^8.3.4"
+pytest-asyncio = "^0.23.8"
+black = "^24.10.0"
 isort = "^5.13.2"
 
 [build-system]
@@ -27,3 +27,8 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 siaql = "siaql.cli.main:app"
 build-docs = "siaql.scripts.build_docs:main"
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+norecursedirs = ["__pycache__", ".git", "build", "dist"]

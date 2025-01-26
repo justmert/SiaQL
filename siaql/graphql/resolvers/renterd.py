@@ -6,7 +6,8 @@ import logging
 
 T = TypeVar("T")
 
-logger = logging.getLogger('siaql.resolvers.renterd')
+logger = logging.getLogger("siaql.resolvers.renterd")
+
 
 class RenterdBaseResolver:
     """Base resolver class for Renterd API"""

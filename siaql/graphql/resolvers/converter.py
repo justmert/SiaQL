@@ -30,7 +30,7 @@ from strawberry.types.union import StrawberryUnion
 from dateutil import parser
 
 
-logger = logging.getLogger('siaql.resolvers.converter')
+logger = logging.getLogger("siaql.resolvers.converter")
 
 
 class TypeConverter:

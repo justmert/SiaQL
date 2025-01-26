@@ -7,6 +7,7 @@ from siaql.graphql.schemas.types import (
     Address,
     ApplyUpdate,
     Balance,
+    ConsensusUpdatesResponse,
     Currency,
     GatewayPeer,
     RevertUpdate,
@@ -91,7 +92,7 @@ class WalletdClient:
         return response.json()
 
     @handle_api_errors(WalletdError)
-    async def get_consensus_updates(self, index: ChainIndex, limit: int) -> List[Union[ApplyUpdate, RevertUpdate]]:
+    async def get_consensus_updates(self, index: ChainIndex, limit: int) -> ConsensusUpdatesResponse:
         """Get consensus updates since index."""
         response = await self.client.get(f"/consensus/updates/{index}", params={"limit": limit})
         return response.json()

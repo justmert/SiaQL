@@ -7,7 +7,7 @@ import logging
 
 T = TypeVar("T")
 
-logger = logging.getLogger('siaql.resolvers.hostd')
+logger = logging.getLogger("siaql.resolvers.hostd")
 
 
 class HostdBaseResolver:

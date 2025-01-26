@@ -6,7 +6,7 @@ from siaql.graphql.schemas.types import (
     Contract,
     ContractFilter,
     FileContractID,
-    ContractsResponse,
+    HostdContractsResponse,
     IntegrityCheckResult,
 )
 from siaql.graphql.resolvers.filter import FilterInput, SortInput, PaginationInput
@@ -23,7 +23,7 @@ class ContractQueries:
         filter: ContractFilter.Input,
         sort: Optional[SortInput] = None,
         pagination: Optional[PaginationInput] = None,
-    ) -> ContractsResponse:
+    ) -> HostdContractsResponse:
         """Get contracts matching the filter"""
         return await HostdBaseResolver.handle_api_call(
             info, "post_contracts", filter=filter, sort_input=sort, pagination_input=pagination

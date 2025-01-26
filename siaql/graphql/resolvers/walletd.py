@@ -28,7 +28,7 @@ import logging
 
 from datetime import datetime
 
-logger = logging.getLogger('siaql.resolvers.walletd')
+logger = logging.getLogger("siaql.resolvers.walletd")
 
 T = TypeVar("T")
 
@@ -52,6 +52,7 @@ class WalletdBaseResolver:
         client = info.context["walletd_client"]
         method_func = getattr(client, method)
         try:
+
             # 1. Get raw data from API
             result = await method_func(*args, **kwargs)
             logger.debug("Executing method: %s", method_func)
@@ -65,7 +66,6 @@ class WalletdBaseResolver:
                 field_type = info._field.type
                 # Convert the entire result to proper GraphQL types
                 result = TypeConverter.convert(result, field_type)
-
             # 4. Apply filtering, sorting, and pagination AFTER type conversion
             if isinstance(result, list):
                 if filter_input:
@@ -75,7 +75,6 @@ class WalletdBaseResolver:
                     result = QueryFiltering.apply_sort(result, sort_input)
                 if pagination_input:
                     result = QueryFiltering.apply_pagination(result, pagination_input)
-
             return result
         except Exception as e:
             logger.error("Error in handle_api_call: %s", e)

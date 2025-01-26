@@ -6,7 +6,8 @@ from strawberry.types import Info
 from siaql.graphql.resolvers.walletd import WalletdBaseResolver
 from siaql.graphql.schemas.types import (
     ChainIndex,
-    ConsensusState,  # From consensus.State
+    ConsensusState,
+    ConsensusUpdatesResponse,  # From consensus.State
     Network,  # From consensus.Network
     ApplyUpdate,  # From consensus.ApplyUpdate
     RevertUpdate,  # From consensus.RevertUpdate
@@ -83,7 +84,7 @@ class ConsensusQueries(WalletdBaseResolver):
         filter: Optional[FilterInput] = None,
         sort: Optional[SortInput] = None,
         pagination: Optional[PaginationInput] = None,
-    ) -> List[Union[ApplyUpdate, RevertUpdate]]:
+    ) -> ConsensusUpdatesResponse:
         """Get consensus updates since specified index"""
         return await WalletdBaseResolver.handle_api_call(
             info,

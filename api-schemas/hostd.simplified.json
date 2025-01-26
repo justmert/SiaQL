@@ -1,0 +1,1116 @@
+{
+  "item": [
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "Get alerts",
+          "method": "GET",
+          "url": "{{baseURL}}/alerts",
+          "description": "",
+          "responses": [
+            {
+              "name": "Get alerts",
+              "status": 200,
+              "body": [
+                {
+                  "id": "h:db6be3723a3c5c5d6a83b5448a606a429f5ec62700c678627c55b6a449c9f565",
+                  "severity": "info",
+                  "message": "Volume initialized",
+                  "data": {
+                    "elapsed": 186111899,
+                    "volumeID": 2
+                  },
+                  "timestamp": "2023-06-02T22:33:14.921184149Z"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Dismiss alerts",
+          "method": "POST",
+          "url": "{{baseURL}}/alerts/dismiss?all",
+          "description": "Dismisses one or more alerts.",
+          "requestBody": [
+            "h:db6be3723a3c5c5d6a83b5448a606a429f5ec62700c678627c55b6a449c9f565"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Contracts",
+      "item": [
+        {
+          "name": "Integrity",
+          "item": [
+            {
+              "name": "Start check",
+              "method": "PUT",
+              "url": "{{baseURL}}/contracts/:id/integrity",
+              "description": ""
+            },
+            {
+              "name": "Check status",
+              "method": "GET",
+              "url": "{{baseURL}}/contracts/:id/integrity",
+              "description": "Returns the current status of a running integrity check. If the check is complete, this returns the results of the check.",
+              "responses": [
+                {
+                  "name": "Check status",
+                  "status": 200,
+                  "body": {
+                    "start": "2023-05-25T21:41:14.445779096Z",
+                    "end": "2023-05-25T21:41:14.508004943Z",
+                    "checkedSectors": 2,
+                    "totalSectors": 2,
+                    "badSectors": null
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Search contracts",
+          "method": "POST",
+          "url": "{{baseURL}}/contracts",
+          "description": "Searches for contracts based on the provided filter. If no filter is provided, all contracts are returned.\n\nSupported statuses are:\n\n\\+ pending\n\n\\+ rejected\n\n\\+ active\n\n\\+ successful\n\n\\+ failed\n\n`limit` and `offset` are used for pagination. The default limit is 500 contracts.",
+          "requestBody": {
+            "statuses": [
+              "<string>"
+            ],
+            "contractIDs": [
+              "<string>"
+            ],
+            "renewedFrom": [
+              "<string>"
+            ],
+            "renewedTo": [
+              "<string>"
+            ],
+            "renterKey": [
+              "<string>"
+            ],
+            "minNegotiationHeight": "<long>",
+            "maxNegotiationHeight": "<long>",
+            "minExpirationHeight": "<long>",
+            "maxExpirationHeight": "<long>",
+            "limit": "<integer>",
+            "offset": "<integer>",
+            "sortField": "<string>",
+            "sortDesc": "<boolean>"
+          },
+          "responses": [
+            {
+              "name": "No filters",
+              "status": 200,
+              "body": {
+                "count": 10,
+                "contracts": [
+                  {
+                    "revision": {
+                      "parentID": "fcid:49b8fd417052ed8fef9f0e2f98e13bec24b8be674beda2de4ac21ed3267112b8",
+                      "unlockConditions": {
+                        "timelock": 0,
+                        "publicKeys": [
+                          "ed25519:26feca369bd0e2d75e7a9ed034ea88d0382586f77586f51903296755f7f9acc7"
+                        ],
+                        "signaturesRequired": 2
+                      },
+                      "filesize": 41943040,
+                      "fileMerkleRoot": "h:6f1303c691ad0f11b7a753e42925ff38c075a65c03e8a055531fe7ff0033b17c",
+                      "windowStart": 12970,
+                      "windowEnd": 13114,
+                      "payout": "340282366920938463463374607431768211455",
+                      "validProofOutputs": [
+                        {
+                          "value": "210013184346255220511127",
+                          "address": "addr:27a37a46b524361f0dd21017a5ec73f05686d36c388e3833b633e4830a58cb529852ffc8c94f"
+                        }
+                      ],
+                      "missedProofOutputs": [
+                        {
+                          "value": "266234079989213429760",
+                          "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                        }
+                      ],
+                      "unlockHash": "h:80a3d682c21a43c364b88fffd97e344e358a339f52775807f9e5e7f4108446f6",
+                      "revisionNumber": 16
+                    },
+                    "hostSignature": "sig:24e0a5ef6d54b3ab911f370ec1ce7b1a5b412725a2a219b3c678b77d5a49f290ce75e479465b5be4e654443861b0a0d070ca3c88228930f5f950e4be45a5cb0e",
+                    "renterSignature": "sig:a6b4d19eb340cb92548f41d4f4315f9ed69f45c7737dda349afda1342c7935677896b65efbfa0c444c4031ec0a09c9d75bef3bf306ce7dc407ce8c917be00f0e",
+                    "status": "successful",
+                    "lockedCollateral": "2223851917367480400",
+                    "usage": {
+                      "rpc": "200000000000000000000002",
+                      "storage": "88744693329737809920",
+                      "egress": "0",
+                      "ingress": "0",
+                      "accountFunding": "10010960494337853030725",
+                      "riskedCollateral": "177489386659475619840"
+                    },
+                    "negotiationHeight": 12769,
+                    "formationConfirmed": true,
+                    "revisionConfirmed": true,
+                    "resolutionHeight": 12971,
+                    "renewedTo": "fcid:0000000000000000000000000000000000000000000000000000000000000000",
+                    "renewedFrom": "fcid:0000000000000000000000000000000000000000000000000000000000000000"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get contract",
+          "method": "GET",
+          "url": "{{baseURL}}/contracts/:id",
+          "description": "Returns the contract matching the id",
+          "responses": [
+            {
+              "name": "Get contract",
+              "status": 200,
+              "body": {
+                "revision": {
+                  "parentID": "fcid:49b8fd417052ed8fef9f0e2f98e13bec24b8be674beda2de4ac21ed3267112b8",
+                  "unlockConditions": {
+                    "timelock": 0,
+                    "publicKeys": [
+                      "ed25519:26feca369bd0e2d75e7a9ed034ea88d0382586f77586f51903296755f7f9acc7"
+                    ],
+                    "signaturesRequired": 2
+                  },
+                  "filesize": 41943040,
+                  "fileMerkleRoot": "h:6f1303c691ad0f11b7a753e42925ff38c075a65c03e8a055531fe7ff0033b17c",
+                  "windowStart": 12970,
+                  "windowEnd": 13114,
+                  "payout": "340282366920938463463374607431768211455",
+                  "validProofOutputs": [
+                    {
+                      "value": "210013184346255220511127",
+                      "address": "addr:27a37a46b524361f0dd21017a5ec73f05686d36c388e3833b633e4830a58cb529852ffc8c94f"
+                    }
+                  ],
+                  "missedProofOutputs": [
+                    {
+                      "value": "266234079989213429760",
+                      "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                    }
+                  ],
+                  "unlockHash": "h:80a3d682c21a43c364b88fffd97e344e358a339f52775807f9e5e7f4108446f6",
+                  "revisionNumber": 16
+                },
+                "hostSignature": "sig:24e0a5ef6d54b3ab911f370ec1ce7b1a5b412725a2a219b3c678b77d5a49f290ce75e479465b5be4e654443861b0a0d070ca3c88228930f5f950e4be45a5cb0e",
+                "renterSignature": "sig:a6b4d19eb340cb92548f41d4f4315f9ed69f45c7737dda349afda1342c7935677896b65efbfa0c444c4031ec0a09c9d75bef3bf306ce7dc407ce8c917be00f0e",
+                "status": "successful",
+                "lockedCollateral": "2223851917367480400",
+                "usage": {
+                  "rpc": "200000000000000000000002",
+                  "storage": "88744693329737809920",
+                  "egress": "0",
+                  "ingress": "0",
+                  "accountFunding": "10010960494337853030725",
+                  "riskedCollateral": "177489386659475619840"
+                },
+                "negotiationHeight": 12769,
+                "formationConfirmed": true,
+                "revisionConfirmed": true,
+                "resolutionHeight": 12971,
+                "renewedTo": "fcid:0000000000000000000000000000000000000000000000000000000000000000",
+                "renewedFrom": "fcid:0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Accounts",
+          "method": "GET",
+          "url": "{{baseURL}}/accounts",
+          "description": "Returns a paginated list of active accounts"
+        },
+        {
+          "name": "Get Account Funding Sources",
+          "method": "GET",
+          "url": "",
+          "description": "Returns a list of contracts that were used to fund the account"
+        }
+      ]
+    },
+    {
+      "name": "Metrics",
+      "item": [
+        {
+          "name": "Get metrics",
+          "method": "GET",
+          "url": "{{baseURL}}/metrics",
+          "description": "This endpoint provides the current values for all tracked metrics of the host.",
+          "responses": [
+            {
+              "name": "Get metrics",
+              "status": 200,
+              "body": {
+                "revenue": {
+                  "potential": {
+                    "rpc": "0",
+                    "storage": "0",
+                    "ingress": "0",
+                    "egress": "0",
+                    "registryRead": "0",
+                    "registryWrite": "0"
+                  },
+                  "earned": {
+                    "rpc": "0",
+                    "storage": "0",
+                    "ingress": "0",
+                    "egress": "0",
+                    "registryRead": "0",
+                    "registryWrite": "0"
+                  }
+                },
+                "pricing": {
+                  "contractPrice": "200000000000000000000000",
+                  "ingressPrice": "5000000000000",
+                  "egressPrice": "1000000000000000",
+                  "baseRPCPrice": "100000000000000000",
+                  "sectorAccessPrice": "100000000000000000",
+                  "storagePrice": "92592592593",
+                  "collateralMultiplier": 2
+                },
+                "contracts": {
+                  "pending": 0,
+                  "active": 43,
+                  "rejected": 1,
+                  "failed": 0,
+                  "successful": 14,
+                  "lockedCollateral": "2333701147994063033788939954",
+                  "riskedCollateral": "1255899783822755889701453824"
+                },
+                "storage": {
+                  "totalSectors": 1192093,
+                  "physicalSectors": 570795,
+                  "contractSectors": 570915,
+                  "tempSectors": 0,
+                  "reads": 163503,
+                  "writes": 579412,
+                  "sectorCacheHits": 128,
+                  "sectorCacheMisses": 137836
+                },
+                "registry": {
+                  "entries": 0,
+                  "maxEntries": 10000,
+                  "reads": 0,
+                  "writes": 0
+                },
+                "data": {
+                  "rhp2": {
+                    "ingress": 180127821,
+                    "egress": 344923904
+                  },
+                  "rhp3": {
+                    "ingress": 2471936838700,
+                    "egress": 344405157566
+                  }
+                },
+                "balance": "310676449073764101058451501019",
+                "timestamp": "2023-07-13T21:41:11.084820467Z"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get period metrics",
+          "method": "GET",
+          "url": "{{baseURL}}/metrics/:interval?start=2022-01-01T00:00:00-06:00&periods=12",
+          "description": "Returns metrics for each `interval` beginning at `start`. `periods` is optional. If `periods` is set, the output will contain exactly `n` periods since `start`, including future timestamps. If `periods` is unset, the output will contain periods from `start` through `now`.\n\nThe `start` parameter will be normalized depending on `interval`. For daily metrics, each period will include the metrics for `00:00:00` - `23:59:59` for the locale.",
+          "responses": [
+            {
+              "name": "Get period metrics",
+              "status": 200,
+              "body": [
+                {
+                  "revenue": {
+                    "potential": {
+                      "rpc": "0",
+                      "storage": "0",
+                      "ingress": "0",
+                      "egress": "0",
+                      "registryRead": "0",
+                      "registryWrite": "0"
+                    },
+                    "earned": {
+                      "rpc": "0",
+                      "storage": "0",
+                      "ingress": "0",
+                      "egress": "0",
+                      "registryRead": "0",
+                      "registryWrite": "0"
+                    }
+                  },
+                  "pricing": {
+                    "contractPrice": "0",
+                    "ingressPrice": "0",
+                    "egressPrice": "0",
+                    "baseRPCPrice": "0",
+                    "sectorAccessPrice": "0",
+                    "storagePrice": "0",
+                    "collateralMultiplier": 0
+                  },
+                  "contracts": {
+                    "pending": 0,
+                    "active": 0,
+                    "rejected": 0,
+                    "failed": 0,
+                    "successful": 0,
+                    "lockedCollateral": "0",
+                    "riskedCollateral": "0"
+                  },
+                  "storage": {
+                    "totalSectors": 0,
+                    "physicalSectors": 0,
+                    "contractSectors": 0,
+                    "tempSectors": 0,
+                    "reads": 0,
+                    "writes": 0,
+                    "sectorCacheHits": 0,
+                    "sectorCacheMisses": 0
+                  },
+                  "registry": {
+                    "entries": 0,
+                    "maxEntries": 0,
+                    "reads": 0,
+                    "writes": 0
+                  },
+                  "data": {
+                    "rhp2": {
+                      "ingress": 0,
+                      "egress": 0
+                    },
+                    "rhp3": {
+                      "ingress": 0,
+                      "egress": 0
+                    }
+                  },
+                  "balance": "0",
+                  "timestamp": "2022-12-01T00:00:00-06:00"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sectors",
+      "item": [
+        {
+          "name": "Remove sector",
+          "method": "DELETE",
+          "url": "{{baseURL}}/sectors/:root",
+          "description": "Forcibly removes a sector from the host. Any contracts referencing that sector may fail. _This endpoint should only be used in specific circumstances._"
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "item": [
+        {
+          "name": "Price Pinning",
+          "item": [
+            {
+              "name": "Get Pins",
+              "method": "GET",
+              "url": "{{baseURL}}/settings/pinned",
+              "description": "Returns the pinned settings, currency, and threshold when set.",
+              "responses": [
+                {
+                  "name": "Get Pins",
+                  "status": 200,
+                  "body": {
+                    "currency": "usd",
+                    "threshold": 0.01,
+                    "storage": {
+                      "pinned": true,
+                      "value": 5.0
+                    },
+                    "ingress": {
+                      "pinned": false,
+                      "value": 0
+                    },
+                    "egress": {
+                      "pinned": false,
+                      "value": 0
+                    },
+                    "maxCollateral": {
+                      "pinned": false,
+                      "value": 0
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Update Pins",
+              "method": "PUT",
+              "url": "{{baseURL}}/settings/pinned",
+              "description": "Updates the pinned settings.\n\n`currency` is the 3 letter currency code to use for the exchange rate.\n\n`threshold` is a percentage that controls the minimum change in exchange rate to update the prices. This prevents the host from changing prices too often. We recommend `0.02` (2%).\n\nWhen `pinned` is set to true, the corresponding setting will be updated automatically when the exchange rate goes over the threshold. If `pinned` is false or if `value` is zero, the price will not be updated.",
+              "requestBody": {
+                "currency": "usd",
+                "threshold": 0.01,
+                "storage": {
+                  "pinned": true,
+                  "value": 5.0
+                },
+                "ingress": {
+                  "pinned": true,
+                  "value": 0.25
+                },
+                "egress": {
+                  "pinned": true,
+                  "value": 0.25
+                },
+                "maxCollateral": {
+                  "pinned": true,
+                  "value": 50.0
+                }
+              },
+              "responses": [
+                {
+                  "name": "Invalid Currency Code",
+                  "status": 500,
+                  "body": "failed to update prices: failed to get exchange rate: unexpected status code: 400\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Get settings",
+          "method": "GET",
+          "url": "{{baseURL}}/settings",
+          "description": "Return's the host's current settings",
+          "responses": [
+            {
+              "name": "Get settings",
+              "status": 200,
+              "body": {
+                "acceptingContracts": true,
+                "netAddress": "tabo.zen.sia.tech:9882",
+                "maxContractDuration": 25920,
+                "windowSize": 144,
+                "contractPrice": "200000000000000000000000",
+                "baseRPCPrice": "100000000000000000",
+                "sectorAccessPrice": "100000000000000000",
+                "collateralMultiplier": 2.0,
+                "maxCollateral": "3000000000000000000000000000",
+                "storagePrice": "92592592593",
+                "egressPrice": "1000000000000000",
+                "ingressPrice": "5000000000000",
+                "priceTableValidity": 1800000000000,
+                "maxRegistryEntries": 10000,
+                "accountExpiry": 2592000000000000,
+                "maxAccountBalance": "10000000000000000000000000",
+                "ingressLimit": 0,
+                "egressLimit": 0,
+                "ddns": {
+                  "provider": "",
+                  "ipv4": false,
+                  "ipv6": false,
+                  "options": null
+                },
+                "sectorCacheSize": 100,
+                "revision": 56
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update settings",
+          "method": "PATCH",
+          "url": "{{baseURL}}/settings",
+          "description": "This endpoint updates the host's settings. The request body only needs to include the settings the user wants to change.\n\nFor example, to only change the storage price, your request body would look like:\n\n``` json\n{\n    \"minStoragePrice\": \"100000\"\n}\n\n```\n\n### DDNS\n\nCurrently, `hostd` supports 4 providers: `cloudflare`, `duckdns`, `noip`, and `route53`. The `ddns.options` field changes depending on the `ddns.provider` field.\n\n**Cloudflare provider:**\n\n``` json\n{\n    \"token\": \"<string>\",\n    \"zoneID\": \"<string>\"\n}\n\n```\n\n**DuckDNS provider:**\n\n``` json\n{\n    \"token\": \"<string>\"\n}\n\n```\n\n**No-IP provider:**\n\n``` json\n{\n    \"email\": \"<string>\",\n    \"password\": \"<string>\"\n}\n\n```\n\n**Route53 provider:**\n\n``` json\n{\n    \"id\": \"<string>\",\n    \"secret\": \"<string>\",\n    \"zoneID\": \"<string>\"\n}\n\n```",
+          "requestBody": {
+            "acceptingContracts": "<boolean>",
+            "netAddress": "<string>",
+            "maxContractDuration": "<integer>",
+            "contractPrice": "<string>",
+            "baseRPCPrice": "<string>",
+            "sectorAccessPrice": "<string>",
+            "collateralMultiplier": "<number>",
+            "maxCollateral": "<string>",
+            "maxAccountBalance": "<string>",
+            "storagePrice": "<string>",
+            "egressPrice": "<string>",
+            "ingressPrice": "<string>",
+            "ingressLimit": "<integer>",
+            "egressLimit": "<integer>",
+            "maxRegistryEntries": "<integer>",
+            "accountExpiry": "<integer>",
+            "sectorCacheSize": "<integer>",
+            "ddns": {
+              "provider": "<string>",
+              "ipv4": "<boolean>",
+              "ipv6": "<boolean>",
+              "options": {}
+            }
+          },
+          "responses": [
+            {
+              "name": "Update pricing",
+              "status": 200,
+              "body": {
+                "acceptingContracts": true,
+                "netAddress": "123.456.789.0:9982",
+                "maxContractDuration": 25920,
+                "windowSize": 144,
+                "contractPrice": "200000000000000000000000",
+                "baseRPCPrice": "100000000000000000",
+                "sectorAccessPrice": "100000000000000000",
+                "collateral": "46296296296",
+                "maxCollateral": "1000000000000000000000000000",
+                "storagePrice": "100000",
+                "egressPrice": "100000",
+                "ingressPrice": "100000",
+                "priceTableValidity": 1800000000000,
+                "maxRegistryEntries": 100000,
+                "accountExpiry": 2592000000000000,
+                "maxAccountBalance": "10000000000000000000000000",
+                "ingressLimit": 0,
+                "egressLimit": 0,
+                "dynDNS": {
+                  "provider": "",
+                  "ipv4": false,
+                  "ipv6": false,
+                  "options": null
+                },
+                "revision": 47
+              }
+            }
+          ]
+        },
+        {
+          "name": "Announce the host",
+          "method": "POST",
+          "url": "{{baseURL}}/settings/announce",
+          "description": "Announces the host. The current `netaddress` setting is used for the announcement."
+        },
+        {
+          "name": "Test DDNS",
+          "method": "PUT",
+          "url": "{{baseURL}}/settings/ddns/update",
+          "description": "Tests the DDNS configuration by force updating the records."
+        }
+      ]
+    },
+    {
+      "name": "State",
+      "item": [
+        {
+          "name": "Get consensus state",
+          "method": "GET",
+          "url": "{{baseURL}}/state/consensus",
+          "description": "Gets the current block height and sync status",
+          "responses": [
+            {
+              "name": "Get consensus state",
+              "status": 200,
+              "body": {
+                "synced": true,
+                "chainIndex": {
+                  "height": 19031,
+                  "ID": "bid:00000002308ec251c67dc9b50edc68f6d731a228630556154982375dbbb26d13"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get host state",
+          "method": "GET",
+          "url": "{{baseURL}}/state/host",
+          "description": "Returns static metadata about the host, such as the public key and `hostd` version.",
+          "responses": [
+            {
+              "name": "Get host state",
+              "status": 200,
+              "body": {
+                "name": "Tabo",
+                "publicKey": "ed25519:eb51aa3633a87d04acf7a8446a1f842e45db88b37e31e6b353fde74c141576ee",
+                "lastAnnouncement": {
+                  "index": {
+                    "height": 44393,
+                    "id": "bid:00000000cb8114b022df0f521b9779968a2bdfbb38833052f58a21d1f917952a"
+                  },
+                  "publicKey": "ed25519:eb51aa3633a87d04acf7a8446a1f842e45db88b37e31e6b353fde74c141576ee",
+                  "address": "my.host.com:9882"
+                },
+                "walletAddress": "addr:27a37a46b524361f0dd21017a5ec73f05686d36c388e3833b633e4830a58cb529852ffc8c94f",
+                "startTime": "2023-12-20T18:30:22.411584799Z",
+                "explorer": {
+                  "enabled": true,
+                  "url": "https://api.siascan.com"
+                },
+                "network": "Zen Testnet",
+                "version": "b2fbaa8",
+                "commit": "b2fbaa8",
+                "os": "linux",
+                "buildTime": "2023-12-20T18:13:22Z"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Syncer",
+      "item": [
+        {
+          "name": "Get the syncer peers",
+          "method": "GET",
+          "url": "{{baseURL}}/syncer/peers",
+          "description": "Returns a list of connected peers and their gateway RPC version",
+          "responses": [
+            {
+              "name": "Get the syncer peers",
+              "status": 200,
+              "body": [
+                {
+                  "address": "123.456.789.0:9881",
+                  "version": "1.5.4"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Connect to a syncer peer",
+          "method": "PUT",
+          "url": "{{baseURL}}/syncer/peers",
+          "description": "",
+          "requestBody": {
+            "address": "<string>"
+          }
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "List directory",
+          "method": "GET",
+          "url": "{{baseURL}}/system/dir?path=~",
+          "description": "Lists a directory on the system. Returns the size of the mount point and all child directories at the path.\n\n**Special paths (all operating systems):**\n\n- `~` returns the home directory of the user running `hostd`\n- `.` returns the current working directory of `hostd`\n    \n\n**Special paths (Windows):**\n\n- `/` returns all disks on the system (e.g. `C:`, `D:`, etc)",
+          "responses": [
+            {
+              "name": "List directory",
+              "status": 200,
+              "body": {
+                "path": "/",
+                "totalBytes": 501729951744,
+                "freeBytes": 494226583552,
+                "directories": [
+                  "var"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create directory",
+          "method": "PUT",
+          "url": "{{baseURL}}/system/dir",
+          "description": "Creates a directory on the system at the specified path. The directory is created with permissions `0775`. If the directory already exists, this is a no-op. This functions like `mkdir -p`",
+          "requestBody": {
+            "path": "/storage/tmp"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transaction Pool",
+      "item": [
+        {
+          "name": "Get fee",
+          "method": "GET",
+          "url": "{{baseURL}}/tpool/fee",
+          "description": "Gets the current fee to broadcast a transaction in Hastings per byte",
+          "responses": [
+            {
+              "name": "Get fee",
+              "status": 200,
+              "body": "30000000000000000000"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "Get wallet information",
+          "method": "GET",
+          "url": "{{baseURL}}/wallet",
+          "description": "Returns the current wallet balance and address. The `confirmed` field is the sum of the UTXOs that have been confirmed on the blockchain. The `spendable` field is the sum of UTXOs not currently locked or in the tpool. The `unconfirmed` field is the sum of unconfirmed UTXOs in the tpool.",
+          "responses": [
+            {
+              "name": "Get wallet information",
+              "status": 200,
+              "body": {
+                "scanHeight": 19031,
+                "address": "addr:27a37a46b524361f0dd21017a5ec73f05686d36c388e3833b633e4830a58cb529852ffc8c94f",
+                "spendable": "569582649143461227751935036338",
+                "confirmed": "569582649143461227751935036338",
+                "unconfirmed": "0"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send Siacoins",
+          "method": "POST",
+          "url": "{{baseURL}}/wallet/send",
+          "description": "Send Siacoins to an address. If `subtractMinerFee` is true, the miner fee will be subtracted from the send amount.",
+          "requestBody": {
+            "address": "addr:7ee29010e7314daa9442ab526ea37dc0234f1f390e2bc6d4474e7af67b1d707de855883d53b5",
+            "amount": "5000000000000000000000000",
+            "subtractMinerFee": false
+          },
+          "responses": [
+            {
+              "name": "Send Siacoins",
+              "status": 200,
+              "body": "txid:66865e12382b8a2a353e9dffa66093c5598743020eeb6281702ff4e531c58ca4"
+            }
+          ]
+        },
+        {
+          "name": "Get wallet transactions",
+          "method": "GET",
+          "url": "{{baseURL}}/wallet/transactions?limit=100&offset=0",
+          "description": "",
+          "responses": [
+            {
+              "name": "Get wallet transactions",
+              "status": 200,
+              "body": [
+                {
+                  "ID": "txid:2370ac069cd4ea42c6c1625ee67a56412eae539a1264a215b14d6900851323b1",
+                  "index": {
+                    "height": 14310,
+                    "ID": "bid:00000000dde36fac7e48167d2db62d819fdfb68dead5b0e017261b9426d09c23"
+                  },
+                  "transaction": {
+                    "siacoinInputs": [
+                      {
+                        "parentID": "scoid:0cd408007f134a4786695a48bf6f8b2e2a5021d916bdb6f0870454fc42151c81",
+                        "unlockConditions": {
+                          "timelock": 0,
+                          "publicKeys": [
+                            "ed25519:e19832f694e18d7d5e7f29de94a5bb416a2c40979044a6363e460737aab9f1f6"
+                          ],
+                          "signaturesRequired": 1
+                        }
+                      }
+                    ],
+                    "siacoinOutputs": [
+                      {
+                        "value": "9998016266472767515052337952",
+                        "address": "addr:27a37a46b524361f0dd21017a5ec73f05686d36c388e3833b633e4830a58cb529852ffc8c94f"
+                      }
+                    ],
+                    "fileContracts": [
+                      {
+                        "filesize": 0,
+                        "fileMerkleRoot": "h:0000000000000000000000000000000000000000000000000000000000000000",
+                        "windowStart": 22333,
+                        "windowEnd": 22477,
+                        "payout": "7475266705464978085026608",
+                        "validProofOutputs": [
+                          {
+                            "value": "2183731303951843939716608",
+                            "address": "addr:27a37a46b524361f0dd21017a5ec73f05686d36c388e3833b633e4830a58cb529852ffc8c94f"
+                          }
+                        ],
+                        "missedProofOutputs": [
+                          {
+                            "value": "0",
+                            "address": "addr:000000000000000000000000000000000000000000000000000000000000000089eb0d6a8a69"
+                          }
+                        ],
+                        "unlockHash": "h:4af28435f39e11ffc00ada1697eb4f8ecd3e082cb732cf54567ae0437d2c6d4c",
+                        "revisionNumber": 0
+                      }
+                    ],
+                    "minerFees": [
+                      "13650000000000000000000"
+                    ],
+                    "signatures": [
+                      {
+                        "parentID": "h:0cd408007f134a4786695a48bf6f8b2e2a5021d916bdb6f0870454fc42151c81",
+                        "publicKeyIndex": 0,
+                        "coveredFields": {
+                          "wholeTransaction": true
+                        },
+                        "signature": "4n69AS15+TwrHNnSVsBnOKEsDP+yfn6dZGsjGkiXBC4i/Gk/WzPsJ1Vud+mb6c87Parpc45WJ0sdw+b+1vLsBA=="
+                      }
+                    ]
+                  },
+                  "inflow": "9998016266472767515052337952",
+                  "outflow": "9999999997776719358992054560",
+                  "source": "transaction",
+                  "timestamp": "2023-04-22T21:50:20Z"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Get pending wallet transactions",
+          "method": "GET",
+          "url": "{{baseURL}}/wallet/pending",
+          "description": "Returns any unconfirmed transactions relevant to the wallet",
+          "responses": [
+            {
+              "name": "Get pending wallet transactions",
+              "status": 200,
+              "body": [
+                {
+                  "ID": "txid:66865e12382b8a2a353e9dffa66093c5598743020eeb6281702ff4e531c58ca4",
+                  "index": {
+                    "height": 19041,
+                    "ID": "bid:0000000000000000000000000000000000000000000000000000000000000000"
+                  },
+                  "transaction": {
+                    "siacoinInputs": [
+                      {
+                        "parentID": "scoid:5c5c9848141b52ce37fd91b9a655e0039b59d90f8f09a6d19b96c65af4e24c96",
+                        "unlockConditions": {
+                          "timelock": 0,
+                          "publicKeys": [
+                            "ed25519:e19832f694e18d7d5e7f29de94a5bb416a2c40979044a6363e460737aab9f1f6"
+                          ],
+                          "signaturesRequired": 1
+                        }
+                      }
+                    ],
+                    "siacoinOutputs": [
+                      {
+                        "value": "9993352610473940243027127264",
+                        "address": "addr:27a37a46b524361f0dd21017a5ec73f05686d36c388e3833b633e4830a58cb529852ffc8c94f"
+                      }
+                    ],
+                    "minerFees": [
+                      "36000000000000000000000"
+                    ],
+                    "signatures": [
+                      {
+                        "parentID": "h:5c5c9848141b52ce37fd91b9a655e0039b59d90f8f09a6d19b96c65af4e24c96",
+                        "publicKeyIndex": 0,
+                        "coveredFields": {
+                          "wholeTransaction": true
+                        },
+                        "signature": "AMYD8Exr8X/ZofMzGHCIAVVOCZfM4vR9G6rphuMNivDLUsb6/SP0dw+urtZv31POx/wZ7oifXc981I02kBdWCg=="
+                      }
+                    ]
+                  },
+                  "inflow": "9993352610473940243027127264",
+                  "outflow": "9998388610473940243027127264",
+                  "source": "transaction",
+                  "timestamp": "2023-05-25T20:01:05.890456293Z"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Volumes",
+      "item": [
+        {
+          "name": "List volumes",
+          "method": "GET",
+          "url": "{{baseURL}}/volumes",
+          "description": "Returns all volumes that have been added to the host",
+          "responses": [
+            {
+              "name": "List volumes",
+              "status": 200,
+              "body": [
+                {
+                  "ID": 2,
+                  "localPath": "/storage/test.dat",
+                  "usedSectors": 0,
+                  "totalSectors": 100,
+                  "readOnly": false,
+                  "available": true,
+                  "failedReads": 0,
+                  "failedWrites": 0,
+                  "successfulReads": 0,
+                  "successfulWrites": 0,
+                  "status": "ready",
+                  "errors": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Get volume",
+          "method": "GET",
+          "url": "{{baseURL}}/volumes/:id",
+          "description": "Gets a volume by ID",
+          "responses": [
+            {
+              "name": "Get volume",
+              "status": 200,
+              "body": {
+                "ID": 2,
+                "localPath": "/storage/test.dat",
+                "usedSectors": 0,
+                "totalSectors": 100,
+                "readOnly": false,
+                "available": true,
+                "failedReads": 0,
+                "failedWrites": 0,
+                "successfulReads": 0,
+                "successfulWrites": 0,
+                "status": "ready",
+                "errors": null
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add a new volume",
+          "method": "POST",
+          "url": "{{baseURL}}/volumes",
+          "description": "Adds a new volume to the host at the specified location. The volume will store sectors up to its maximum.",
+          "requestBody": {
+            "localPath": "/storage/test.dat",
+            "maxSectors": 100
+          },
+          "responses": [
+            {
+              "name": "Add a new volume",
+              "status": 200,
+              "body": {
+                "ID": 2,
+                "localPath": "/storage/test.dat",
+                "usedSectors": 0,
+                "totalSectors": 100,
+                "readOnly": false,
+                "available": true
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resize volume",
+          "method": "PUT",
+          "url": "{{baseURL}}/volumes/:id/resize",
+          "description": "Grows or shrinks the volume to the new size",
+          "requestBody": {
+            "maxSectors": 250
+          }
+        },
+        {
+          "name": "Delete volume",
+          "method": "DELETE",
+          "url": "{{baseURL}}/volumes/:id",
+          "description": "Deletes a volume from the host. Any data stored in the volume will be migrated to another available volume. If the host does not have enough free space, deletion will fail. If a sector in the volume is corrupt, deletion will fail."
+        },
+        {
+          "name": "Cancel Operation",
+          "method": "DELETE",
+          "url": "{{baseURL}}/volumes/:id/cancel",
+          "description": "Cancels an in-progress Add, Resize, or Delete operation for a volume."
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "List Webhooks",
+          "method": "GET",
+          "url": "{{baseURL}}/webhooks",
+          "description": "",
+          "responses": [
+            {
+              "name": "List Webhooks",
+              "status": 200,
+              "body": [
+                {
+                  "id": 1,
+                  "callbackURL": "https://myurl.com/callbacks/hostd",
+                  "secretKey": "ff8d7383f31c4c4a15b08b5d9918575d",
+                  "scopes": [
+                    "all"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Register Webhook",
+          "method": "POST",
+          "url": "{{baseURL}}/webhooks",
+          "description": "Registers a new webhook limited to updates from the provided scopes. If the scope is \"all,\" the webhook will receive all updates from `hostd`.\n\nThe callback URL must be unique.\n\nThe response body will contain the webhook's `secretKey`. When a request is sent to the callback URL, the secret key will be included as the basic auth password. It is recommended, but not required, for the callback server to verify the key and ensure the notification is coming from the expected location.",
+          "requestBody": {
+            "callbackURL": "https://myurl.com/callbacks/hostd",
+            "scopes": [
+              "all"
+            ]
+          },
+          "responses": [
+            {
+              "name": "Register Webhook",
+              "status": 200,
+              "body": {
+                "id": 1,
+                "callbackURL": "https://myurl.com/callbacks/hostd",
+                "secretKey": "ff8d7383f31c4c4a15b08b5d9918575d",
+                "scopes": [
+                  "all"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Webhook",
+          "method": "PUT",
+          "url": "{{baseURL}}/webhooks/:id",
+          "description": "Updates a webhook callback URL and scopes.",
+          "requestBody": {
+            "callbackURL": "https://my.webhook.com/callbacks/hostd",
+            "scopes": [
+              "alerts/warning"
+            ]
+          }
+        },
+        {
+          "name": "Delete Webhook",
+          "method": "DELETE",
+          "url": "{{baseURL}}/webhooks/:id",
+          "description": "Deletes the webhook with the specified ID. No more notifications will be sent to the webhook."
+        },
+        {
+          "name": "Test Webhook",
+          "method": "POST",
+          "url": "{{baseURL}}/webhooks/:id/test",
+          "description": "Sends a test message to the provided webhook callback URL"
+        }
+      ]
+    }
+  ]
+}

@@ -8,11 +8,11 @@ from siaql.graphql.schemas.types import (
     ConsensusState,
     Contract,
     ContractFilter,
-    ContractsResponse,
     FileContractID,
     FundingSource,
     Hash256,
     HostdAccount,
+    HostdContractsResponse,
     HostdState,
     IntegrityCheckResult,
     Metrics,
@@ -35,7 +35,7 @@ from siaql.graphql.schemas.types import (
     WalletResponse,
     Currency,
 )
-from siaql.api.utils import APIError, handle_api_errors
+from siaql.api.utils import handle_api_errors
 
 
 class HostdError(Exception):
@@ -194,7 +194,7 @@ class HostdClient:
 
     # Contract endpoints
     @handle_api_errors(HostdError)
-    async def post_contracts(self, filter: ContractFilter) -> ContractsResponse:
+    async def post_contracts(self, filter: ContractFilter) -> HostdContractsResponse:
         """Get contracts matching filter"""
         response = await self.client.post("/contracts", json=filter)
         response.raise_for_status()

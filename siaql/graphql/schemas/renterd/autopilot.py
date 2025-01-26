@@ -6,6 +6,8 @@ from siaql.graphql.resolvers.renterd import RenterdBaseResolver
 from siaql.graphql.schemas.types import (
     AutopilotConfig,
     AutopilotStateResponse,
+    AutopilotTriggerRequest,
+    AutopilotTriggerResponse,
     HostResponse,
     ConfigEvaluationRequest,
     ConfigEvaluationResponse,
@@ -100,10 +102,10 @@ class AutopilotMutations(RenterdBaseResolver):
         return True
 
     @strawberry.mutation
-    async def trigger_autopilot(self, info: Info, force_scan: bool = False) -> bool:
+    async def trigger_autopilot(self, info: Info, req: AutopilotTriggerRequest.Input) -> AutopilotTriggerResponse:
         """Trigger an iteration of the autopilot's main loop"""
-        response = await RenterdBaseResolver.handle_api_call(info, "trigger_autopilot", force_scan=force_scan)
-        return response.get("triggered", False)
+        response = await RenterdBaseResolver.handle_api_call(info, "trigger_autopilot", req=req)
+        return response
 
     @strawberry.mutation
     async def evaluate_autopilot_config(

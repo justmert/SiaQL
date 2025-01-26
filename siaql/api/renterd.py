@@ -20,6 +20,8 @@ from siaql.graphql.schemas.types import (
     Autopilot,
     AutopilotConfig,
     AutopilotStateResponse,
+    AutopilotTriggerRequest,
+    AutopilotTriggerResponse,
     Block,
     Bucket,
     BucketCreateRequest,
@@ -731,8 +733,8 @@ class RenterdClient:
         return response.json()
 
     @handle_api_errors(RenterdError)
-    async def trigger_autopilot(self, force_scan: bool = False) -> bool:
-        response = await self.client.post("/autopilot/trigger", json={"forceScan": force_scan})
+    async def trigger_autopilot(self, req: AutopilotTriggerRequest) -> AutopilotTriggerResponse:
+        response = await self.client.post("/autopilot/trigger", json=req)
         return response.json()
 
     @handle_api_errors(RenterdError)

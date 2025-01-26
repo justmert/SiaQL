@@ -76,5 +76,5 @@ class TxpoolMutations:
     @strawberry.mutation
     async def txpool_broadcast(self, info: Info, req: TxpoolBroadcastRequest.Input) -> bool:
         """Broadcast transactions to network"""
-        await WalletdBaseResolver.handle_api_call(info, "post_txpool_broadcast", req=req)
+        await WalletdBaseResolver.handle_api_call(info, "txpool_broadcast", req=req)
         return True

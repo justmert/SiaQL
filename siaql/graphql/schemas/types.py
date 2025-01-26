@@ -17,7 +17,7 @@ from dataclasses import dataclass, fields
 
 import logging
 
-logger = logging.getLogger('siaql.schemas.types')
+logger = logging.getLogger("siaql.schemas.types")
 
 T = TypeVar("T")
 
@@ -3203,9 +3203,7 @@ class AddVolumeRequest(SiaType):
 
 @strawberry.type
 class VolumeStats(SiaType):
-    failed_reads: Optional[int] = strawberry.field(
-        description="Number of failed read operations", name="failedReads"
-    )
+    failed_reads: Optional[int] = strawberry.field(description="Number of failed read operations", name="failedReads")
     failed_writes: Optional[int] = strawberry.field(
         description="Number of failed write operations", name="failedWrites"
     )
@@ -3223,9 +3221,7 @@ class VolumeStats(SiaType):
 class Volume(SiaType):
     id: Optional[int] = strawberry.field(description="Unique identifier for the volume", name="id")
     local_path: Optional[str] = strawberry.field(description="Local filesystem path of the volume", name="localPath")
-    used_sectors: Optional[int] = strawberry.field(
-        description="Number of sectors currently in use", name="usedSectors"
-    )
+    used_sectors: Optional[int] = strawberry.field(description="Number of sectors currently in use", name="usedSectors")
     total_sectors: Optional[int] = strawberry.field(
         description="Total number of sectors available", name="totalSectors"
     )
@@ -3493,6 +3489,12 @@ class IntegrityCheckResult(SiaType):
     bad_sectors: Optional[List[IntegrityResult]] = strawberry.field(
         description="List of sectors that failed the integrity check", name="badSectors"
     )
+
+
+@strawberry.type
+class HostdContractsResponse(SiaType):
+    count: Optional[int] = strawberry.field(description="Total number of contracts", name="count")
+    contracts: Optional[List[HostdContract]] = strawberry.field(description="List of contracts", name="contracts")
 
 
 @strawberry.enum
