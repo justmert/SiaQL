@@ -19,13 +19,23 @@ class SiaQLGraphQL(GraphQL):
         renterd_password: str,
         hostd_url: str,
         hostd_password: str,
+        skipped_endpoints: Dict[str, bool],
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.walletd_client = WalletdClient(base_url=walletd_url, api_password=walletd_password)
-        self.renterd_client = RenterdClient(base_url=renterd_url, api_password=renterd_password)
-        self.hostd_client = HostdClient(base_url=hostd_url, api_password=hostd_password)
+        self.skipped_endpoints = skipped_endpoints
+
+        # Initialize clients only for non-skipped endpoints
+        self.walletd_client = (
+            None if skipped_endpoints["walletd"] else WalletdClient(base_url=walletd_url, api_password=walletd_password)
+        )
+        self.renterd_client = (
+            None if skipped_endpoints["renterd"] else RenterdClient(base_url=renterd_url, api_password=renterd_password)
+        )
+        self.hostd_client = (
+            None if skipped_endpoints["hostd"] else HostdClient(base_url=hostd_url, api_password=hostd_password)
+        )
 
     async def get_context(
         self, request: Union[Request, WebSocket], response: Optional[Response] = None
@@ -37,6 +47,7 @@ class SiaQLGraphQL(GraphQL):
             "walletd_client": self.walletd_client,
             "renterd_client": self.renterd_client,
             "hostd_client": self.hostd_client,
+            "skipped_endpoints": self.skipped_endpoints,
         }
         return context
 
@@ -48,6 +59,7 @@ def create_graphql_app(
     renterd_password: str,
     hostd_url: str,
     hostd_password: str,
+    skipped_endpoints: Dict[str, bool],
 ) -> GraphQL:
     """Creates and configures the GraphQL application"""
     return SiaQLGraphQL(
@@ -58,6 +70,7 @@ def create_graphql_app(
         renterd_password=renterd_password,
         hostd_url=hostd_url,
         hostd_password=hostd_password,
+        skipped_endpoints=skipped_endpoints,
         graphiql=True,
         debug=True,
     )

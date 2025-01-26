@@ -25,6 +25,10 @@ class RenterdBaseResolver:
         **kwargs,
     ) -> Any:
         """Generic method to handle API calls with error handling"""
+        # Check if endpoint is skipped
+        if info.context["skipped_endpoints"].get("renterd", False):
+            raise Exception("Renterd configuration was skipped during startup. This query is not available.")
+        
         client = info.context["renterd_client"]
         method_func = getattr(client, method)
         try:

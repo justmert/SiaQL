@@ -26,6 +26,10 @@ class HostdBaseResolver:
         **kwargs,
     ) -> Any:
         """Generic method to handle API calls with error handling"""
+        # Check if endpoint is skipped
+        if info.context["skipped_endpoints"].get("hostd", False):
+            raise Exception("Hostd endpoint was skipped during configuration. This query is not available.")
+
         client = info.context["hostd_client"]
         method_func = getattr(client, method)
         try:

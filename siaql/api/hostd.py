@@ -47,7 +47,7 @@ class HostdError(Exception):
 class HostdClient:
     """Client for interacting with the Hostd REST API"""
 
-    def __init__(self, base_url: str = "http://localhost:9880", api_password: Optional[str] = None):
+    def __init__(self, base_url: str, api_password: Optional[str] = None):
         # Ensure base_url doesn't have trailing slash and has /api
         self.base_url = f"{base_url.rstrip('/')}/api"
         if api_password:

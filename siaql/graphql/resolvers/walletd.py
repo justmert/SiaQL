@@ -49,6 +49,10 @@ class WalletdBaseResolver:
         **kwargs,
     ) -> Any:
         """Generic method to handle API calls with error handling"""
+        # Check if endpoint is skipped
+        if info.context["skipped_endpoints"].get("walletd", False):
+            raise Exception("Walletd endpoint was skipped during startup. This query is not available.")
+
         client = info.context["walletd_client"]
         method_func = getattr(client, method)
         try:

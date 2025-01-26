@@ -18,19 +18,28 @@ class MockField:
 
 class WalletdMockInfo:
     def __init__(self, client, field_type):
-        self.context = {"walletd_client": client}
+        self.context = {
+            "walletd_client": client,
+            "skipped_endpoints": {"walletd": False, "renterd": False, "hostd": False}
+        }
         self._field = MockField(field_type)
 
 
 class HostdMockInfo:
     def __init__(self, client, field_type):
-        self.context = {"hostd_client": client}
+        self.context = {
+            "hostd_client": client,
+            "skipped_endpoints": {"walletd": False, "renterd": False, "hostd": False}
+        }
         self._field = MockField(field_type)
 
 
 class RenterddMockInfo:
     def __init__(self, client, field_type):
-        self.context = {"renterd_client": client}
+        self.context = {
+            "renterd_client": client,
+            "skipped_endpoints": {"walletd": False, "renterd": False, "hostd": False}
+        }
         self._field = MockField(field_type)
 
 
