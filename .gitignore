@@ -48,5 +48,4 @@ htmlcov/
 node_modules/
 __pycache__/
 _build/
-public/
 siaql_codebase.md
