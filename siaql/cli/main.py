@@ -2,7 +2,6 @@
 import typer
 import uvicorn
 import os
-import requests
 import sys
 from rich.console import Console
 from rich.prompt import Prompt, Confirm
@@ -11,7 +10,7 @@ from typing import Optional
 from pathlib import Path
 from dotenv import load_dotenv
 from siaql.graphql.app import create_graphql_app
-
+import httpx
 # Load environment variables from .env file
 load_dotenv()
 
@@ -22,8 +21,9 @@ console = Console()
 def validate_url(url: str) -> bool:
     """Check if a URL is alive by making a request"""
     try:
-        response = requests.get(url)
-        return response.status_code < 500  # Accept any non-server error response
+        with httpx.Client() as client:
+            response = client.get(url)
+            return response.status_code < 500  # Accept any non-server error response
     except:
         return False
 

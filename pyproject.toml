@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "siaql"
-version = "0.1.0"
+version = "0.1.1"
 description = "GraphQL interface for Sia network components"
 authors = ["Mert Köklü <kklumert@gmail.com>"]
 readme = "README.md"

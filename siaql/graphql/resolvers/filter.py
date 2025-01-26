@@ -99,7 +99,6 @@ class QueryFiltering:
         parts = field_path.split(".")
         current = obj
         for part in parts:
-            print("current", current)
             if current is None:
                 return None
 
@@ -121,7 +120,6 @@ class QueryFiltering:
                 current = getattr(current, part)
             else:
                 return None
-        print('current', current)
         return current
 
     @classmethod
