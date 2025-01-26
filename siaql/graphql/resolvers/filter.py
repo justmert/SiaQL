@@ -157,9 +157,7 @@ class QueryFiltering:
             exists_check = field_value is not None
             if filter_value is not None:
                 return exists_check == (str(filter_value).lower() == "true")
-            return exists_check
-        
-        print(field_value)
+            return exists_check        
         if field_value is None:
             return False
         field_val = cls.convert_value_for_comparison(field_value)
