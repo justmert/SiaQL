@@ -7,7 +7,7 @@ def main():
     # Get the project root directory
     project_root = Path(__file__).parent.parent.parent
     docs_config = project_root / "docs" / "config.yml"
-    output_dir = project_root / "docs" / "_build" / "html"
+    output_dir = project_root / "docs" / "public"
 
     # Create output directory if it doesn't exist
     output_dir.mkdir(parents=True, exist_ok=True)
