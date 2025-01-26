@@ -45,4 +45,7 @@ _docs/
 htmlcov/
 .pytest_cache/
 
-# api-schemas/
+node_modules/
+__pycache__/
+_build/
+siaql_codebase.md

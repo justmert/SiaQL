@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "spectaql": "^3.0.3"
+  },
+  "scripts": {
+    "build-docs": "spectaql --target-dir _build/html config.yml"
+  }
+}

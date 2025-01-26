@@ -1,0 +1,34 @@
+spectaql:
+
+  embedLogo: false
+  preserveLogoName: false
+  embedFavicon: false
+  displayAllServers: true
+  x-hidePoweredBy: true
+
+introspection:
+  url: http://127.0.0.1:8001/graphql
+
+info:
+  title: SiaQL Documentation
+  description: "GraphQL API for Sia Network components: Renterd, Hostd, and Walletd."
+  contact:
+    name: Mert Köklü
+    url: https://t.me/mertkklu
+    email: kklumert@gmail.com
+  license:
+    name: Apache 2.0
+    url: https://github.com/justmert/SiaQL/blob/master/LICENSE
+
+  # A non-standard array of items to display in your Introduction Area
+  x-introItems:
+    # Can be a Title (for the Nav panel) + URL to simply add a link to somewhere
+    - title: See the Github repository!
+      url: https://github.com/justmert/SiaQL
+
+
+extensions:
+  graphqlScalarExamples: true
+
+
+

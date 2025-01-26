@@ -26,3 +26,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 siaql = "siaql.cli.main:app"
+build-docs = "siaql.scripts.build_docs:main"

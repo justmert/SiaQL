@@ -3504,6 +3504,3 @@ class MetricsInterval(Enum):
     WEEKLY = strawberry.enum_value("weekly", description="1 week interval")
     MONTHLY = strawberry.enum_value("monthly", description="1 month interval")
     YEARLY = strawberry.enum_value("yearly", description="1 year interval")
-
-
-logger.debug("SearchHostsRequest.Input: %s", SearchHostsRequest.Input)  # Check if this returns a valid input type
