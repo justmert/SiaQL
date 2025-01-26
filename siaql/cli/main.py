@@ -63,9 +63,9 @@ def serve(
     # Set defaults
     DEFAULT_HOST = "127.0.0.1"
     DEFAULT_PORT = 9090
-    DEFAULT_WALLETD_URL = "http://localhost:9980"
-    DEFAULT_RENTERD_URL = "http://localhost:9980"
-    DEFAULT_HOSTD_URL = "http://localhost:9980"
+    DEFAULT_RENTERD_URL = "http://localhost:9981"
+    DEFAULT_WALLETD_URL = "http://localhost:9982"
+    DEFAULT_HOSTD_URL = "http://localhost:9983"
 
     # Get values from environment or use defaults
     host = host or os.getenv("HOST") or DEFAULT_HOST

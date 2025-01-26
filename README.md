@@ -1,98 +1,157 @@
 # SiaQL
 
-A GraphQL interface for Sia network components (hostd, renterd, and walletd).
+A GraphQL interface for Sia network components: [walletd](https://sia.tech/software/walletd), [renterd](https://sia.tech/software/renterd), [hostd](https://sia.tech/software/hostd).
 
+[![Python](https://img.shields.io/badge/python-^3.9-blue.svg)](https://www.python.org/downloads/)
+[![Poetry](https://img.shields.io/badge/poetry-package-blueviolet.svg)](https://python-poetry.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://siaql-docs.netlify.app)
+  
 ## Overview
 
-SiaQL provides a unified GraphQL layer on top of Sia's core REST APIs, making it easier to interact with Sia components. This project aims to simplify data querying and reduce over-fetching by providing a flexible GraphQL interface.
+SiaQL provides a unified GraphQL API layer for interacting with various Sia network components. It simplifies the process of querying and managing Sia nodes by providing:
+
+📚 See GraphQL documentation: [siaql-docs.netlify.app](https://siaql-docs.netlify.app)
 
 ## Features
 
-- GraphQL interface for Sia's core components
-- Built-in GraphiQL editor for API exploration
-- Secure authentication handling
-- Efficient API integration
-- Type-safe queries and responses
+- **Unified API**: Access walletd, renterd, and hostd through a single GraphQL endpoint
+- **Type Safety**: Fully typed schema with TypeScript/Python type definitions
+- **Flexible Queries**: Built-in support for filtering, sorting, and pagination
+- **Interactive Documentation and Playground**: GraphiQL interface with schema exploration
+- **CLI Tool**: Easy setup and management through command-line interface
 
 ## Installation
 
-### Prerequisites
-
-- Python 3.9 or higher
-- Poetry (Python package manager)
-
-### Setup
-
-1. Clone the repository:
+Install SiaQL using pip:
 
 ```bash
-git clone https://github.com/justmert/siaql.git
-cd siaql
+pip install siaql
 ```
 
-2. Install dependencies:
+## Quick Start
+
+1. Start the SiaQL server:
 
 ```bash
-poetry install
+siaql
 ```
 
-## Usage
+2. Access the GraphiQL interface at `http://localhost:9090/graphql` by default.
 
-### Starting the Server
+3. Start querying your Sia components!
 
-Start the GraphQL server using one of these methods:
+## Configuration
 
-1. With password prompt (recommended):
+SiaQL can be configured through environment variables (`.env` file), command-line arguments:
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HOST` | 127.0.0.1 | Server host address |
+| `PORT` | 8000 | Server port |
+| `ENABLE_RENTERD` | true | Enable/disable renterd integration |
+| `RENTERD_URL` | <http://localhost:9981> | Renterd API URL |
+| `RENTERD_PASSWORD` | None | Renterd API password |
+| `ENABLE_WALLETD` | true | Enable/disable walletd integration |
+| `WALLETD_URL` | <http://localhost:9982> | Walletd API URL |
+| `WALLETD_PASSWORD` | None | Walletd API password |
+| `ENABLE_HOSTD` | true | Enable/disable hostd integration |
+| `HOSTD_URL` | <http://localhost:9983> | Hostd API URL |
+| `HOSTD_PASSWORD` | None | Hostd API password |
+
+### Command Line Arguments
+
+The same configuration options are available as command-line arguments:
 
 ```bash
-poetry run siaql
+siaql --host 127.0.0.1 --port 9090
 ```
 
-2. With password as command line argument:
+> **Note**: SiaQL can be started without any configuration, in which case it will ask for the API URLs and passwords interactively.
 
-```bash
-poetry run siaql --walletd-password your_password
-```
+### Compatibility
 
-3. With password as environment variable:
+SiaQL is compatible with following versions of Sia components:
 
-```bash
-export SIAQL_WALLETD_PASSWORD=your_password
-poetry run siaql
-```
+| Component | Version |
+|----------|---------|
+| Walletd | [v0.8.0](https://github.com/SiaFoundation/walletd/releases/tag/v0.8.0) |
+| Renterd | [v1.1.1](https://github.com/SiaFoundation/renterd/releases/tag/v1.1.1) |
+| Hostd | [v2.0.2](https://github.com/SiaFoundation/hostd/releases/tag/v2.0.2) |
 
-Additional configuration options:
+## Example Queries
 
-```bash
-poetry run siaql --help
-```
-
-### Using the GraphQL Interface
-
-Once the server is running, open GraphiQL at `http://localhost:8000/graphql`. Here are some example queries:
+### Query Wallet Balance
 
 ```graphql
-# Get address balance
-{
-  addressBalance(address: "your_sia_address") {
-    siacoins
-    immatureSiacoins
-    siafunds
-  }
-}
-
-# Get address events
-{
-  addressEvents(address: "your_sia_address", limit: 5) {
+query {
+  wallets {
     id
-    timestamp
-    type
-    maturityHeight
+    balance {
+      siacoins
+      siafunds
+    }
   }
 }
 ```
 
-## License
+### Query Host Settings
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+```graphql
+query {
+  settings {
+    acceptingContracts
+    maxContractDuration
+    storagePrice
+    collateralMultiplier
+  }
+}
+```
 
+### Query Storage Contracts
+
+```graphql
+query {
+  contracts {
+    id
+    status
+    size
+    startHeight
+    windowEnd
+  }
+}
+```
+
+## Development
+
+### Setup Development Environment
+
+```bash
+# Create a virtual environment if needed
+# python3.9 -m venv venv
+
+# Clone the repository
+git clone https://github.com/justmert/siaql.git && cd siaql
+
+# Tested with poetry 2.0.1
+# pip install --upgrade poetry==2.0.1
+
+# Install dependencies
+poetry install
+
+# Run tests
+poetry run pytest
+
+```
+
+## Acknowledgments
+
+- [Sia](https://sia.tech/) - The decentralized storage network
+- [Strawberry GraphQL](https://strawberry.rocks/) - GraphQL library for Python
+- [Typer](https://typer.tiangolo.com/) - CLI library for Python
+
+## Disclaimer
+
+This repository is a community effort and is not officially supported by the Sia Network.
