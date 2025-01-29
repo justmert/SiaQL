@@ -4,7 +4,7 @@ A GraphQL interface for Sia network components: [walletd](https://sia.tech/softw
 
 [![Python](https://img.shields.io/badge/python-^3.9-blue.svg)](https://www.python.org/downloads/)
 [![Poetry](https://img.shields.io/badge/poetry-package-blueviolet.svg)](https://python-poetry.org/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://siaql-docs.netlify.app)
   
 ## Overview
