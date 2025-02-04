@@ -83,7 +83,7 @@ SiaQL is compatible with following versions of Sia components:
 
 ## Example Queries
 
-All [queries](http://localhost:3000/#group-Operations-Queries) are written as its respective Sia component. For example `renterd_Contracts` for  Renterd  [contracts](https://api.sia.tech/renterd#3aca247e-0dd0-449a-abab-d15494b77c37) endpoint.
+All [queries](https://siaql-docs.netlify.app/#group-Operations-Queries) are written as its respective Sia component. For example `renterd_Contracts` for  Renterd  [contracts](https://api.sia.tech/renterd#3aca247e-0dd0-449a-abab-d15494b77c37) endpoint.
 
 1. Get Sorted Contracts
 ```graphql
